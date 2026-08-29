@@ -13,6 +13,11 @@ namespace Ccc.Core.Model
         public long Denominator { get; }
         public bool IsInteger => Denominator == 1;
 
+        /// <summary>
+        /// 値が負数かどうかを取得します。
+        /// </summary>
+        public bool IsNegative => Numerator < 0;
+
         private Rational(long numerator, long denominator)
         {
             Numerator = numerator;
@@ -77,7 +82,7 @@ namespace Ccc.Core.Model
             return Numerator == other.Numerator && Denominator == other.Denominator;
         }
 
-        public override bool Equals(object? obj)
+        public override bool Equals(object obj)
         {
             return obj is Rational other && Equals(other);
         }
