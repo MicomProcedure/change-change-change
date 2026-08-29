@@ -37,7 +37,7 @@ namespace Ccc.Core.Logic
         /// <summary>
         /// 抽選に使用する乱数生成器を取得します。
         /// </summary>
-        public Random Random { get; }
+        public IRandomSource RandomSource { get; }
 
         /// <summary>
         /// <see cref="MissionDrawContext"/> の新しいインスタンスを初期化します。
@@ -47,14 +47,14 @@ namespace Ccc.Core.Logic
         /// <param name="section">セクション番号（1以上）。</param>
         /// <param name="nextMissionId">割り当てる新しいミッションID。</param>
         /// <param name="previousMissionId">直前のミッションID（任意）。</param>
-        /// <param name="random">乱数生成器。</param>
+        /// <param name="randomSource">乱数sampleの供給元。</param>
         public MissionDrawContext(
             MissionCatalog catalog,
             GameplayConfig config,
             int section,
             MissionId nextMissionId,
             MissionId? previousMissionId,
-            Random random)
+            IRandomSource randomSource)
         {
             if (catalog == null)
             {
@@ -71,9 +71,9 @@ namespace Ccc.Core.Logic
                 throw new ArgumentOutOfRangeException(nameof(section), section, "Section must be greater than zero.");
             }
 
-            if (random == null)
+            if (randomSource == null)
             {
-                throw new ArgumentNullException(nameof(random));
+                throw new ArgumentNullException(nameof(randomSource));
             }
 
             Catalog = catalog;
@@ -81,7 +81,7 @@ namespace Ccc.Core.Logic
             Section = section;
             NextMissionId = nextMissionId;
             PreviousMissionId = previousMissionId;
-            Random = random;
+            RandomSource = randomSource;
         }
     }
 }

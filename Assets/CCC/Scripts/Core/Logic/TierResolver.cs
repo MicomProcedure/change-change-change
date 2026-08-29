@@ -14,9 +14,9 @@ namespace Ccc.Core.Logic
         /// </summary>
         /// <param name="section">現在のセクション番号（1以上）。</param>
         /// <param name="config">ゲームプレイ設定。</param>
-        /// <param name="random">乱数生成器。</param>
+        /// <param name="randomSource">乱数sampleの供給元。</param>
         /// <returns>決定された Tier 番号（1以上）。</returns>
-        public static int ResolveTier(int section, GameplayConfig config, Random random)
+        public static int ResolveTier(int section, GameplayConfig config, IRandomSource randomSource)
         {
             if (section <= 0)
             {
@@ -28,9 +28,9 @@ namespace Ccc.Core.Logic
                 throw new ArgumentNullException(nameof(config));
             }
 
-            if (random == null)
+            if (randomSource == null)
             {
-                throw new ArgumentNullException(nameof(random));
+                throw new ArgumentNullException(nameof(randomSource));
             }
 
             int currentMaxTier = config.TierProgression.GetTier(section);
@@ -43,7 +43,7 @@ namespace Ccc.Core.Logic
 
             // CurrentTierDrawWeight と LowerTierDrawWeight による重み付き選択
             var weights = new[] { config.CurrentTierDrawWeight, config.LowerTierDrawWeight };
-            int selectedWeightIndex = WeightedIndexSelector.SelectIndex(weights, random);
+            int selectedWeightIndex = WeightedIndexSelector.SelectIndex(weights, randomSource.NextSample());
 
             if (selectedWeightIndex == 0)
             {
@@ -53,7 +53,7 @@ namespace Ccc.Core.Logic
 
             // Lower Tier: 1 〜 (currentMaxTier - 1) のいずれかを均等抽選
             int lowerTierCount = currentMaxTier - 1;
-            int lowerTierOffset = UniformIndexSelector.SelectIndex(lowerTierCount, random);
+            int lowerTierOffset = UniformIndexSelector.SelectIndex(lowerTierCount, randomSource.NextSample());
             return 1 + lowerTierOffset;
         }
     }
