@@ -77,7 +77,7 @@ namespace Ccc.Core.Model
             return Numerator == other.Numerator && Denominator == other.Denominator;
         }
 
-        public override bool Equals(object? obj)
+        public override bool Equals(object obj)
         {
             return obj is Rational other && Equals(other);
         }
