@@ -9,6 +9,9 @@ namespace Ccc.Core.Model
         DivisionByZero
     }
 
+    /// <summary>
+    /// 式の計算結果（正常値・0除算・未初期化）を表現する不変値オブジェクト。
+    /// </summary>
     public readonly struct CalculationResult : IEquatable<CalculationResult>
     {
         private readonly Rational _value;
@@ -16,26 +19,24 @@ namespace Ccc.Core.Model
         public CalculationResultKind Kind { get; }
         public bool IsDefined => Kind == CalculationResultKind.Defined;
 
+        /// <summary>
+        /// 計算結果の Rational 値。
+        /// Kind != Defined の場合は InvalidOperationException がスローされます。
+        /// </summary>
         public Rational Value
         {
             get
             {
                 if (Kind != CalculationResultKind.Defined)
                 {
-                    throw new InvalidOperationException($"CalculationResult kind '{Kind}' does not provide a defined value.");
+                    throw new InvalidOperationException($"Cannot access Value when Kind is {Kind}.");
                 }
-
                 return _value;
             }
         }
 
         private CalculationResult(CalculationResultKind kind, Rational value)
         {
-            if (!Enum.IsDefined(typeof(CalculationResultKind), kind))
-            {
-                throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
-            }
-
             Kind = kind;
             _value = value;
         }
@@ -52,40 +53,35 @@ namespace Ccc.Core.Model
 
         public bool Equals(CalculationResult other)
         {
-            return Kind == other.Kind && ValueEquals(other);
+            if (Kind != other.Kind)
+            {
+                return false;
+            }
+
+            if (Kind == CalculationResultKind.Defined)
+            {
+                return _value.Equals(other._value);
+            }
+
+            return true;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is CalculationResult other && Equals(other);
         }
 
         public override int GetHashCode()
         {
-            unchecked
-            {
-                return ((int)Kind * 397) ^ (IsDefined ? _value.GetHashCode() : 0);
-            }
+            return HashCode.Combine(Kind, Kind == CalculationResultKind.Defined ? _value : default);
         }
 
-        public static bool operator ==(CalculationResult left, CalculationResult right)
+        public override string ToString()
         {
-            return left.Equals(right);
+            return Kind == CalculationResultKind.Defined ? _value.ToString() : Kind.ToString();
         }
 
-        public static bool operator !=(CalculationResult left, CalculationResult right)
-        {
-            return !(left == right);
-        }
-
-        private bool ValueEquals(CalculationResult other)
-        {
-            if (Kind != CalculationResultKind.Defined || other.Kind != CalculationResultKind.Defined)
-            {
-                return Kind == other.Kind;
-            }
-
-            return _value.Equals(other._value);
-        }
+        public static bool operator ==(CalculationResult left, CalculationResult right) => left.Equals(right);
+        public static bool operator !=(CalculationResult left, CalculationResult right) => !left.Equals(right);
     }
 }
