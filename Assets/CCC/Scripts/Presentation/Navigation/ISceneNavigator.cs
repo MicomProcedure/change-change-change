@@ -17,7 +17,7 @@ namespace Ccc.Presentation.Navigation
         /// </summary>
         /// <param name="request">Gameplay開始Requestです。</param>
         UniTask<SceneNavigationResult> LoadGameplayAsync(
-            GameplayStartRequest request);
+            GameplayNavigationRequest request);
 
         /// <summary>
         /// TitleSceneをロードします。

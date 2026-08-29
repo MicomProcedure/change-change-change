@@ -10,19 +10,17 @@ namespace Ccc.Infrastructure.UI
     /// </summary>
     public sealed class PointerDownInputView : MonoBehaviour, IPointerDownHandler
     {
-        private Subject<Unit> _pressedSubject;
+        private Subject<Unit> _pressedSubject = new();
         private bool _isDestroyed;
         private bool _isInteractable = true;
 
         /// <summary>
         ///     押下イベントの発行元。
         /// </summary>
-        public Observable<Unit> Pressed { get; private set; }
+        public Observable<Unit> Pressed => _pressedSubject;
 
         private void Awake()
         {
-            _pressedSubject = new Subject<Unit>();
-            Pressed = _pressedSubject;
         }
 
         private void OnDestroy()

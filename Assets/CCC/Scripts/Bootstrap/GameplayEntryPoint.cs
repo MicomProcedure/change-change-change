@@ -7,6 +7,8 @@ using Ccc.Presentation;
 using Ccc.Presentation.Audio;
 using UnityEngine;
 using VContainer.Unity;
+using NavigationGameplayStartRequest = Ccc.Presentation.Navigation.GameplayNavigationRequest;
+using CoreGameplayStartRequest = Ccc.Core.UseCases.GameplayStartRequest;
 
 namespace Ccc.Bootstrap
 {
@@ -15,10 +17,7 @@ namespace Ccc.Bootstrap
     /// </summary>
     public sealed class GameplayEntryPoint : IStartable, IDisposable
     {
-        private readonly GameplayStartRequest _request;
-        private readonly GameplayConfigAsset _configAsset;
-        private readonly MissionPresetAsset _missionPresetAsset;
-        private readonly MissionTextAsset _missionTextAsset;
+        private readonly GameplayStartContext _startContext;
         private readonly IGameplayFlow _flow;
         private readonly GameplayPresenter _presenter;
         private readonly IGameplayView _view;
@@ -29,29 +28,20 @@ namespace Ccc.Bootstrap
         /// <summary>
         /// GameplayEntryPointを生成します。
         /// </summary>
-        /// <param name="request">MainMenuから注入されたSession開始Request。</param>
-        /// <param name="configAsset">Gameplay設定Asset。</param>
-        /// <param name="missionPresetAsset">Mission候補Preset Asset。</param>
-        /// <param name="missionTextAsset">Mission表示文言Asset。</param>
+        /// <param name="startContext">Gameplay開始RequestとConfig Entryの組。</param>
         /// <param name="flow">Gameplayフロー。</param>
         /// <param name="presenter">Gameplay Presenter。</param>
         /// <param name="view">Gameplay View。</param>
         /// <param name="audio">Audio再生ポート。</param>
         /// <exception cref="ArgumentNullException">依存のいずれかがnullの場合。</exception>
         public GameplayEntryPoint(
-            GameplayStartRequest request,
-            GameplayConfigAsset configAsset,
-            MissionPresetAsset missionPresetAsset,
-            MissionTextAsset missionTextAsset,
+            GameplayStartContext startContext,
             IGameplayFlow flow,
             GameplayPresenter presenter,
             IGameplayView view,
             IAudioPlayer audio)
         {
-            _request = request ?? throw new ArgumentNullException(nameof(request));
-            _configAsset = configAsset ?? throw new ArgumentNullException(nameof(configAsset));
-            _missionPresetAsset = missionPresetAsset ?? throw new ArgumentNullException(nameof(missionPresetAsset));
-            _missionTextAsset = missionTextAsset ?? throw new ArgumentNullException(nameof(missionTextAsset));
+            _startContext = startContext ?? throw new ArgumentNullException(nameof(startContext));
             _flow = flow ?? throw new ArgumentNullException(nameof(flow));
             _presenter = presenter ?? throw new ArgumentNullException(nameof(presenter));
             _view = view ?? throw new ArgumentNullException(nameof(view));
@@ -73,17 +63,18 @@ namespace Ccc.Bootstrap
 
             _isStarted = true;
             var validationErrors = new List<string>();
-            validationErrors.AddRange(_configAsset.Validate());
-            validationErrors.AddRange(_missionPresetAsset.Validate());
-            validationErrors.AddRange(_missionTextAsset.Validate());
-            ValidateRequest(validationErrors);
+            GameplayConfigEntry configEntry = _startContext.ConfigEntry;
+            validationErrors.AddRange(configEntry.GameplayConfigAsset.Validate());
+            validationErrors.AddRange(configEntry.MissionPresetAsset.Validate());
+            LogMissionTextDiagnostics(configEntry.MissionTextAsset);
+            ValidateRequest(_startContext.Request, validationErrors);
 
             IReadOnlyList<Ccc.Core.Model.MissionParameterCandidate> candidates = null;
             if (validationErrors.Count == 0)
             {
                 try
                 {
-                    candidates = _missionPresetAsset.CreateCandidates();
+                    candidates = configEntry.MissionPresetAsset.CreateCandidates();
                 }
                 catch (Exception exception)
                 {
@@ -104,9 +95,10 @@ namespace Ccc.Bootstrap
                 : viewBehaviour.destroyCancellationToken;
             _presenter.Start(destroyCancellationToken);
 
-            GameplayStartRequest sessionRequest = new GameplayStartRequest(
-                _request.GameMode,
-                _request.GameDifficulty,
+            CoreGameplayStartRequest sessionRequest =
+                new CoreGameplayStartRequest(
+                ConvertGameMode(_startContext.Request.GameMode),
+                ConvertDifficulty(_startContext.Request.Difficulty),
                 candidates);
             GameplayStartResult startResult = _flow.StartSession(sessionRequest);
             if (!startResult.IsSuccess)
@@ -137,16 +129,40 @@ namespace Ccc.Bootstrap
             }
         }
 
-        private void ValidateRequest(ICollection<string> errors)
+        private static void LogMissionTextDiagnostics(MissionTextAsset missionTextAsset)
         {
-            if (_request.GameMode != Ccc.Core.Model.GameMode.LifeEndless)
+            if (missionTextAsset == null)
             {
-                errors.Add($"Unsupported gameplay mode: {_request.GameMode}.");
+                Debug.LogWarning(
+                    "GameplayConfigEntry has no MissionTextAsset. " +
+                    "Gameplay will continue with fallback mission text.");
+                return;
             }
 
-            if (_request.GameDifficulty != Ccc.Core.Model.GameDifficulty.Normal)
+            IReadOnlyList<string> errors = missionTextAsset.Validate();
+            for (int index = 0; index < errors.Count; index++)
             {
-                errors.Add($"Unsupported gameplay difficulty: {_request.GameDifficulty}.");
+                Debug.LogWarning(
+                    $"[GameplayEntryPoint] Non-fatal MissionTextAsset error: {errors[index]}");
+            }
+        }
+
+        private static void ValidateRequest(
+            NavigationGameplayStartRequest request,
+            ICollection<string> errors)
+        {
+            if (request.GameMode !=
+                Ccc.Presentation.Navigation.GameMode.LifeEndless)
+            {
+                errors.Add(
+                    $"Unsupported gameplay mode: {request.GameMode}.");
+            }
+
+            if (request.Difficulty !=
+                Ccc.Presentation.Navigation.GameDifficulty.Normal)
+            {
+                errors.Add(
+                    $"Unsupported gameplay difficulty: {request.Difficulty}.");
             }
         }
 
@@ -155,6 +171,37 @@ namespace Ccc.Bootstrap
             if (_isDisposed)
             {
                 throw new ObjectDisposedException(nameof(GameplayEntryPoint));
+            }
+        }
+
+        private static Ccc.Core.Model.GameMode ConvertGameMode(
+            Ccc.Presentation.Navigation.GameMode gameMode)
+        {
+            switch (gameMode)
+            {
+                case Ccc.Presentation.Navigation.GameMode.LifeEndless:
+                    return Ccc.Core.Model.GameMode.LifeEndless;
+
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(gameMode),
+                        gameMode,
+                        null);
+            }
+        }
+        private static Ccc.Core.Model.GameDifficulty ConvertDifficulty(
+            Ccc.Presentation.Navigation.GameDifficulty difficulty)
+        {
+            switch (difficulty)
+            {
+                case Ccc.Presentation.Navigation.GameDifficulty.Normal:
+                    return Ccc.Core.Model.GameDifficulty.Normal;
+
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(difficulty),
+                        difficulty,
+                        null);
             }
         }
     }

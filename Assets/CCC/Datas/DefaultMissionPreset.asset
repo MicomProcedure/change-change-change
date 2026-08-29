@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2cf0c824b9d564c27835a05b78995a8b, type: 3}
+  m_Name: DefaultMissionPreset
+  m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.Assets.MissionPresetAsset
+  entries:
+  - kind: 0
+    parameterA: 0
+    parameterB: 0
+    isNegated: 1
+    tier: 1
+  - kind: 1
+    parameterA: 0
+    parameterB: 0
+    isNegated: 1
+    tier: 1
+  - kind: 2
+    parameterA: 0
+    parameterB: 0
+    isNegated: 1
+    tier: 1
+  - kind: 3
+    parameterA: 0
+    parameterB: 0
+    isNegated: 1
+    tier: 1
+  - kind: 6
+    parameterA: 0
+    parameterB: 0
+    isNegated: 1
+    tier: 1
+  - kind: 7
+    parameterA: 0
+    parameterB: 0
+    isNegated: 1
+    tier: 1
+  - kind: 8
+    parameterA: 0
+    parameterB: 0
+    isNegated: 1
+    tier: 1
+  - kind: 10
+    parameterA: -25
+    parameterB: 0
+    isNegated: 1
+    tier: 2
