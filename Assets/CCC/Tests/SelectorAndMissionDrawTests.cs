@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Ccc.Core.Logic;
 using Ccc.Core.Model;
+using Ccc.Core.UseCases;
 using NUnit.Framework;
 
 namespace Ccc.Tests
@@ -32,11 +33,11 @@ namespace Ccc.Tests
         public void Draw_ShouldNotConsumeRandomWhenEveryChoiceHasOneOption()
         {
             var randomSource = new SequenceRandomSource();
-            var strategy = new SimpleMissionDrawStrategy();
-            var result = strategy.Draw(CreateContext(new[] { CreateCandidate(MissionKind.Even, 1, 1) }, randomSource));
+            var strategy = new SimpleMissionDrawStrategy(randomSource);
+            var result = strategy.Draw(CreateContext(new[] { CreateCandidate(MissionKind.Even, 1, 1) }));
 
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.SelectedMission.Condition.Kind, Is.EqualTo(MissionKind.Even));
+            Assert.That(result.Candidate.Condition.Kind, Is.EqualTo(MissionKind.Even));
             Assert.That(randomSource.ConsumedSamples, Is.Empty);
         }
 
@@ -55,11 +56,11 @@ namespace Ccc.Tests
                 CreateCandidate(MissionKind.Exact, 2, 2)
             };
 
-            var result = new SimpleMissionDrawStrategy().Draw(CreateContext(candidates, randomSource, section: 4));
+            var result = new SimpleMissionDrawStrategy(randomSource).Draw(CreateContext(candidates, section: 4));
 
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.SelectedMission.Condition.Kind, Is.EqualTo(MissionKind.Exact));
-            Assert.That(result.SelectedMission.Condition.ParameterA, Is.EqualTo(2));
+            Assert.That(result.Candidate.Condition.Kind, Is.EqualTo(MissionKind.Exact));
+            Assert.That(result.Candidate.Condition.ParameterA, Is.EqualTo(2));
             Assert.That(randomSource.ConsumedSamples, Is.EqualTo(new[] { 0.50d, 0.99d, 0.99d }));
         }
 
@@ -76,25 +77,24 @@ namespace Ccc.Tests
                 CreateCandidate(MissionKind.Exact, 2, 1),
                 CreateCandidate(MissionKind.Exact, 2, 2)
             };
-            var first = new SimpleMissionDrawStrategy().Draw(CreateContext(candidates, new SequenceRandomSource(0.20d, 0.10d, 0.90d), section: 4));
-            var second = new SimpleMissionDrawStrategy().Draw(CreateContext(candidates, new SequenceRandomSource(0.20d, 0.10d, 0.90d), section: 4));
+            var first = new SimpleMissionDrawStrategy(new SequenceRandomSource(0.20d, 0.10d, 0.90d))
+                .Draw(CreateContext(candidates, section: 4));
+            var second = new SimpleMissionDrawStrategy(new SequenceRandomSource(0.20d, 0.10d, 0.90d))
+                .Draw(CreateContext(candidates, section: 4));
 
-            Assert.That(second.SelectedMission.Condition, Is.EqualTo(first.SelectedMission.Condition));
-            Assert.That(second.SelectedMission.Tier, Is.EqualTo(first.SelectedMission.Tier));
+            Assert.That(second.Candidate.Condition, Is.EqualTo(first.Candidate.Condition));
+            Assert.That(second.Candidate.Tier, Is.EqualTo(first.Candidate.Tier));
         }
 
         private static MissionDrawContext CreateContext(
             IReadOnlyList<MissionCandidate> candidates,
-            IRandomSource randomSource,
             int section = 1)
         {
+            var config = GameplayConfigDefaults.CreateNormal();
+            var catalog = new MissionCatalog(candidates);
             return new MissionDrawContext(
-                new MissionCatalog(candidates),
-                GameplayConfigDefaults.CreateNormal(),
-                section,
-                new MissionId(1),
-                null,
-                randomSource);
+                new GameplaySessionContext(config, catalog),
+                section);
         }
 
         private static MissionCandidate CreateCandidate(MissionKind kind, int tier, int parameter)
@@ -125,7 +125,7 @@ namespace Ccc.Tests
             /// 固定sample列から次のsampleを取得します。
             /// </summary>
             /// <returns>次のsample。</returns>
-            public double NextSample()
+            public float NextFloat01()
             {
                 if (_samples.Count == 0)
                 {
@@ -134,7 +134,7 @@ namespace Ccc.Tests
 
                 var sample = _samples.Dequeue();
                 ((List<double>)ConsumedSamples).Add(sample);
-                return sample;
+                return (float)sample;
             }
         }
     }

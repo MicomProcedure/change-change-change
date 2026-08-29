@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Ccc.Core.Model;
+using Ccc.Core.Logic;
 
 namespace Ccc.Core.UseCases
 {
@@ -42,7 +43,9 @@ namespace Ccc.Core.UseCases
                     return MissionDrawResult.Failure("Mission catalog contains no candidates.");
                 }
 
-                int currentTier = context.SessionContext.Config.TierProgression.GetTier(context.Section);
+                int currentTier = TierResolver.ResolveCurrentTier(
+                    context.Section,
+                    context.SessionContext.Config);
                 var currentTierCandidates = catalogCandidates
                     .Where(candidate => candidate.Tier == currentTier)
                     .ToArray();
@@ -144,7 +147,10 @@ namespace Ccc.Core.UseCases
                 return false;
             }
 
-            selectCurrentTier = randomValue < currentTierWeight / totalWeight;
+            int selectedWeightIndex = WeightedIndexSelector.SelectIndex(
+                new[] { currentTierWeight, lowerTierWeight },
+                randomValue);
+            selectCurrentTier = selectedWeightIndex == 0;
             return true;
         }
 
@@ -248,7 +254,7 @@ namespace Ccc.Core.UseCases
                 return false;
             }
 
-            selectedIndex = Math.Min((int)(randomValue * candidateCount), candidateCount - 1);
+            selectedIndex = UniformIndexSelector.SelectIndex(candidateCount, randomValue);
             return true;
         }
 
