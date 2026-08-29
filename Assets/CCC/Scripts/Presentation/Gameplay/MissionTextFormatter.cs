@@ -31,15 +31,16 @@ namespace Ccc.Presentation
         public string Format(MissionCondition condition)
         {
             string template = _textSource.GetTemplate(condition.Kind, condition.IsNegated);
-            if (template == null)
+            if (string.IsNullOrWhiteSpace(template))
             {
-                throw new InvalidOperationException("Mission text source returned a null template.");
+                throw new InvalidOperationException(
+                    $"Mission text source returned an empty template for MissionKind.{condition.Kind}.");
             }
 
             if (condition.Kind == MissionKind.Between)
             {
                 int upperBound = checked(condition.ParameterA + condition.ParameterB);
-                return string.Format(
+                return FormatTemplate(
                     CultureInfo.InvariantCulture,
                     template,
                     condition.ParameterA,
@@ -48,7 +49,7 @@ namespace Ccc.Presentation
 
             if (condition.Kind == MissionKind.Modulo)
             {
-                return string.Format(
+                return FormatTemplate(
                     CultureInfo.InvariantCulture,
                     template,
                     condition.ParameterA,
@@ -57,18 +58,35 @@ namespace Ccc.Presentation
 
             if (MissionCondition.IsNoParameterKind(condition.Kind))
             {
-                return string.Format(CultureInfo.InvariantCulture, template);
+                return FormatTemplate(CultureInfo.InvariantCulture, template);
             }
 
             if (MissionCondition.IsSingleParameterKind(condition.Kind))
             {
-                return string.Format(
+                return FormatTemplate(
                     CultureInfo.InvariantCulture,
                     template,
                     condition.ParameterA);
             }
 
             throw new ArgumentOutOfRangeException(nameof(condition), condition.Kind, null);
+        }
+
+        private static string FormatTemplate(
+            IFormatProvider formatProvider,
+            string template,
+            params object[] arguments)
+        {
+            try
+            {
+                return string.Format(formatProvider, template, arguments);
+            }
+            catch (FormatException exception)
+            {
+                throw new InvalidOperationException(
+                    "Mission text template contains an invalid placeholder.",
+                    exception);
+            }
         }
     }
 }

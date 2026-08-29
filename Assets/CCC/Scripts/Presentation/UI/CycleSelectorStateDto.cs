@@ -1,4 +1,4 @@
-namespace Proto.UI
+namespace Ccc.Presentation.UI
 {
     /// <summary>
     ///     CycleSelectorView に渡す完成済みの表示状態。

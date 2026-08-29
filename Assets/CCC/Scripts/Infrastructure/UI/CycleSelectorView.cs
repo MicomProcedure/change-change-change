@@ -2,8 +2,9 @@ using System;
 using R3;
 using UnityEngine;
 using UnityEngine.UI;
+using Ccc.Presentation.UI;
 
-namespace Proto.UI
+namespace Ccc.Infrastructure.UI
 {
     /// <summary>
     ///     現在値表示と change 要求入力をまとめて扱うビュー。

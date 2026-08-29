@@ -109,6 +109,29 @@ namespace Ccc.Core.Logic
         }
 
         /// <summary>
+        /// 指定された式を公開せずに現在値へ設定します。
+        /// Controllerがセッション開始時の公開順をStates、Expressionsの順に保証するために使用します。
+        /// </summary>
+        /// <param name="expression">設定する提出式。</param>
+        /// <exception cref="ArgumentOutOfRangeException">左右の数値が設定範囲外の場合。</exception>
+        /// <exception cref="ObjectDisposedException">破棄済みの場合。</exception>
+        internal void ResetSilently(Expression expression)
+        {
+            ThrowIfDisposed();
+
+            if (!IsInConfiguredNumberRange(expression.Left) ||
+                !IsInConfiguredNumberRange(expression.Right))
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(expression),
+                    expression,
+                    "Expression numbers must be within the configured range.");
+            }
+
+            _current = expression;
+        }
+
+        /// <summary>
         /// 入力を破棄し、公開中の Observable を完了します。
         /// </summary>
         public void Dispose()

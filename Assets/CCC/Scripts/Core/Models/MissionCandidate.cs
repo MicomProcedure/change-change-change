@@ -36,6 +36,13 @@ namespace Ccc.Core.Model
                 throw new ArgumentOutOfRangeException(nameof(expressionMatchCount), "Expression match count must be between 1 and evaluatedExpressionCount.");
             }
 
+            if (!answerExample.Result.IsDefined)
+            {
+                throw new ArgumentException(
+                    "AnswerExample must contain a defined calculation result.",
+                    nameof(answerExample));
+            }
+
             Condition = condition;
             Tier = tier;
             ExpressionMatchCount = expressionMatchCount;
