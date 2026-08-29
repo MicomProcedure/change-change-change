@@ -52,7 +52,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.Gameplay.DotweenFeedbackView
   feedbackText: {fileID: 4358778675201186479}
-  canvasGroup: {fileID: 0}
+  canvasGroup: {fileID: 740869597842250399}
   successAnimationDurationSeconds: 0.4
   failureAnimationDurationSeconds: 1.5
 --- !u!225 &740869597842250399
