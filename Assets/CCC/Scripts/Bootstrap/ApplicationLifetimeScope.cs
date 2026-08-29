@@ -1,6 +1,8 @@
 using System;
 using Ccc.Infrastructure.Audio;
 using Ccc.Presentation.Audio;
+using Ccc.Infrastructure.Navigation;
+using Ccc.Presentation.Navigation;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -25,7 +27,9 @@ namespace Ccc.Bootstrap
                 throw new InvalidOperationException(
                     "ApplicationLifetimeScope requires a UnityAudioPlayer reference.");
             }
+            builder.Register<ISceneNavigator, SceneNavigator>(Lifetime.Singleton);
 
+            builder.RegisterInstance(new TitleStartRequest(TitleScreenState.TitleScreen));
             builder.RegisterComponent(audioPlayer).As<IAudioPlayer>();
         }
     }
