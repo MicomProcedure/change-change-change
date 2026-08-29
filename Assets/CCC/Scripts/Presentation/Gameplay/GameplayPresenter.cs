@@ -144,7 +144,7 @@ namespace Ccc.Presentation
                         return;
                     }
 
-                    _audio.PlaySE(AudioKey.SEUIInput);
+                    _audio.PlaySE(AudioKey.SEChangeClick);
                     _flow.ChangeNumber(PlayerSide.Left);
                     break;
                 case GameplayInputKind.ChangeRightNumber:
@@ -153,7 +153,7 @@ namespace Ccc.Presentation
                         return;
                     }
 
-                    _audio.PlaySE(AudioKey.SEUIInput);
+                    _audio.PlaySE(AudioKey.SEChangeClick);
                     _flow.ChangeNumber(PlayerSide.Right);
                     break;
                 case GameplayInputKind.ChangeLeftOperator:
@@ -163,13 +163,13 @@ namespace Ccc.Presentation
                         return;
                     }
 
-                    _audio.PlaySE(AudioKey.SEUIInput);
+                    _audio.PlaySE(AudioKey.SEChangeClick);
                     _flow.ChangeOperator();
                     break;
                 case GameplayInputKind.Submit:
                     if (CanForwardGameplayInput())
                     {
-                        _audio.PlaySE(AudioKey.SESubmit);
+                        _audio.PlaySE(AudioKey.SENormalClick);
                         _flow.Submit(_latestState.CurrentMission.Id);
                     }
                     break;
@@ -263,8 +263,8 @@ namespace Ccc.Presentation
             {
                 _audio.PlaySE(
                     resolvedEvent.Resolution.IsSuccess
-                        ? AudioKey.SESuccess
-                        : AudioKey.SEFailure);
+                        ? AudioKey.SECorrect
+                        : AudioKey.SEWrong);
 
                 FeedbackViewDataDto feedback = new FeedbackViewDataDto(
                     resolvedEvent.Resolution.MissionId,
@@ -411,7 +411,7 @@ namespace Ccc.Presentation
             _hasTimeWarning = true;
             _timeWarningMissionId = snapshot.MissionId;
             _lastTimeWarningSecond = remainingSecond;
-            _audio.PlaySE(AudioKey.SETimeWarning);
+            _audio.PlaySE(AudioKey.SETimeClock);
         }
 
         private static string FormatOperator(OperatorType @operator)
