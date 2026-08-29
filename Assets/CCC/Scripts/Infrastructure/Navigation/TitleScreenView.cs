@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using R3;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using VContainer;
 
@@ -22,7 +23,10 @@ namespace Ccc.Infrastructure.Navigation
 
         [Header("ボタン")]
         [SerializeField] private Button _enterMainMenuButton;
-        [SerializeField] private Button _startGameplayButton;
+
+        [FormerlySerializedAs("_startGameplayButton")]
+        [SerializeField] private Button _difficultySelectionButton;
+
         [SerializeField] private Button _openOptionButton;
         [SerializeField] private Button _closeOptionButton;
         [SerializeField] private Button _openCreditButton;
@@ -35,19 +39,23 @@ namespace Ccc.Infrastructure.Navigation
         private IDisposable _screenSubscription;
         private IDisposable _busySubscription;
         private IDisposable _errorSubscription;
+        private bool _isInitialized;
 
         [Inject]
         private void Construct(TitleScreenModel model)
         {
-            _model = model ?? throw new ArgumentNullException(nameof(model));
+            _model = model;
         }
 
         private void Start()
         {
-            ValidateReferences();
+            if (!ValidateReferences())
+            {
+                return;
+            }
 
             _enterMainMenuButton.onClick.AddListener(_model.EnterMainMenu);
-            _startGameplayButton.onClick.AddListener(HandleStartGameplay);
+            _difficultySelectionButton.onClick.AddListener(HandleStartGameplay);
             _openOptionButton.onClick.AddListener(_model.OpenOptionMenu);
             _closeOptionButton.onClick.AddListener(_model.CloseOptionMenu);
             _openCreditButton.onClick.AddListener(_model.OpenCredit);
@@ -65,6 +73,8 @@ namespace Ccc.Infrastructure.Navigation
             RenderScreen(_model.CurrentScreen.CurrentValue);
             RenderBusyState(_model.IsBusy.CurrentValue);
             RenderErrorMessage(_model.ErrorMessage.CurrentValue);
+
+            _isInitialized = true;
         }
 
         private void OnDestroy()
@@ -73,17 +83,46 @@ namespace Ccc.Infrastructure.Navigation
             _busySubscription?.Dispose();
             _errorSubscription?.Dispose();
 
-            if (_model == null)
+            if (!_isInitialized || _model == null)
             {
                 return;
             }
 
-            _enterMainMenuButton.onClick.RemoveListener(_model.EnterMainMenu);
-            _startGameplayButton.onClick.RemoveListener(HandleStartGameplay);
-            _openOptionButton.onClick.RemoveListener(_model.OpenOptionMenu);
-            _closeOptionButton.onClick.RemoveListener(_model.CloseOptionMenu);
-            _openCreditButton.onClick.RemoveListener(_model.OpenCredit);
-            _closeCreditButton.onClick.RemoveListener(_model.CloseCredit);
+            if (_enterMainMenuButton != null)
+            {
+                _enterMainMenuButton.onClick.RemoveListener(
+                    _model.EnterMainMenu);
+            }
+
+            if (_difficultySelectionButton != null)
+            {
+                _difficultySelectionButton.onClick.RemoveListener(
+                    HandleStartGameplay);
+            }
+
+            if (_openOptionButton != null)
+            {
+                _openOptionButton.onClick.RemoveListener(
+                    _model.OpenOptionMenu);
+            }
+
+            if (_closeOptionButton != null)
+            {
+                _closeOptionButton.onClick.RemoveListener(
+                    _model.CloseOptionMenu);
+            }
+
+            if (_openCreditButton != null)
+            {
+                _openCreditButton.onClick.RemoveListener(
+                    _model.OpenCredit);
+            }
+
+            if (_closeCreditButton != null)
+            {
+                _closeCreditButton.onClick.RemoveListener(
+                    _model.CloseCredit);
+            }
         }
 
         private void RenderScreen(TitleScreenState screenState)
@@ -106,7 +145,7 @@ namespace Ccc.Infrastructure.Navigation
             bool isInteractable = !isBusy;
 
             _enterMainMenuButton.interactable = isInteractable;
-            _startGameplayButton.interactable = isInteractable;
+            _difficultySelectionButton.interactable = isInteractable;
             _openOptionButton.interactable = isInteractable;
             _closeOptionButton.interactable = isInteractable;
             _openCreditButton.interactable = isInteractable;
@@ -136,23 +175,94 @@ namespace Ccc.Infrastructure.Navigation
             Debug.LogException(exception);
         }
 
-        private void ValidateReferences()
+        private bool ValidateReferences()
         {
-            if (_model == null ||
-                _titleScreenRoot == null ||
-                _mainMenuRoot == null ||
-                _optionMenuRoot == null ||
-                _creditRoot == null ||
-                _enterMainMenuButton == null ||
-                _startGameplayButton == null ||
-                _openOptionButton == null ||
-                _closeOptionButton == null ||
-                _openCreditButton == null ||
-                _closeCreditButton == null)
+            bool isValid = true;
+
+            if (_model == null)
             {
-                throw new InvalidOperationException(
-                    "TitleScreenViewのInspector参照が不足しています。");
+                LogMissingReference(nameof(_model));
+                isValid = false;
             }
+
+            if (_titleScreenRoot == null)
+            {
+                LogMissingReference(nameof(_titleScreenRoot));
+                isValid = false;
+            }
+
+            if (_mainMenuRoot == null)
+            {
+                LogMissingReference(nameof(_mainMenuRoot));
+                isValid = false;
+            }
+
+            if (_optionMenuRoot == null)
+            {
+                LogMissingReference(nameof(_optionMenuRoot));
+                isValid = false;
+            }
+
+            if (_creditRoot == null)
+            {
+                LogMissingReference(nameof(_creditRoot));
+                isValid = false;
+            }
+
+            if (_enterMainMenuButton == null)
+            {
+                LogMissingReference(nameof(_enterMainMenuButton));
+                isValid = false;
+            }
+
+            if (_difficultySelectionButton == null)
+            {
+                LogMissingReference(nameof(_difficultySelectionButton));
+                isValid = false;
+            }
+
+            if (_openOptionButton == null)
+            {
+                LogMissingReference(nameof(_openOptionButton));
+                isValid = false;
+            }
+
+            if (_closeOptionButton == null)
+            {
+                LogMissingReference(nameof(_closeOptionButton));
+                isValid = false;
+            }
+
+            if (_openCreditButton == null)
+            {
+                LogMissingReference(nameof(_openCreditButton));
+                isValid = false;
+            }
+
+            if (_closeCreditButton == null)
+            {
+                LogMissingReference(nameof(_closeCreditButton));
+                isValid = false;
+            }
+
+            if (_errorText == null)
+            {
+                Debug.LogWarning(
+                    $"{nameof(TitleScreenView)}: " +
+                    $"{nameof(_errorText)}が未設定です。 " +
+                    "エラー表示は無効になります。",
+                    this);
+            }
+
+            return isValid;
+        }
+
+        private void LogMissingReference(string fieldName)
+        {
+            Debug.LogWarning(
+                $"{nameof(TitleScreenView)}: " +
+                $"{fieldName}が未設定です。Title画面の初期化を中止します。",
+                this);
         }
     }
 }
