@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using Ccc.Core.Model;
 
