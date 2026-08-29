@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using VContainer;
+using VContainer.Unity;
 using Ccc.Presentation.Navigation;
 
 namespace Ccc.Infrastructure.Navigation
