@@ -13,6 +13,11 @@ namespace Ccc.Core.Model
         public long Denominator { get; }
         public bool IsInteger => Denominator == 1;
 
+        /// <summary>
+        /// 値が負数かどうかを取得します。
+        /// </summary>
+        public bool IsNegative => Numerator < 0;
+
         private Rational(long numerator, long denominator)
         {
             Numerator = numerator;
