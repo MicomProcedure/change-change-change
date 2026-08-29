@@ -7,16 +7,22 @@ namespace Ccc.Presentation.Audio
     {
         None = 0,
 
-        BgmTitle,
-        BgmGameplay,
-        BgmResult,
+        BgmTitle = 100,
+        BgmGameplayNormal = 101,
+        BgmResult = 102,
 
-        SEUIInput,
-        SEMissionPresented,
-        SESubmit,
-        SESuccess,
-        SEFailure,
-        SETimeWarning,
-        SEGameOver
+        SEChangeClick = 200,
+        SEMissionPresented = 201,
+        SENormalClick = 202,
+        SECorrect = 203,
+        SEWrong = 204,
+        SETimeClock = 205,
+        SEGameOver = 206,
+
+        BgmGameplayDifficult = 103,
+
+        SECancelClick = 207,
+        SeCuntdown = 208,
+        SEHizimere = 209,
     }
 }

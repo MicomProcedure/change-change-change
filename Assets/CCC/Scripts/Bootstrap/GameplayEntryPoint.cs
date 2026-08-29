@@ -108,7 +108,7 @@ namespace Ccc.Bootstrap
                 return;
             }
 
-            _audio.PlayBgm(AudioKey.BgmGameplay);
+            _audio.PlayBgm(AudioKey.BgmGameplayNormal);
         }
 
         /// <summary>
