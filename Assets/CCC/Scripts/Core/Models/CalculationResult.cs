@@ -66,7 +66,7 @@ namespace Ccc.Core.Model
             return true;
         }
 
-        public override bool Equals(object? obj)
+        public override bool Equals(object obj)
         {
             return obj is CalculationResult other && Equals(other);
         }
