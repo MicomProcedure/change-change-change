@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Ccc.Presentation;
 using Cysharp.Threading.Tasks;
 using R3;
+using TMPro;
 using UnityEngine;
 
 namespace Ccc.Infrastructure.Gameplay
@@ -21,6 +22,8 @@ namespace Ccc.Infrastructure.Gameplay
         [SerializeField] private GameplayNavigationView _gameplayNavigationView;
         [SerializeField] private GameplayErrorView _gameplayErrorView;
         [SerializeField] private DotweenFeedbackView _feedbackView;
+        [SerializeField] private TMP_Text _gameModeText;
+        [SerializeField] private TMP_Text _difficultyText;
 
         private Subject<GameplayInput> _inputsSubject;
         private readonly List<IDisposable> _inputSubscriptions = new List<IDisposable>();
@@ -29,6 +32,8 @@ namespace Ccc.Infrastructure.Gameplay
         private bool _expressionInputConnected;
         private bool _submitInputConnected;
         private bool _navigationInputConnected;
+        private IRuntimeMode _runtimeMode;
+        private bool _referencesValidated;
 
         /// <summary>
         /// Gameplay画面入力のストリームを取得します。
@@ -42,14 +47,21 @@ namespace Ccc.Infrastructure.Gameplay
         {
             _inputsSubject = new Subject<GameplayInput>();
             Inputs = _inputsSubject;
+
+            if (_gameplayNavigationView != null)
+            {
+                _gameplayNavigationView.HideResult();
+            }
         }
 
         /// <summary>
         /// VContainerから注入された後にUI入力を接続します。
         /// </summary>
         [VContainer.Inject]
-        private void ConnectInputs()
+        private void InjectRuntimeMode(IRuntimeMode runtimeMode)
         {
+            _runtimeMode = runtimeMode;
+            ValidateReferences();
             ConnectInputSources();
         }
 
@@ -58,6 +70,7 @@ namespace Ccc.Infrastructure.Gameplay
         /// </summary>
         private void Start()
         {
+            ValidateReferences();
             ConnectInputSources();
         }
 
@@ -75,6 +88,16 @@ namespace Ccc.Infrastructure.Gameplay
             if (_missionView != null)
             {
                 _missionView.Render(state.Section, state.Tier, state.MissionText);
+            }
+
+            if (_gameModeText != null)
+            {
+                _gameModeText.text = state.GameModeText;
+            }
+
+            if (_difficultyText != null)
+            {
+                _difficultyText.text = state.DifficultyText;
             }
 
             if (_lifeView != null)
@@ -119,6 +142,23 @@ namespace Ccc.Infrastructure.Gameplay
             }
 
             return _feedbackView.PlayAsync(feedback, cancellationToken);
+        }
+
+        /// <summary>
+        /// Result画面を表示します。
+        /// </summary>
+        /// <param name="result">Result画面の表示状態。</param>
+        public void ShowResult(GameplayResultViewStateDto result)
+        {
+            if (result == null)
+            {
+                throw new ArgumentNullException(nameof(result));
+            }
+
+            if (_gameplayNavigationView != null)
+            {
+                _gameplayNavigationView.RenderResult(result);
+            }
         }
 
         /// <summary>
@@ -202,6 +242,57 @@ namespace Ccc.Infrastructure.Gameplay
             _inputsConnected = _expressionInputConnected &&
                                _submitInputConnected &&
                                _navigationInputConnected;
+        }
+
+        private void ValidateReferences()
+        {
+            if (_referencesValidated)
+            {
+                return;
+            }
+
+            _referencesValidated = true;
+            LogMissingReferenceIfNecessary(_missionView, nameof(_missionView));
+            LogMissingReferenceIfNecessary(_lifeView, nameof(_lifeView));
+            LogMissingReferenceIfNecessary(_timerView, nameof(_timerView));
+            LogMissingReferenceIfNecessary(_expressionView, nameof(_expressionView));
+            LogMissingReferenceIfNecessary(_submitView, nameof(_submitView));
+            LogMissingReferenceIfNecessary(
+                _gameplayNavigationView,
+                nameof(_gameplayNavigationView));
+            LogMissingReferenceIfNecessary(_gameplayErrorView, nameof(_gameplayErrorView));
+            LogMissingReferenceIfNecessary(_feedbackView, nameof(_feedbackView));
+            LogMissingReferenceIfNecessary(_gameModeText, nameof(_gameModeText));
+            LogMissingReferenceIfNecessary(_difficultyText, nameof(_difficultyText));
+        }
+
+        private void LogMissingReferenceIfNecessary(
+            UnityEngine.Object reference,
+            string fieldName)
+        {
+            if (reference != null)
+            {
+                return;
+            }
+
+            string message =
+                $"{nameof(GameplayView)}: {fieldName}が未設定です。" +
+                (IsDebugMode
+                    ? "DebugModeのため処理を継続します。"
+                    : "該当するUI表示または入力を無効にして処理を継続します。");
+            if (IsDebugMode)
+            {
+                Debug.LogError(message, this);
+            }
+            else
+            {
+                Debug.LogWarning(message, this);
+            }
+        }
+
+        private bool IsDebugMode
+        {
+            get { return _runtimeMode != null && _runtimeMode.IsDebugMode; }
         }
 
         private bool SubscribeInputStream(Observable<GameplayInput> inputStream)

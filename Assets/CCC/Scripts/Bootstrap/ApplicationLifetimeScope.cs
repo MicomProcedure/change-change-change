@@ -1,6 +1,7 @@
 using Ccc.Infrastructure.Audio;
 using Ccc.Presentation.Audio;
 using Ccc.Infrastructure.Navigation;
+using Ccc.Presentation;
 using Ccc.Presentation.Navigation;
 using UnityEngine;
 using VContainer;
@@ -14,6 +15,7 @@ namespace Ccc.Bootstrap
     public sealed class ApplicationLifetimeScope : LifetimeScope
     {
         [SerializeField] private UnityAudioPlayer audioPlayer;
+        [SerializeField] private bool isDebugMode;
 
         /// <summary>
         /// Application lifetimeのAudio出力を登録します。
@@ -21,6 +23,8 @@ namespace Ccc.Bootstrap
         /// <param name="builder">VContainerの登録Builder。</param>
         protected override void Configure(IContainerBuilder builder)
         {
+            builder.RegisterInstance<IRuntimeMode>(new RuntimeMode(isDebugMode));
+
             if (audioPlayer != null)
             {
                 builder.RegisterComponent(audioPlayer).As<IAudioPlayer>();

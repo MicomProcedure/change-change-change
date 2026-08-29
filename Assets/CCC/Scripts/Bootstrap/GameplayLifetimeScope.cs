@@ -13,7 +13,6 @@ using Ccc.Presentation.Navigation;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
-using NavigationGameplayStartRequest = Ccc.Presentation.Navigation.GameplayNavigationRequest;
 
 namespace Ccc.Bootstrap
 {
@@ -66,11 +65,19 @@ namespace Ccc.Bootstrap
             builder.Register<IGameplayFlow, GameplayController>(Lifetime.Scoped);
             builder.Register<RationalDecimalFormatter>(Lifetime.Scoped);
             builder.Register<MissionTextFormatter>(Lifetime.Scoped);
-            builder.Register<GameplayPresenter>(Lifetime.Scoped);
+            builder.Register<GameplayPresenter>(
+                resolver => new GameplayPresenter(
+                    resolver.Resolve<IGameplayFlow>(),
+                    resolver.Resolve<IGameplayView>(),
+                    resolver.Resolve<ISceneNavigator>(),
+                    resolver.Resolve<GameplayStartContext>().Request,
+                    resolver.Resolve<GameplayConfig>(),
+                    resolver.Resolve<IAudioPlayer>(),
+                    resolver.Resolve<RationalDecimalFormatter>(),
+                    resolver.Resolve<MissionTextFormatter>()),
+                Lifetime.Scoped);
 
             builder.RegisterComponentInHierarchy<GameplayView>().As<IGameplayView>();
-            builder.RegisterComponentInHierarchy<GameplayNavigation>()
-                .As<IGameplayNavigation>();
             builder.RegisterEntryPoint<GameplayEntryPoint>();
         }
 

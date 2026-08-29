@@ -23,7 +23,7 @@ namespace Ccc.Infrastructure.Assets
         {
             if (_reportedKinds.Add(kind))
             {
-                Debug.LogError(
+                Debug.LogWarning(
                     $"[FallbackMissionTextSource] MissionTextAsset is missing. " +
                     $"Using fallback text for MissionKind.{kind}.");
             }

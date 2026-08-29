@@ -30,7 +30,12 @@ namespace Ccc.Presentation
         /// <summary>
         /// MainMenuへの復帰を要求します。
         /// </summary>
-        ReturnToMainMenu
+        ReturnToMainMenu,
+
+        /// <summary>
+        /// 同じ設定でGameplayを再開します。
+        /// </summary>
+        Retry
     }
 
     /// <summary>

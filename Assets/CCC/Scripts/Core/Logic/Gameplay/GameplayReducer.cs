@@ -149,6 +149,7 @@ namespace Ccc.Core.Logic
                 currentState.CurrentMission,
                 lastResolution);
             var sessionResult = new SessionResult(
+                SessionTerminationReason.LifeDepleted,
                 currentState.Section,
                 currentState.CurrentMission,
                 lastResolution);

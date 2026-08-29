@@ -8,6 +8,16 @@ namespace Ccc.Presentation
     public sealed class GameplayViewStateDto
     {
         /// <summary>
+        /// 現在のゲームモード表示文言を取得します。
+        /// </summary>
+        public string GameModeText { get; }
+
+        /// <summary>
+        /// 現在の難易度表示文言を取得します。
+        /// </summary>
+        public string DifficultyText { get; }
+
+        /// <summary>
         /// 現在のSectionを取得します。
         /// </summary>
         public int Section { get; }
@@ -71,6 +81,8 @@ namespace Ccc.Presentation
         /// 指定された表示値からGameplay画面の表示状態を生成します。
         /// </summary>
         /// <param name="section">現在のSection。</param>
+        /// <param name="gameModeText">ゲームモード表示文言。</param>
+        /// <param name="difficultyText">難易度表示文言。</param>
         /// <param name="tier">現在のTier。</param>
         /// <param name="life">残りLife。</param>
         /// <param name="missionText">ミッションの表示文言。</param>
@@ -85,6 +97,8 @@ namespace Ccc.Presentation
         /// <exception cref="ArgumentNullException">文字列引数のいずれかがnullの場合。</exception>
         /// <exception cref="ArgumentOutOfRangeException">残り秒数が不正な場合。</exception>
         public GameplayViewStateDto(
+            string gameModeText,
+            string difficultyText,
             int section,
             int tier,
             int life,
@@ -98,6 +112,16 @@ namespace Ccc.Presentation
             bool isTimeWarning,
             bool canSubmit)
         {
+            if (gameModeText == null)
+            {
+                throw new ArgumentNullException(nameof(gameModeText));
+            }
+
+            if (difficultyText == null)
+            {
+                throw new ArgumentNullException(nameof(difficultyText));
+            }
+
             if (missionText == null)
             {
                 throw new ArgumentNullException(nameof(missionText));
@@ -133,6 +157,8 @@ namespace Ccc.Presentation
                     "Remaining seconds must be finite and zero or positive.");
             }
 
+            GameModeText = gameModeText;
+            DifficultyText = difficultyText;
             Section = section;
             Tier = tier;
             Life = life;

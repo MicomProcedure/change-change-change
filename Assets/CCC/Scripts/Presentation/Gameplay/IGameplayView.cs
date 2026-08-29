@@ -22,6 +22,12 @@ namespace Ccc.Presentation
         void Render(GameplayViewStateDto state);
 
         /// <summary>
+        /// Result画面を表示します。
+        /// </summary>
+        /// <param name="result">Result画面の表示状態。</param>
+        void ShowResult(GameplayResultViewStateDto result);
+
+        /// <summary>
         /// 提出結果のフィードバック演出を再生します。
         /// </summary>
         /// <param name="feedback">演出に必要な表示データ。</param>

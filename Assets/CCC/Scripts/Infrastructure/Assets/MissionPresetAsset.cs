@@ -22,7 +22,6 @@ namespace Ccc.Infrastructure.Assets
         public IReadOnlyList<string> Validate()
         {
             var errors = new List<string>();
-            var duplicateChecker = new HashSet<(MissionCondition, int)>();
             if (entries == null || entries.Count == 0)
             {
                 errors.Add("Mission preset entries are missing.");
@@ -43,17 +42,12 @@ namespace Ccc.Infrastructure.Assets
                     errors.Add($"Mission preset entry at index {index} has an invalid tier.");
                 }
 
-                if (!TryCreateCondition(entry, out MissionCondition condition, out string conditionError))
+                if (!TryCreateCondition(entry, out _, out string conditionError))
                 {
                     errors.Add($"Mission preset entry at index {index}: {conditionError}");
                     continue;
                 }
 
-                if (!duplicateChecker.Add((condition, entry.Tier)))
-                {
-                    errors.Add(
-                        $"Mission preset entry at index {index} duplicates MissionKind.{condition.Kind} in tier {entry.Tier}.");
-                }
             }
 
             return errors.Distinct().ToArray();

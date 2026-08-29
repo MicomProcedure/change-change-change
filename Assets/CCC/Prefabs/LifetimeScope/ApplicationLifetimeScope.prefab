@@ -49,3 +49,4 @@ MonoBehaviour:
   autoRun: 1
   autoInjectGameObjects: []
   audioPlayer: {fileID: 0}
+  isDebugMode: 0

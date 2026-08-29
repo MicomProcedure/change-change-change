@@ -20,8 +20,9 @@ namespace Ccc.Core.Logic
             if (parameters == null) throw new ArgumentNullException(nameof(parameters));
             if (config == null) throw new ArgumentNullException(nameof(config));
 
-            // 入力パラメータの重複・不正チェック
-            ValidateParameters(parameters);
+            // 同一条件・Tierの候補は最初の1件へ正規化する
+            IReadOnlyList<MissionParameterCandidate> normalizedParameters =
+                NormalizeParameters(parameters);
 
             // 0除算を除いた正常式候補のみを分母とする
             var definedExpressions = expressions.Where(e => e.Result.IsDefined).ToList();
@@ -32,7 +33,7 @@ namespace Ccc.Core.Logic
                     "No defined expression candidates provided.");
             }
 
-            if (parameters.Count == 0)
+            if (normalizedParameters.Count == 0)
             {
                 return MissionCatalogBuildResult.Failure(
                     MissionCatalogBuildFailureKind.NoParameters,
@@ -42,7 +43,12 @@ namespace Ccc.Core.Logic
             int evaluatedCount = definedExpressions.Count;
             var acceptedCandidates = new List<MissionCandidate>();
 
-            foreach (var param in parameters)
+            Rational minimumMatchRatio = Rational.FromSingle(
+                config.MinimumExpressionMatchRatio);
+            Rational maximumMatchRatio = Rational.FromSingle(
+                config.MaximumExpressionMatchRatio);
+
+            foreach (var param in normalizedParameters)
             {
                 int matchCount = 0;
                 ExpressionCandidate? firstMatch = null;
@@ -60,7 +66,7 @@ namespace Ccc.Core.Logic
                 }
 
                 int nonMatchCount = evaluatedCount - matchCount;
-                float matchRatio = (float)matchCount / evaluatedCount;
+                Rational matchRatio = Rational.Create(matchCount, evaluatedCount);
                 int requiredMinMatchCount = config.GetMinimumExpressionMatchCount(param.Condition.Kind);
 
                 // 選出条件判定:
@@ -71,8 +77,8 @@ namespace Ccc.Core.Logic
                 // 5. 正常な AnswerExample を保持している
                 if (matchCount >= 1 &&
                     nonMatchCount >= 1 &&
-                    matchRatio >= config.MinimumExpressionMatchRatio &&
-                    matchRatio <= config.MaximumExpressionMatchRatio &&
+                    matchRatio >= minimumMatchRatio &&
+                    matchRatio <= maximumMatchRatio &&
                     matchCount >= requiredMinMatchCount &&
                     firstMatch.HasValue)
                 {
@@ -104,18 +110,21 @@ namespace Ccc.Core.Logic
             return MissionCatalogBuildResult.Success(new MissionCatalog(sortedCandidates));
         }
 
-        private static void ValidateParameters(IReadOnlyList<MissionParameterCandidate> parameters)
+        private static IReadOnlyList<MissionParameterCandidate> NormalizeParameters(
+            IReadOnlyList<MissionParameterCandidate> parameters)
         {
             var seen = new HashSet<(MissionCondition, int)>();
-            for (int i = 0; i < parameters.Count; i++)
+            var normalizedParameters = new List<MissionParameterCandidate>(parameters.Count);
+            for (int index = 0; index < parameters.Count; index++)
             {
-                var p = parameters[i];
-                var key = (p.Condition, p.Tier);
-                if (!seen.Add(key))
+                MissionParameterCandidate parameter = parameters[index];
+                if (seen.Add((parameter.Condition, parameter.Tier)))
                 {
-                    throw new ArgumentException($"Duplicate parameter candidate: '{p.Condition.Kind}' in Tier {p.Tier}.", nameof(parameters));
+                    normalizedParameters.Add(parameter);
                 }
             }
+
+            return normalizedParameters;
         }
     }
 }

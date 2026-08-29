@@ -36,15 +36,17 @@ namespace Ccc.Infrastructure.Navigation
         [SerializeField] private TMP_Text _errorText;
 
         private TitleScreenModel _model;
+        private IRuntimeMode _runtimeMode;
         private IDisposable _screenSubscription;
         private IDisposable _busySubscription;
         private IDisposable _errorSubscription;
         private bool _isInitialized;
 
         [Inject]
-        private void Construct(TitleScreenModel model)
+        private void Construct(TitleScreenModel model, IRuntimeMode runtimeMode)
         {
             _model = model;
+            _runtimeMode = runtimeMode;
         }
 
         private void Start()
@@ -54,12 +56,35 @@ namespace Ccc.Infrastructure.Navigation
                 return;
             }
 
-            _enterMainMenuButton.onClick.AddListener(_model.EnterMainMenu);
-            _difficultySelectionButton.onClick.AddListener(HandleStartGameplay);
-            _openOptionButton.onClick.AddListener(_model.OpenOptionMenu);
-            _closeOptionButton.onClick.AddListener(_model.CloseOptionMenu);
-            _openCreditButton.onClick.AddListener(_model.OpenCredit);
-            _closeCreditButton.onClick.AddListener(_model.CloseCredit);
+            if (_enterMainMenuButton != null)
+            {
+                _enterMainMenuButton.onClick.AddListener(_model.EnterMainMenu);
+            }
+
+            if (_difficultySelectionButton != null)
+            {
+                _difficultySelectionButton.onClick.AddListener(HandleStartGameplay);
+            }
+
+            if (_openOptionButton != null)
+            {
+                _openOptionButton.onClick.AddListener(_model.OpenOptionMenu);
+            }
+
+            if (_closeOptionButton != null)
+            {
+                _closeOptionButton.onClick.AddListener(_model.CloseOptionMenu);
+            }
+
+            if (_openCreditButton != null)
+            {
+                _openCreditButton.onClick.AddListener(_model.OpenCredit);
+            }
+
+            if (_closeCreditButton != null)
+            {
+                _closeCreditButton.onClick.AddListener(_model.CloseCredit);
+            }
 
             _screenSubscription =
                 _model.CurrentScreen.Subscribe(RenderScreen);
@@ -127,16 +152,20 @@ namespace Ccc.Infrastructure.Navigation
 
         private void RenderScreen(TitleScreenState screenState)
         {
-            _titleScreenRoot.SetActive(
+            SetActiveIfAvailable(
+                _titleScreenRoot,
                 screenState == TitleScreenState.TitleScreen);
 
-            _mainMenuRoot.SetActive(
+            SetActiveIfAvailable(
+                _mainMenuRoot,
                 screenState == TitleScreenState.MainMenu);
 
-            _optionMenuRoot.SetActive(
+            SetActiveIfAvailable(
+                _optionMenuRoot,
                 screenState == TitleScreenState.OptionMenu);
 
-            _creditRoot.SetActive(
+            SetActiveIfAvailable(
+                _creditRoot,
                 screenState == TitleScreenState.Credit);
         }
 
@@ -144,12 +173,12 @@ namespace Ccc.Infrastructure.Navigation
         {
             bool isInteractable = !isBusy;
 
-            _enterMainMenuButton.interactable = isInteractable;
-            _difficultySelectionButton.interactable = isInteractable;
-            _openOptionButton.interactable = isInteractable;
-            _closeOptionButton.interactable = isInteractable;
-            _openCreditButton.interactable = isInteractable;
-            _closeCreditButton.interactable = isInteractable;
+            SetInteractableIfAvailable(_enterMainMenuButton, isInteractable);
+            SetInteractableIfAvailable(_difficultySelectionButton, isInteractable);
+            SetInteractableIfAvailable(_openOptionButton, isInteractable);
+            SetInteractableIfAvailable(_closeOptionButton, isInteractable);
+            SetInteractableIfAvailable(_openCreditButton, isInteractable);
+            SetInteractableIfAvailable(_closeCreditButton, isInteractable);
         }
 
         private void RenderErrorMessage(string errorMessage)
@@ -177,92 +206,109 @@ namespace Ccc.Infrastructure.Navigation
 
         private bool ValidateReferences()
         {
-            bool isValid = true;
-
             if (_model == null)
             {
                 LogMissingReference(nameof(_model));
-                isValid = false;
+                return false;
             }
 
             if (_titleScreenRoot == null)
             {
                 LogMissingReference(nameof(_titleScreenRoot));
-                isValid = false;
             }
 
             if (_mainMenuRoot == null)
             {
                 LogMissingReference(nameof(_mainMenuRoot));
-                isValid = false;
             }
 
             if (_optionMenuRoot == null)
             {
                 LogMissingReference(nameof(_optionMenuRoot));
-                isValid = false;
             }
 
             if (_creditRoot == null)
             {
                 LogMissingReference(nameof(_creditRoot));
-                isValid = false;
             }
 
             if (_enterMainMenuButton == null)
             {
                 LogMissingReference(nameof(_enterMainMenuButton));
-                isValid = false;
             }
 
             if (_difficultySelectionButton == null)
             {
                 LogMissingReference(nameof(_difficultySelectionButton));
-                isValid = false;
             }
 
             if (_openOptionButton == null)
             {
                 LogMissingReference(nameof(_openOptionButton));
-                isValid = false;
             }
 
             if (_closeOptionButton == null)
             {
                 LogMissingReference(nameof(_closeOptionButton));
-                isValid = false;
             }
 
             if (_openCreditButton == null)
             {
                 LogMissingReference(nameof(_openCreditButton));
-                isValid = false;
             }
 
             if (_closeCreditButton == null)
             {
                 LogMissingReference(nameof(_closeCreditButton));
-                isValid = false;
             }
 
             if (_errorText == null)
             {
-                Debug.LogWarning(
-                    $"{nameof(TitleScreenView)}: " +
-                    $"{nameof(_errorText)}が未設定です。 " +
-                    "エラー表示は無効になります。",
-                    this);
+                LogMissingReference(nameof(_errorText));
             }
 
-            return isValid;
+            return true;
         }
 
         private void LogMissingReference(string fieldName)
         {
-            Debug.LogWarning(
+            string message =
                 $"{nameof(TitleScreenView)}: " +
-                $"{fieldName}が未設定です。Title画面の初期化を中止します。",
-                this);
+                $"{fieldName}が未設定です。" +
+                (IsDebugMode
+                    ? "DebugModeのため初期化を継続します。"
+                    : "該当するUI表示または入力を無効にして処理を継続します。");
+            if (IsDebugMode)
+            {
+                Debug.LogError(message, this);
+            }
+            else
+            {
+                Debug.LogWarning(message, this);
+            }
+        }
+
+        private bool IsDebugMode
+        {
+            get { return _runtimeMode != null && _runtimeMode.IsDebugMode; }
+        }
+
+        private static void SetActiveIfAvailable(GameObject target, bool isActive)
+        {
+            if (target != null)
+            {
+                target.SetActive(isActive);
+            }
+        }
+
+        private static void SetInteractableIfAvailable(
+            Button button,
+            bool isInteractable)
+        {
+            if (button != null)
+            {
+                button.interactable = isInteractable;
+            }
         }
     }
 }

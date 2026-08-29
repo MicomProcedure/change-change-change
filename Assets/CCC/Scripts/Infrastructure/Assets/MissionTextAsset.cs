@@ -169,9 +169,9 @@ namespace Ccc.Infrastructure.Assets
             string fallbackKey = $"{kind}:{isNegated}:{reason}";
             if (_reportedFallbacks.Add(fallbackKey))
             {
-                Debug.LogError(
+                Debug.LogWarning(
                     $"[MissionTextAsset] {name}: {reason} " +
-                    $"Using fallback text for MissionKind.{kind}.");
+                    $"Using fallback text for MissionKind.{kind}.", this);
             }
 
             return $"MissionKind.{kind}";

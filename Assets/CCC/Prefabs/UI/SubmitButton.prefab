@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 3654880977834666325}
   - component: {fileID: 5899943369274371946}
   - component: {fileID: 5133479285004628421}
+  - component: {fileID: 8364219751638304172}
   m_Layer: 5
   m_Name: SubmitButton
   m_TagString: Untagged
@@ -121,6 +122,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &8364219751638304172
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4671000245763610013}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74f054df7684a433690e9e2c8a886872, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.UI.PointerDownInputView
 --- !u!1 &5424660819993414714
 GameObject:
   m_ObjectHideFlags: 0

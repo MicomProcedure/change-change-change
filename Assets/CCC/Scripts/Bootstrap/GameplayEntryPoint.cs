@@ -22,6 +22,7 @@ namespace Ccc.Bootstrap
         private readonly GameplayPresenter _presenter;
         private readonly IGameplayView _view;
         private readonly IAudioPlayer _audio;
+        private readonly IRuntimeMode _runtimeMode;
         private bool _isStarted;
         private bool _isDisposed;
 
@@ -33,19 +34,22 @@ namespace Ccc.Bootstrap
         /// <param name="presenter">Gameplay Presenter。</param>
         /// <param name="view">Gameplay View。</param>
         /// <param name="audio">Audio再生ポート。</param>
+        /// <param name="runtimeMode">アプリケーションの実行モード。</param>
         /// <exception cref="ArgumentNullException">依存のいずれかがnullの場合。</exception>
         public GameplayEntryPoint(
             GameplayStartContext startContext,
             IGameplayFlow flow,
             GameplayPresenter presenter,
             IGameplayView view,
-            IAudioPlayer audio)
+            IAudioPlayer audio,
+            IRuntimeMode runtimeMode)
         {
             _startContext = startContext ?? throw new ArgumentNullException(nameof(startContext));
             _flow = flow ?? throw new ArgumentNullException(nameof(flow));
             _presenter = presenter ?? throw new ArgumentNullException(nameof(presenter));
             _view = view ?? throw new ArgumentNullException(nameof(view));
             _audio = audio ?? throw new ArgumentNullException(nameof(audio));
+            _runtimeMode = runtimeMode ?? throw new ArgumentNullException(nameof(runtimeMode));
         }
 
         /// <summary>
@@ -66,7 +70,7 @@ namespace Ccc.Bootstrap
             GameplayConfigEntry configEntry = _startContext.ConfigEntry;
             validationErrors.AddRange(configEntry.GameplayConfigAsset.Validate());
             validationErrors.AddRange(configEntry.MissionPresetAsset.Validate());
-            LogMissionTextDiagnostics(configEntry.MissionTextAsset);
+            AddMissionTextValidationErrors(configEntry.MissionTextAsset, validationErrors);
             ValidateRequest(_startContext.Request, validationErrors);
 
             IReadOnlyList<Ccc.Core.Model.MissionParameterCandidate> candidates = null;
@@ -129,21 +133,39 @@ namespace Ccc.Bootstrap
             }
         }
 
-        private static void LogMissionTextDiagnostics(MissionTextAsset missionTextAsset)
+        private void AddMissionTextValidationErrors(
+            MissionTextAsset missionTextAsset,
+            ICollection<string> validationErrors)
         {
             if (missionTextAsset == null)
             {
-                Debug.LogWarning(
-                    "GameplayConfigEntry has no MissionTextAsset. " +
-                    "Gameplay will continue with fallback mission text.");
+                const string errorMessage = "GameplayConfigEntry has no MissionTextAsset.";
+                if (_runtimeMode.IsDebugMode)
+                {
+                    Debug.LogWarning(
+                        $"[GameplayEntryPoint] {errorMessage} " +
+                        "DebugMode allows fallback mission text.");
+                }
+                else
+                {
+                    validationErrors.Add(errorMessage);
+                }
+
                 return;
             }
 
             IReadOnlyList<string> errors = missionTextAsset.Validate();
             for (int index = 0; index < errors.Count; index++)
             {
-                Debug.LogWarning(
-                    $"[GameplayEntryPoint] Non-fatal MissionTextAsset error: {errors[index]}");
+                if (_runtimeMode.IsDebugMode)
+                {
+                    Debug.LogWarning(
+                        $"[GameplayEntryPoint] DebugMode allows MissionTextAsset fallback: {errors[index]}");
+                }
+                else
+                {
+                    validationErrors.Add($"Mission text asset: {errors[index]}");
+                }
             }
         }
 

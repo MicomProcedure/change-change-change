@@ -1,3 +1,5 @@
+using System;
+using Ccc.Infrastructure.UI;
 using Ccc.Presentation;
 using R3;
 using UnityEngine;
@@ -13,7 +15,8 @@ namespace Ccc.Infrastructure.Gameplay
         [SerializeField] private Button _submitButton;
 
         private Subject<GameplayInput> _inputsSubject;
-        private UnityEngine.Events.UnityAction _submitAction;
+        private PointerDownInputView _submitInputView;
+        private IDisposable _submitInputSubscription;
 
         /// <summary>
         /// 提出入力のストリームを取得します。
@@ -24,18 +27,18 @@ namespace Ccc.Infrastructure.Gameplay
         {
             _inputsSubject = new Subject<GameplayInput>();
             Inputs = _inputsSubject;
+            _submitInputView = GetComponent<PointerDownInputView>();
         }
 
         private void Start()
         {
-            if (_submitButton == null || _inputsSubject == null)
+            if (_submitInputView == null || _inputsSubject == null)
             {
                 return;
             }
 
-            _submitAction =
-                () => _inputsSubject.OnNext(new GameplayInput(GameplayInputKind.Submit));
-            _submitButton.onClick.AddListener(_submitAction);
+            _submitInputSubscription = _submitInputView.Pressed.Subscribe(
+                _ => _inputsSubject.OnNext(new GameplayInput(GameplayInputKind.Submit)));
         }
 
         /// <summary>
@@ -48,14 +51,16 @@ namespace Ccc.Infrastructure.Gameplay
             {
                 _submitButton.interactable = isInteractable;
             }
+
+            if (_submitInputView != null)
+            {
+                _submitInputView.SetInteractable(isInteractable);
+            }
         }
 
         private void OnDestroy()
         {
-            if (_submitButton != null && _submitAction != null)
-            {
-                _submitButton.onClick.RemoveListener(_submitAction);
-            }
+            _submitInputSubscription?.Dispose();
 
             if (_inputsSubject != null)
             {

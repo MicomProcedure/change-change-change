@@ -5,6 +5,7 @@ using Ccc.Core.Logic;
 using Ccc.Core.Model;
 using Ccc.Core.UseCases;
 using Ccc.Presentation.Audio;
+using Ccc.Presentation.Navigation;
 using Cysharp.Threading.Tasks;
 using R3;
 
@@ -16,10 +17,13 @@ namespace Ccc.Presentation
     public sealed class GameplayPresenter : IDisposable
     {
         private const int TimeWarningThresholdSeconds = 3;
+        private const string HiddenAnswerText = "？";
 
         private readonly IGameplayFlow _flow;
         private readonly IGameplayView _view;
-        private readonly IGameplayNavigation _navigation;
+        private readonly ISceneNavigator _sceneNavigator;
+        private readonly GameplayNavigationRequest _gameplayRequest;
+        private readonly GameplayConfig _gameplayConfig;
         private readonly IAudioPlayer _audio;
         private readonly MissionTextFormatter _missionTextFormatter;
         private readonly RationalDecimalFormatter _resultFormatter;
@@ -39,13 +43,16 @@ namespace Ccc.Presentation
         private bool _hasTimeWarning;
         private bool _isStarted;
         private bool _isDisposed;
+        private bool _isNavigationInProgress;
 
         /// <summary>
         /// GameplayPresenterを生成します。
         /// </summary>
         /// <param name="flow">Gameplayフロー。</param>
         /// <param name="view">Gameplay View。</param>
-        /// <param name="navigation">画面遷移ポート。</param>
+        /// <param name="sceneNavigator">Scene遷移ポート。</param>
+        /// <param name="gameplayRequest">現在のGameplay開始Request。</param>
+        /// <param name="gameplayConfig">Gameplay設定。</param>
         /// <param name="audio">Audio再生ポート。</param>
         /// <param name="rationalFormatter">計算結果Formatter。</param>
         /// <param name="missionTextFormatter">Mission表示Formatter。</param>
@@ -53,14 +60,18 @@ namespace Ccc.Presentation
         public GameplayPresenter(
             IGameplayFlow flow,
             IGameplayView view,
-            IGameplayNavigation navigation,
+            ISceneNavigator sceneNavigator,
+            GameplayNavigationRequest gameplayRequest,
+            GameplayConfig gameplayConfig,
             IAudioPlayer audio,
             RationalDecimalFormatter rationalFormatter,
             MissionTextFormatter missionTextFormatter)
         {
             _flow = flow ?? throw new ArgumentNullException(nameof(flow));
             _view = view ?? throw new ArgumentNullException(nameof(view));
-            _navigation = navigation ?? throw new ArgumentNullException(nameof(navigation));
+            _sceneNavigator = sceneNavigator ?? throw new ArgumentNullException(nameof(sceneNavigator));
+            _gameplayRequest = gameplayRequest ?? throw new ArgumentNullException(nameof(gameplayRequest));
+            _gameplayConfig = gameplayConfig ?? throw new ArgumentNullException(nameof(gameplayConfig));
             _audio = audio ?? throw new ArgumentNullException(nameof(audio));
             _missionTextFormatter = missionTextFormatter ?? throw new ArgumentNullException(nameof(missionTextFormatter));
             _resultFormatter = rationalFormatter ?? throw new ArgumentNullException(nameof(rationalFormatter));
@@ -175,6 +186,9 @@ namespace Ccc.Presentation
                 case GameplayInputKind.ReturnToMainMenu:
                     NavigateToMainMenu();
                     break;
+                case GameplayInputKind.Retry:
+                    RetryGameplay();
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(input));
             }
@@ -230,7 +244,7 @@ namespace Ccc.Presentation
                     }
                     break;
                 case SessionEndedEvent endedEvent:
-                    _navigation.ShowResult(endedEvent.Result);
+                    _view.ShowResult(CreateResultViewStateDto(endedEvent.Result));
                     _audio.PlaySE(AudioKey.SEGameOver);
                     _audio.PlayBgm(AudioKey.BgmResult);
                     break;
@@ -316,14 +330,12 @@ namespace Ccc.Presentation
             }
 
             _view.Render(CreateViewStateDto(
-                null,
                 _latestState,
                 _latestExpression,
                 _hasTimerSnapshot ? _latestTimerSnapshot : (SectionTimerSnapshot?)null));
         }
 
         private GameplayViewStateDto CreateViewStateDto(
-            GameplaySessionContext context,
             GameplayState gameplayState,
             Expression expression,
             SectionTimerSnapshot? timerSnapshot)
@@ -335,7 +347,9 @@ namespace Ccc.Presentation
 
             string missionText = _missionTextFormatter.Format(gameplayState.CurrentMission.Condition);
             CalculationResult calculationResult = ExpressionCalculator.Evaluate(expression);
-            string answerText = _resultFormatter.Format(calculationResult);
+            string answerText = _gameplayConfig.ShowCurrentAnswer
+                ? _resultFormatter.Format(calculationResult)
+                : HiddenAnswerText;
             bool hasRemainingTime = timerSnapshot.HasValue &&
                                     timerSnapshot.Value.MissionId == gameplayState.CurrentMission.Id;
             float remainingSeconds = hasRemainingTime
@@ -343,6 +357,8 @@ namespace Ccc.Presentation
                 : 0f;
 
             return new GameplayViewStateDto(
+                _gameplayRequest.GameMode.ToString(),
+                _gameplayRequest.Difficulty.ToString(),
                 gameplayState.Section,
                 gameplayState.CurrentMission.Tier,
                 gameplayState.Life,
@@ -359,24 +375,73 @@ namespace Ccc.Presentation
 
         private void NavigateToMainMenu()
         {
-            if (_isDisposed || _lifecycleCancellationSource == null)
+            if (!TryBeginNavigation())
             {
                 return;
             }
 
-            _lifecycleCancellationSource.Cancel();
             NavigateToMainMenuAsync().Forget(HandleAsyncFailure);
+        }
+
+        private void RetryGameplay()
+        {
+            if (_isDisposed ||
+                _latestState == null ||
+                _latestState.Status != GameplayStatus.GameOver ||
+                !TryBeginNavigation())
+            {
+                return;
+            }
+
+            RetryGameplayAsync().Forget(HandleAsyncFailure);
         }
 
         private async UniTask NavigateToMainMenuAsync()
         {
-            await _navigation.NavigateToMainMenuAsync();
+            SceneNavigationResult result = await _sceneNavigator.LoadTitleAsync(
+                new TitleStartRequest(TitleScreenState.MainMenu));
+            HandleSceneNavigationResult(result);
+        }
+
+        private async UniTask RetryGameplayAsync()
+        {
+            SceneNavigationResult result = await _sceneNavigator.LoadGameplayAsync(
+                _gameplayRequest);
+            HandleSceneNavigationResult(result);
+        }
+
+        private bool TryBeginNavigation()
+        {
+            if (_isDisposed || _isNavigationInProgress)
+            {
+                return false;
+            }
+
+            _isNavigationInProgress = true;
+            return true;
+        }
+
+        private void HandleSceneNavigationResult(SceneNavigationResult result)
+        {
+            if (result == null)
+            {
+                throw new ArgumentNullException(nameof(result));
+            }
+
+            if (result.IsSuccess || _isDisposed)
+            {
+                return;
+            }
+
+            _isNavigationInProgress = false;
+            _view.ShowFatalError(result.ErrorMessage);
         }
 
         private void HandleAsyncFailure(Exception exception)
         {
             if (!_isDisposed && !(exception is OperationCanceledException))
             {
+                _isNavigationInProgress = false;
                 _view.ShowFatalError($"Gameplay presentation failed: {exception.Message}");
             }
         }
@@ -384,8 +449,52 @@ namespace Ccc.Presentation
         private bool CanForwardGameplayInput()
         {
             return !_isDisposed &&
+                   !_isNavigationInProgress &&
                    _latestState != null &&
                    _latestState.Status == GameplayStatus.Playing;
+        }
+
+        private GameplayResultViewStateDto CreateResultViewStateDto(SessionResult result)
+        {
+            if (result == null)
+            {
+                throw new ArgumentNullException(nameof(result));
+            }
+
+            string lastMissionText = _missionTextFormatter.Format(result.LastMission.Condition);
+            string finalExpressionText = FormatExpression(result.FinalExpression);
+            string finalResultText = _resultFormatter.Format(result.LastResolution.CalculationResult);
+            string terminationReasonText = FormatTerminationReason(result.TerminationReason);
+            string resultText = string.Join(
+                Environment.NewLine,
+                $"終了理由: {terminationReasonText}",
+                $"最後のMission: {lastMissionText}",
+                $"最終式: {finalExpressionText}",
+                $"最終結果: {finalResultText}",
+                $"正解数: {result.CorrectAnswerCount}",
+                $"最終Section: {result.FinalSection}");
+
+            return new GameplayResultViewStateDto(resultText);
+        }
+
+        private static string FormatExpression(Expression expression)
+        {
+            return string.Join(
+                " ",
+                expression.Left.ToString(CultureInfo.InvariantCulture),
+                FormatOperator(expression.Operator),
+                expression.Right.ToString(CultureInfo.InvariantCulture));
+        }
+
+        private static string FormatTerminationReason(SessionTerminationReason reason)
+        {
+            switch (reason)
+            {
+                case SessionTerminationReason.LifeDepleted:
+                    return "Lifeが0になりました";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(reason), reason, null);
+            }
         }
 
         private void PlayTimeWarningIfNeeded(SectionTimerSnapshot snapshot)
