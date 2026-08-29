@@ -109,12 +109,12 @@ namespace Ccc.Infrastructure.Audio
                 var isSeKey = entry.Key.ToString().StartsWith("SE", StringComparison.Ordinal);
                 var isBgmKey = entry.Key.ToString().StartsWith("Bgm", StringComparison.Ordinal);
 
-                if (isSeKey && !seEntries.Contains(entry))
+                if (isSeKey && (seEntries == null || !seEntries.Contains(entry)))
                 {
                     errors.Add($"{entry.Key} should be registered in the SE list.");
                 }
 
-                if (isBgmKey && !bgmEntries.Contains(entry))
+                if (isBgmKey && (bgmEntries == null || !bgmEntries.Contains(entry)))
                 {
                     errors.Add($"{entry.Key} should be registered in the BGM list.");
                 }

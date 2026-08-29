@@ -24,6 +24,17 @@ namespace Ccc.Core.Model
 
         public static MissionCondition Create(MissionKind kind)
         {
+            return Create(kind, false);
+        }
+
+        /// <summary>
+        /// パラメータなしのMissionConditionを生成します。
+        /// </summary>
+        /// <param name="kind">ミッションの種類。</param>
+        /// <param name="isNegated">条件を否定するかどうか。</param>
+        /// <returns>生成された条件。</returns>
+        public static MissionCondition Create(MissionKind kind, bool isNegated)
+        {
             if (!IsNoParameterKind(kind))
             {
                 if (Enum.IsDefined(typeof(MissionKind), kind))
@@ -34,10 +45,22 @@ namespace Ccc.Core.Model
                 throw new ArgumentOutOfRangeException(nameof(kind));
             }
 
-            return new MissionCondition(kind, 0, 0, false);
+            return new MissionCondition(kind, 0, 0, isNegated);
         }
 
         public static MissionCondition Create(MissionKind kind, int parameter)
+        {
+            return Create(kind, parameter, false);
+        }
+
+        /// <summary>
+        /// 1パラメータのMissionConditionを生成します。
+        /// </summary>
+        /// <param name="kind">ミッションの種類。</param>
+        /// <param name="parameter">条件パラメータ。</param>
+        /// <param name="isNegated">条件を否定するかどうか。</param>
+        /// <returns>生成された条件。</returns>
+        public static MissionCondition Create(MissionKind kind, int parameter, bool isNegated)
         {
             if (!IsSingleParameterKind(kind))
             {
@@ -78,10 +101,22 @@ namespace Ccc.Core.Model
                     throw new ArgumentOutOfRangeException(nameof(kind));
             }
 
-            return new MissionCondition(kind, parameter, 0, false);
+            return new MissionCondition(kind, parameter, 0, isNegated);
         }
 
         public static MissionCondition Between(int lowerBound, int width)
+        {
+            return Between(lowerBound, width, false);
+        }
+
+        /// <summary>
+        /// 範囲条件のMissionConditionを生成します。
+        /// </summary>
+        /// <param name="lowerBound">下限。</param>
+        /// <param name="width">下限から上限までの幅。</param>
+        /// <param name="isNegated">条件を否定するかどうか。</param>
+        /// <returns>生成された条件。</returns>
+        public static MissionCondition Between(int lowerBound, int width, bool isNegated)
         {
             if (width < 1)
             {
@@ -94,10 +129,22 @@ namespace Ccc.Core.Model
                 _ = upperBound;
             }
 
-            return new MissionCondition(MissionKind.Between, lowerBound, width, false);
+            return new MissionCondition(MissionKind.Between, lowerBound, width, isNegated);
         }
 
         public static MissionCondition Modulo(int divisor, int remainder)
+        {
+            return Modulo(divisor, remainder, false);
+        }
+
+        /// <summary>
+        /// 剰余条件のMissionConditionを生成します。
+        /// </summary>
+        /// <param name="divisor">法。</param>
+        /// <param name="remainder">余り。</param>
+        /// <param name="isNegated">条件を否定するかどうか。</param>
+        /// <returns>生成された条件。</returns>
+        public static MissionCondition Modulo(int divisor, int remainder, bool isNegated)
         {
             if (divisor < 2)
             {
@@ -109,7 +156,7 @@ namespace Ccc.Core.Model
                 throw new ArgumentOutOfRangeException(nameof(remainder), remainder, null);
             }
 
-            return new MissionCondition(MissionKind.Modulo, divisor, remainder, false);
+            return new MissionCondition(MissionKind.Modulo, divisor, remainder, isNegated);
         }
 
         public static bool IsNoParameterKind(MissionKind kind)

@@ -2,16 +2,19 @@ using System;
 using R3;
 using UnityEngine;
 using UnityEngine.UI;
+using Ccc.Presentation.UI;
+using TMPro;
 
-namespace Proto.UI
+namespace Ccc.Infrastructure.UI
 {
     /// <summary>
     ///     現在値表示と change 要求入力をまとめて扱うビュー。
     /// </summary>
     public sealed class CycleSelectorView : MonoBehaviour
     {
-        [SerializeField] private Text valueText;
+        [SerializeField] private TextMeshProUGUI valueText;
         [SerializeField] private PointerDownInputView changeInputView;
+        [Tooltip("入力受付可否の視覚的なフィードバックをCanvasGroupで設定する場合はこちらを利用。")]
         [SerializeField] private CanvasGroup interactionCanvasGroup;
         [SerializeField] private Graphic disabledGraphic;
 
@@ -80,8 +83,9 @@ namespace Proto.UI
 
             if (interactionCanvasGroup == null && disabledGraphic == null)
             {
-                throw new InvalidOperationException(
-                    "CycleSelectorView requires a CanvasGroup or Graphic reference for disabled visuals.");
+                UnityEngine.Debug.LogWarning(
+                    "CycleSelectorView has neither a CanvasGroup nor a disabled Graphic for visual feedback. " +
+                    "Consider adding one for better user experience.");
             }
         }
 

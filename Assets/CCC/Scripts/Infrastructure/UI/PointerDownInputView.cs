@@ -3,7 +3,7 @@ using R3;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace Proto.UI
+namespace Ccc.Infrastructure.UI
 {
     /// <summary>
     ///     1 回のポインターダウンを 1 回の押下イベントへ変換する共通入力コンポーネント。
