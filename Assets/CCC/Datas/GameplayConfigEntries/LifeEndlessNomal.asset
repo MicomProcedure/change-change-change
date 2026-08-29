@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f240661d94b149e8b1281373749de40, type: 3}
+  m_Name: LifeEndlessNomal
+  m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.Assets.GameplayConfigEntry
+  displayName: LifeEndlessNomal
+  gameMode: 0
+  difficulty: 0
+  gameplayConfigAsset: {fileID: 11400000, guid: 25081134d817a4299ae7d9065497d583, type: 2}
+  missionPresetAsset: {fileID: 11400000, guid: f003470e3ae4d4439ad490db5502866f, type: 2}
+  missionTextAsset: {fileID: 11400000, guid: b1014d3a149b1417982fbb0cda8c7830, type: 2}

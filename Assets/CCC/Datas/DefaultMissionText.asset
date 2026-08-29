@@ -58,3 +58,15 @@ MonoBehaviour:
   - kind: 14
     positiveTemplate: "\u672A\u5B9A\u7FA9\u306E\u6587\u7AE0"
     negatedTemplate: "\u672A\u5B9A\u7FA9\u306E\u6587\u7AE0"
+  - kind: 15
+    positiveTemplate: "\u672A\u5B9A\u7FA9\u306E\u6587\u7AE0"
+    negatedTemplate: "\u672A\u5B9A\u7FA9\u306E\u6587\u7AE0"
+  - kind: 16
+    positiveTemplate: "\u672A\u5B9A\u7FA9\u306E\u6587\u7AE0"
+    negatedTemplate: "\u672A\u5B9A\u7FA9\u306E\u6587\u7AE0"
+  - kind: 17
+    positiveTemplate: "\u672A\u5B9A\u7FA9\u306E\u6587\u7AE0"
+    negatedTemplate: "\u672A\u5B9A\u7FA9\u306E\u6587\u7AE0"
+  - kind: 18
+    positiveTemplate: "\u672A\u5B9A\u7FA9\u306E\u6587\u7AE0"
+    negatedTemplate: "\u672A\u5B9A\u7FA9\u306E\u6587\u7AE0"

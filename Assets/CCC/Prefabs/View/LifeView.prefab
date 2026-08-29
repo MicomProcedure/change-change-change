@@ -49,7 +49,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33c9e90ec71024d03b05790c9595624c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.Gameplay.LifeView
-  _lifeText: {fileID: 0}
+  _lifeText: {fileID: 7433921990341475678}
   _lifeImages: []
 --- !u!1 &5592315775377536773
 GameObject:

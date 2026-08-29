@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Ccc.Core.Model;
 using Ccc.Core.Logic;
 using Ccc.Core.UseCases;
@@ -8,9 +9,11 @@ using Ccc.Infrastructure.Time;
 using Ccc.Infrastructure.Navigation;
 using Ccc.Infrastructure.Gameplay;
 using Ccc.Presentation;
+using Ccc.Presentation.Navigation;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
+using NavigationGameplayStartRequest = Ccc.Presentation.Navigation.GameplayNavigationRequest;
 
 namespace Ccc.Bootstrap
 {
@@ -19,9 +22,7 @@ namespace Ccc.Bootstrap
     /// </summary>
     public sealed class GameplayLifetimeScope : LifetimeScope
     {
-        [SerializeField] private GameplayConfigAsset configAsset;
-        [SerializeField] private MissionPresetAsset missionPresetAsset;
-        [SerializeField] private MissionTextAsset missionTextAsset;
+        [SerializeField] private GameplayConfigCatalogAsset configCatalogAsset;
 
         /// <summary>
         /// Gameplay Scopeの依存関係を登録します。
@@ -31,13 +32,32 @@ namespace Ccc.Bootstrap
         {
             ValidateAssetReferences();
 
-            builder.RegisterInstance(configAsset);
-            builder.RegisterInstance(missionPresetAsset);
-            builder.RegisterInstance<MissionTextAsset>(missionTextAsset)
-                .As<IMissionTextSource>();
+            builder.RegisterInstance(configCatalogAsset);
+            builder.Register<GameplayStartContext>(
+                resolver => CreateStartContext(resolver),
+                Lifetime.Scoped);
+            builder.Register<GameplayConfigEntry>(
+                resolver => resolver.Resolve<GameplayStartContext>().ConfigEntry,
+                Lifetime.Scoped);
+            builder.Register<MissionPresetAsset>(
+                resolver => resolver.Resolve<GameplayConfigEntry>().MissionPresetAsset,
+                Lifetime.Scoped);
+            builder.Register<IMissionTextSource>(
+                resolver =>
+                {
+                    MissionTextAsset missionTextAsset =
+                        resolver.Resolve<GameplayConfigEntry>().MissionTextAsset;
+                    return missionTextAsset == null
+                        ? new FallbackMissionTextSource()
+                        : missionTextAsset;
+                },
+                Lifetime.Scoped);
 
             builder.Register<GameplayConfig>(
-                _ => configAsset.CreateRuntimeConfig(),
+                resolver => resolver
+                    .Resolve<GameplayConfigEntry>()
+                    .GameplayConfigAsset
+                    .CreateRuntimeConfig(),
                 Lifetime.Scoped);
             builder.Register<IRandomSource, UnityRandomSource>(Lifetime.Scoped);
             builder.Register<IMissionDrawStrategy, SimpleMissionDrawStrategy>(Lifetime.Scoped);
@@ -56,23 +76,40 @@ namespace Ccc.Bootstrap
 
         private void ValidateAssetReferences()
         {
-            if (configAsset == null)
+            if (configCatalogAsset == null)
             {
                 throw new InvalidOperationException(
-                    "GameplayLifetimeScope requires a GameplayConfigAsset reference.");
+                    "GameplayLifetimeScope requires a GameplayConfigCatalogAsset reference.");
+            }
+        }
+
+        private GameplayStartContext CreateStartContext(IObjectResolver resolver)
+        {
+            IReadOnlyList<string> catalogErrors = configCatalogAsset.Validate();
+            if (catalogErrors.Count > 0)
+            {
+                throw new InvalidOperationException(
+                    "Gameplay config catalog validation failed: " +
+                    string.Join(" | ", catalogErrors));
             }
 
-            if (missionPresetAsset == null)
+            NavigationGameplayStartRequest request;
+            if (!resolver.TryResolve(out request))
             {
-                throw new InvalidOperationException(
-                    "GameplayLifetimeScope requires a MissionPresetAsset reference.");
+                request = configCatalogAsset.CreateDefaultRequest();
+                Debug.LogWarning(
+                    "GameplayNavigationRequest was not provided. " +
+                    "Using the default GameplayConfigCatalog entry for direct Scene Play.");
             }
 
-            if (missionTextAsset == null)
+            if (!configCatalogAsset.TryGetEntry(request, out GameplayConfigEntry entry))
             {
                 throw new InvalidOperationException(
-                    "GameplayLifetimeScope requires a MissionTextAsset reference.");
+                    $"No GameplayConfigCatalog entry matches " +
+                    $"GameMode.{request.GameMode} and GameDifficulty.{request.Difficulty}.");
             }
+
+            return new GameplayStartContext(request, entry);
         }
     }
 }

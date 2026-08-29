@@ -22,25 +22,36 @@ namespace Ccc.Infrastructure.Audio
         /// </summary>
         private void Awake()
         {
+            var configurationErrors = new List<string>();
             if (catalog == null)
             {
-                throw new InvalidOperationException("UnityAudioPlayer requires an AudioCatalogAsset.");
+                configurationErrors.Add("UnityAudioPlayer requires an AudioCatalogAsset.");
             }
 
             if (bgmSource == null)
             {
-                throw new InvalidOperationException("UnityAudioPlayer requires a BGM AudioSource.");
+                configurationErrors.Add("UnityAudioPlayer requires a BGM AudioSource.");
             }
 
             if (seSource == null)
             {
-                throw new InvalidOperationException("UnityAudioPlayer requires an SE AudioSource.");
+                configurationErrors.Add("UnityAudioPlayer requires an SE AudioSource.");
             }
 
-            if (ReferenceEquals(bgmSource, seSource))
+            if (bgmSource != null && ReferenceEquals(bgmSource, seSource))
             {
-                throw new InvalidOperationException(
+                configurationErrors.Add(
                     "UnityAudioPlayer requires different AudioSource instances for BGM and SE.");
+            }
+
+            for (int index = 0; index < configurationErrors.Count; index++)
+            {
+                Debug.LogError($"[UnityAudioPlayer] {name}: {configurationErrors[index]}");
+            }
+
+            if (configurationErrors.Count > 0)
+            {
+                return;
             }
 
             IReadOnlyList<string> errors = catalog.Validate();
