@@ -150,7 +150,7 @@ GameObject:
   - component: {fileID: 3064715061008788123}
   - component: {fileID: 4849632007876895057}
   m_Layer: 5
-  m_Name: Card
+  m_Name: CardFlip
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
