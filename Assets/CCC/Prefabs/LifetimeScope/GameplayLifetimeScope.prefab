@@ -47,7 +47,6 @@ MonoBehaviour:
   parentReference:
     TypeName: Ccc.Bootstrap.ApplicationLifetimeScope
   autoRun: 1
-  autoInjectGameObjects: []
-  configAsset: {fileID: 11400000, guid: 25081134d817a4299ae7d9065497d583, type: 2}
-  missionPresetAsset: {fileID: 11400000, guid: f003470e3ae4d4439ad490db5502866f, type: 2}
-  missionTextAsset: {fileID: 11400000, guid: b1014d3a149b1417982fbb0cda8c7830, type: 2}
+  autoInjectGameObjects:
+  - {fileID: 0}
+  configCatalogAsset: {fileID: 11400000, guid: 37936467d592f41fdb15b4b291aec484, type: 2}

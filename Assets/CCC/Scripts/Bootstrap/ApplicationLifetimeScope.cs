@@ -1,4 +1,3 @@
-using System;
 using Ccc.Infrastructure.Audio;
 using Ccc.Presentation.Audio;
 using Ccc.Infrastructure.Navigation;
@@ -22,15 +21,20 @@ namespace Ccc.Bootstrap
         /// <param name="builder">VContainerの登録Builder。</param>
         protected override void Configure(IContainerBuilder builder)
         {
-            if (audioPlayer == null)
+            if (audioPlayer != null)
             {
-                throw new InvalidOperationException(
-                    "ApplicationLifetimeScope requires a UnityAudioPlayer reference.");
+                builder.RegisterComponent(audioPlayer).As<IAudioPlayer>();
             }
-            builder.Register<ISceneNavigator, SceneNavigator>(Lifetime.Singleton);
+            else
+            {
+                UnityEngine.Debug.LogError(
+                    "ApplicationLifetimeScope has no UnityAudioPlayer. " +
+                    "Gameplay will continue without audio.");
+                builder.Register<IAudioPlayer, NullAudioPlayer>(Lifetime.Singleton);
+            }
 
+            builder.Register<ISceneNavigator, SceneNavigator>(Lifetime.Singleton);
             builder.RegisterInstance(new TitleStartRequest(TitleScreenState.TitleScreen));
-            builder.RegisterComponent(audioPlayer).As<IAudioPlayer>();
         }
     }
 }

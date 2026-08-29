@@ -906,6 +906,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: GameplayErrorView
       objectReference: {fileID: 0}
+    - target: {fileID: 6334554392209731008, guid: 489ee40070c0248bbb679d986a87ab7b, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8141326564885298505, guid: 489ee40070c0248bbb679d986a87ab7b, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1018,6 +1022,10 @@ PrefabInstance:
     - target: {fileID: 443144165977673963, guid: 75d55c9a32ee44763886fad639c15953, type: 3}
       propertyPath: m_Name
       value: FeedbackView
+      objectReference: {fileID: 0}
+    - target: {fileID: 443144165977673963, guid: 75d55c9a32ee44763886fad639c15953, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2650095621247207752, guid: 75d55c9a32ee44763886fad639c15953, type: 3}
       propertyPath: m_Pivot.x
@@ -1228,6 +1236,10 @@ PrefabInstance:
     - target: {fileID: 3951230134854632505, guid: 959cd4f62a3364900bc174592c5dc4c4, type: 3}
       propertyPath: m_Name
       value: GameplayLifetimeScope
+      objectReference: {fileID: 0}
+    - target: {fileID: 4785725308365450807, guid: 959cd4f62a3364900bc174592c5dc4c4, type: 3}
+      propertyPath: autoInjectGameObjects.Array.size
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8262999870438328684, guid: 959cd4f62a3364900bc174592c5dc4c4, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1603,6 +1615,10 @@ PrefabInstance:
     - target: {fileID: 1672440755363851544, guid: 54178c4690343497b9230582e57e03f6, type: 3}
       propertyPath: m_Name
       value: GameplayNavigationView
+      objectReference: {fileID: 0}
+    - target: {fileID: 1672440755363851544, guid: 54178c4690343497b9230582e57e03f6, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3436164514223353811, guid: 54178c4690343497b9230582e57e03f6, type: 3}
       propertyPath: m_Pivot.x

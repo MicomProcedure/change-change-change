@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a76124cd9e0b14f539a2ccfafd830848, type: 3}
+  m_Name: DefaultGameplayConfigCatalogAsset
+  m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.Assets.GameplayConfigCatalogAsset
+  entries:
+  - {fileID: 11400000, guid: a374b1a9395a240cf9c6d4ee2d6dba68, type: 2}
+  defaultEntry: {fileID: 11400000, guid: a374b1a9395a240cf9c6d4ee2d6dba68, type: 2}

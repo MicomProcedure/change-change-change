@@ -17,6 +17,9 @@ namespace Ccc.Infrastructure.Assets
         [SerializeField]
         private List<MissionTextEntry> entries = new List<MissionTextEntry>();
 
+        [NonSerialized]
+        private HashSet<string> _reportedFallbacks;
+
         /// <summary>
         /// 指定されたミッション種類の表示テンプレートを取得します。
         /// 否定用テンプレートが未設定の場合は、正条件用テンプレートを使用します。
@@ -25,7 +28,6 @@ namespace Ccc.Infrastructure.Assets
         /// <param name="isNegated">否定条件用のテンプレートを取得するかどうか。</param>
         /// <returns>表示テンプレート。</returns>
         /// <exception cref="ArgumentOutOfRangeException">未定義のミッション種類の場合。</exception>
-        /// <exception cref="InvalidOperationException">対象種類のエントリが存在しない場合。</exception>
         public string GetTemplate(MissionKind kind, bool isNegated)
         {
             if (!Enum.IsDefined(typeof(MissionKind), kind))
@@ -38,8 +40,10 @@ namespace Ccc.Infrastructure.Assets
                 : entries.FirstOrDefault(candidate => candidate != null && candidate.Kind == kind);
             if (entry == null)
             {
-                throw new InvalidOperationException(
-                    $"Mission text entry is missing for MissionKind.{kind}.");
+                return CreateFallbackTemplate(
+                    kind,
+                    isNegated,
+                    "Mission text entry is missing.");
             }
 
             string template = isNegated && !string.IsNullOrWhiteSpace(entry.NegatedTemplate)
@@ -47,8 +51,25 @@ namespace Ccc.Infrastructure.Assets
                 : entry.PositiveTemplate;
             if (string.IsNullOrWhiteSpace(template))
             {
-                throw new InvalidOperationException(
-                    $"Mission text entry for MissionKind.{kind} has no usable template.");
+                return CreateFallbackTemplate(
+                    kind,
+                    isNegated,
+                    "Mission text entry has no usable template.");
+            }
+
+            var templateErrors = new List<string>();
+            ValidateTemplate(
+                templateErrors,
+                kind,
+                template,
+                isNegated ? "negatedTemplate" : "positiveTemplate",
+                isRequired: true);
+            if (templateErrors.Count > 0)
+            {
+                return CreateFallbackTemplate(
+                    kind,
+                    isNegated,
+                    templateErrors[0]);
             }
 
             return template;
@@ -117,6 +138,7 @@ namespace Ccc.Infrastructure.Assets
 
         private void OnEnable()
         {
+            _reportedFallbacks = new HashSet<string>();
             LogValidationErrors();
         }
 
@@ -130,8 +152,29 @@ namespace Ccc.Infrastructure.Assets
             IReadOnlyList<string> errors = Validate();
             for (int index = 0; index < errors.Count; index++)
             {
-                Debug.LogError($"[MissionTextAsset] {name}: {errors[index]}");
+                Debug.LogWarning($"[MissionTextAsset] {name}: {errors[index]}");
             }
+        }
+
+        private string CreateFallbackTemplate(
+            MissionKind kind,
+            bool isNegated,
+            string reason)
+        {
+            if (_reportedFallbacks == null)
+            {
+                _reportedFallbacks = new HashSet<string>();
+            }
+
+            string fallbackKey = $"{kind}:{isNegated}:{reason}";
+            if (_reportedFallbacks.Add(fallbackKey))
+            {
+                Debug.LogError(
+                    $"[MissionTextAsset] {name}: {reason} " +
+                    $"Using fallback text for MissionKind.{kind}.");
+            }
+
+            return $"MissionKind.{kind}";
         }
 
         private static void ValidateTemplate(
