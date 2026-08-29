@@ -5,7 +5,7 @@ namespace Ccc.Presentation.Navigation
     /// <summary>
     /// GameScene開始時に必要な設定を保持する不変Requestです。
     /// </summary>
-    public sealed class GameplayStartRequest
+    public sealed class GameplayNavigationRequest
     {
         /// <summary>ゲームモードを取得します。</summary>
         public GameMode GameMode { get; }
@@ -17,12 +17,12 @@ namespace Ccc.Presentation.Navigation
         public OptionSettingsSnapshot OptionSettings { get; }
 
         /// <summary>
-        /// GameplayStartRequestを生成します。
+        /// GameplayNavigationRequestを生成します。
         /// </summary>
         /// <param name="gameMode">ゲームモードです。</param>
         /// <param name="difficulty">ゲーム難易度です。</param>
         /// <param name="optionSettings">設定Snapshotです。</param>
-        public GameplayStartRequest(
+        public GameplayNavigationRequest(
             GameMode gameMode,
             GameDifficulty difficulty,
             OptionSettingsSnapshot optionSettings)

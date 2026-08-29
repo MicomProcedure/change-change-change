@@ -35,7 +35,7 @@ namespace Ccc.Infrastructure.Navigation
         /// <param name="request">Gameplay開始Requestです。</param>
         /// <returns>Scene遷移結果です。</returns>
         public UniTask<SceneNavigationResult> LoadGameplayAsync(
-            GameplayStartRequest request)
+            GameplayNavigationRequest request)
         {
             return LoadSceneAsync(SceneNames.Game, request);
         }

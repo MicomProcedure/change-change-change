@@ -7,6 +7,8 @@ using Ccc.Presentation;
 using Ccc.Presentation.Audio;
 using UnityEngine;
 using VContainer.Unity;
+using NavigationGameplayStartRequest = Ccc.Presentation.Navigation.GameplayNavigationRequest;
+using CoreGameplayStartRequest = Ccc.Core.UseCases.GameplayStartRequest;
 
 namespace Ccc.Bootstrap
 {
@@ -15,7 +17,7 @@ namespace Ccc.Bootstrap
     /// </summary>
     public sealed class GameplayEntryPoint : IStartable, IDisposable
     {
-        private readonly GameplayStartRequest _request;
+        private readonly NavigationGameplayStartRequest _request;
         private readonly GameplayConfigAsset _configAsset;
         private readonly MissionPresetAsset _missionPresetAsset;
         private readonly MissionTextAsset _missionTextAsset;
@@ -39,7 +41,7 @@ namespace Ccc.Bootstrap
         /// <param name="audio">Audio再生ポート。</param>
         /// <exception cref="ArgumentNullException">依存のいずれかがnullの場合。</exception>
         public GameplayEntryPoint(
-            GameplayStartRequest request,
+            NavigationGameplayStartRequest request,
             GameplayConfigAsset configAsset,
             MissionPresetAsset missionPresetAsset,
             MissionTextAsset missionTextAsset,
@@ -104,9 +106,10 @@ namespace Ccc.Bootstrap
                 : viewBehaviour.destroyCancellationToken;
             _presenter.Start(destroyCancellationToken);
 
-            GameplayStartRequest sessionRequest = new GameplayStartRequest(
-                _request.GameMode,
-                _request.GameDifficulty,
+            CoreGameplayStartRequest sessionRequest =
+                new CoreGameplayStartRequest(
+                ConvertGameMode(_request.GameMode),
+                ConvertDifficulty(_request.Difficulty),
                 candidates);
             GameplayStartResult startResult = _flow.StartSession(sessionRequest);
             if (!startResult.IsSuccess)
@@ -139,14 +142,18 @@ namespace Ccc.Bootstrap
 
         private void ValidateRequest(ICollection<string> errors)
         {
-            if (_request.GameMode != Ccc.Core.Model.GameMode.LifeEndless)
+            if (_request.GameMode !=
+                Ccc.Presentation.Navigation.GameMode.LifeEndless)
             {
-                errors.Add($"Unsupported gameplay mode: {_request.GameMode}.");
+                errors.Add(
+                    $"Unsupported gameplay mode: {_request.GameMode}.");
             }
 
-            if (_request.GameDifficulty != Ccc.Core.Model.GameDifficulty.Normal)
+            if (_request.Difficulty !=
+                Ccc.Presentation.Navigation.GameDifficulty.Normal)
             {
-                errors.Add($"Unsupported gameplay difficulty: {_request.GameDifficulty}.");
+                errors.Add(
+                    $"Unsupported gameplay difficulty: {_request.Difficulty}.");
             }
         }
 
@@ -155,6 +162,37 @@ namespace Ccc.Bootstrap
             if (_isDisposed)
             {
                 throw new ObjectDisposedException(nameof(GameplayEntryPoint));
+            }
+        }
+
+        private static Ccc.Core.Model.GameMode ConvertGameMode(
+            Ccc.Presentation.Navigation.GameMode gameMode)
+        {
+            switch (gameMode)
+            {
+                case Ccc.Presentation.Navigation.GameMode.LifeEndless:
+                    return Ccc.Core.Model.GameMode.LifeEndless;
+
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(gameMode),
+                        gameMode,
+                        null);
+            }
+        }
+        private static Ccc.Core.Model.GameDifficulty ConvertDifficulty(
+            Ccc.Presentation.Navigation.GameDifficulty difficulty)
+        {
+            switch (difficulty)
+            {
+                case Ccc.Presentation.Navigation.GameDifficulty.Normal:
+                    return Ccc.Core.Model.GameDifficulty.Normal;
+
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(difficulty),
+                        difficulty,
+                        null);
             }
         }
     }
