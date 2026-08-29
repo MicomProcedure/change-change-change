@@ -263,6 +263,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.UI.CycleSelectorView
   valueText: {fileID: 3024847566370666881}
-  changeInputView: {fileID: 0}
+  changeInputViews: []
   interactionCanvasGroup: {fileID: 0}
   disabledGraphic: {fileID: 491042019446335259}
