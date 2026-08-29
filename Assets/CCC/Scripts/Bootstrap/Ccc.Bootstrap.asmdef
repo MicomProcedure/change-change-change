@@ -1,0 +1,25 @@
+{
+    "name": "Ccc.Bootstrap",
+    "rootNamespace": "",
+    "references": [
+        "GUID:77221876cc6b8244180b96e320b1bcd4",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:1573c00949d9a4a44974cdaf6e6ba816",
+        "GUID:c570df743edf142dc847486430de4b5d",
+        "GUID:3ae5734e49d646442ad24f37762ebdd2",
+        "GUID:029c1c1b674aaae47a6841a0b89ad80e",
+        "GUID:e37dc03e2441f4f7d8d9b58d99a7d52d",
+        "GUID:dc04f38471c3a459fb4d31124ee9127d",
+        "GUID:7c9ddba8dc19643a3accfaa5b9f402af",
+        "GUID:b0214a6008ed146ff8f122a6a9c2f6cc"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
