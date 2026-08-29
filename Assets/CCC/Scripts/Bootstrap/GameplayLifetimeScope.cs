@@ -1,4 +1,5 @@
 using System;
+using Ccc.Core.Model;
 using Ccc.Core.Logic;
 using Ccc.Core.UseCases;
 using Ccc.Infrastructure.Assets;

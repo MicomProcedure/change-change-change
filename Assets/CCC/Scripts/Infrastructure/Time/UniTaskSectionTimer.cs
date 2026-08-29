@@ -68,7 +68,7 @@ namespace Ccc.Infrastructure.Time
             _currentMissionId = missionId;
             _currentDuration = duration;
             _remainingTime = duration;
-            _startedAtRealtimeSeconds = Time.realtimeSinceStartupAsDouble;
+            _startedAtRealtimeSeconds = UnityEngine.Time.realtimeSinceStartupAsDouble;
             _hasCurrentMission = true;
             _isRunning = true;
             _isExpired = false;
@@ -178,7 +178,7 @@ namespace Ccc.Infrastructure.Time
                     }
 
                     TimeSpan elapsedTime = TimeSpan.FromSeconds(
-                        Math.Max(0d, Time.realtimeSinceStartupAsDouble - _startedAtRealtimeSeconds));
+                        Math.Max(0d, UnityEngine.Time.realtimeSinceStartupAsDouble - _startedAtRealtimeSeconds));
                     _remainingTime = duration - elapsedTime;
                     if (_remainingTime <= TimeSpan.Zero)
                     {
@@ -214,7 +214,7 @@ namespace Ccc.Infrastructure.Time
             }
 
             TimeSpan elapsedTime = TimeSpan.FromSeconds(
-                Math.Max(0d, Time.realtimeSinceStartupAsDouble - _startedAtRealtimeSeconds));
+                Math.Max(0d, UnityEngine.Time.realtimeSinceStartupAsDouble - _startedAtRealtimeSeconds));
             _remainingTime = _currentDuration - elapsedTime;
             if (_remainingTime < TimeSpan.Zero)
             {
