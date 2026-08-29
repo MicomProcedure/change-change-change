@@ -18,7 +18,7 @@ namespace Ccc.Infrastructure.UI
         [SerializeField] private CanvasGroup interactionCanvasGroup;
         [SerializeField] private Graphic disabledGraphic;
 
-        private Subject<Unit> _changeRequestedSubject;
+        private Subject<Unit> _changeRequestedSubject = new();
         private IDisposable _pressedSubscription;
 
         /// <summary>
@@ -30,7 +30,6 @@ namespace Ccc.Infrastructure.UI
         {
             ValidateSerializedFields();
 
-            _changeRequestedSubject = new Subject<Unit>();
             ChangeRequested = _changeRequestedSubject;
 
             _pressedSubscription = changeInputView.Pressed.Subscribe(_ => _changeRequestedSubject.OnNext(Unit.Default));
