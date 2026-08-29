@@ -1,0 +1,119 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &7413620949321588600
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 5156404583460306512, guid: c226c92f59cf9487d84c6d03beaee406, type: 3}
+      propertyPath: m_Name
+      value: View_RightBlackButton Variant
+      objectReference: {fileID: 0}
+    - target: {fileID: 6974698798683110841, guid: c226c92f59cf9487d84c6d03beaee406, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6974698798683110841, guid: c226c92f59cf9487d84c6d03beaee406, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6974698798683110841, guid: c226c92f59cf9487d84c6d03beaee406, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6974698798683110841, guid: c226c92f59cf9487d84c6d03beaee406, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6974698798683110841, guid: c226c92f59cf9487d84c6d03beaee406, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6974698798683110841, guid: c226c92f59cf9487d84c6d03beaee406, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6974698798683110841, guid: c226c92f59cf9487d84c6d03beaee406, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 405
+      objectReference: {fileID: 0}
+    - target: {fileID: 6974698798683110841, guid: c226c92f59cf9487d84c6d03beaee406, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 412
+      objectReference: {fileID: 0}
+    - target: {fileID: 6974698798683110841, guid: c226c92f59cf9487d84c6d03beaee406, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6974698798683110841, guid: c226c92f59cf9487d84c6d03beaee406, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6974698798683110841, guid: c226c92f59cf9487d84c6d03beaee406, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6974698798683110841, guid: c226c92f59cf9487d84c6d03beaee406, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6974698798683110841, guid: c226c92f59cf9487d84c6d03beaee406, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6974698798683110841, guid: c226c92f59cf9487d84c6d03beaee406, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6974698798683110841, guid: c226c92f59cf9487d84c6d03beaee406, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6974698798683110841, guid: c226c92f59cf9487d84c6d03beaee406, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -800
+      objectReference: {fileID: 0}
+    - target: {fileID: 6974698798683110841, guid: c226c92f59cf9487d84c6d03beaee406, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -240
+      objectReference: {fileID: 0}
+    - target: {fileID: 6974698798683110841, guid: c226c92f59cf9487d84c6d03beaee406, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6974698798683110841, guid: c226c92f59cf9487d84c6d03beaee406, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6974698798683110841, guid: c226c92f59cf9487d84c6d03beaee406, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5156404583460306512, guid: c226c92f59cf9487d84c6d03beaee406, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7195906195177616730}
+  m_SourcePrefab: {fileID: 100100000, guid: c226c92f59cf9487d84c6d03beaee406, type: 3}
+--- !u!1 &2408654353464156456 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5156404583460306512, guid: c226c92f59cf9487d84c6d03beaee406, type: 3}
+  m_PrefabInstance: {fileID: 7413620949321588600}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7195906195177616730
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2408654353464156456}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74f054df7684a433690e9e2c8a886872, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.UI.PointerDownInputView

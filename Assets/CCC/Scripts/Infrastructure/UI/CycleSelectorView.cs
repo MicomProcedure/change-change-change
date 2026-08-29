@@ -3,6 +3,7 @@ using R3;
 using UnityEngine;
 using UnityEngine.UI;
 using Ccc.Presentation.UI;
+using TMPro;
 
 namespace Ccc.Infrastructure.UI
 {
@@ -11,12 +12,13 @@ namespace Ccc.Infrastructure.UI
     /// </summary>
     public sealed class CycleSelectorView : MonoBehaviour
     {
-        [SerializeField] private Text valueText;
+        [SerializeField] private TextMeshProUGUI valueText;
         [SerializeField] private PointerDownInputView changeInputView;
+        [Tooltip("入力受付可否の視覚的なフィードバックをCanvasGroupで設定する場合はこちらを利用。")]
         [SerializeField] private CanvasGroup interactionCanvasGroup;
         [SerializeField] private Graphic disabledGraphic;
 
-        private Subject<Unit> _changeRequestedSubject;
+        private Subject<Unit> _changeRequestedSubject = new();
         private IDisposable _pressedSubscription;
 
         /// <summary>
@@ -28,7 +30,6 @@ namespace Ccc.Infrastructure.UI
         {
             ValidateSerializedFields();
 
-            _changeRequestedSubject = new Subject<Unit>();
             ChangeRequested = _changeRequestedSubject;
 
             _pressedSubscription = changeInputView.Pressed.Subscribe(_ => _changeRequestedSubject.OnNext(Unit.Default));
@@ -81,8 +82,9 @@ namespace Ccc.Infrastructure.UI
 
             if (interactionCanvasGroup == null && disabledGraphic == null)
             {
-                throw new InvalidOperationException(
-                    "CycleSelectorView requires a CanvasGroup or Graphic reference for disabled visuals.");
+                UnityEngine.Debug.LogWarning(
+                    "CycleSelectorView has neither a CanvasGroup nor a disabled Graphic for visual feedback. " +
+                    "Consider adding one for better user experience.");
             }
         }
 
