@@ -15,9 +15,8 @@ namespace Ccc.Infrastructure.Gameplay
     public sealed class ExpressionView : MonoBehaviour
     {
         [SerializeField] private CycleSelectorView _leftNumberView;
-        [SerializeField] private CycleSelectorView _leftOperatorView;
+        [SerializeField] private CycleSelectorView _operatorView;
         [SerializeField] private CycleSelectorView _rightNumberView;
-        [SerializeField] private CycleSelectorView _rightOperatorView;
         [SerializeField] private TMP_Text _answerText;
 
         private readonly List<IDisposable> _inputSubscriptions = new List<IDisposable>();
@@ -55,9 +54,8 @@ namespace Ccc.Infrastructure.Gameplay
             bool isInteractable)
         {
             RenderSelector(_leftNumberView, leftText, isInteractable);
-            RenderSelector(_leftOperatorView, operatorText, isInteractable);
+            RenderSelector(_operatorView, operatorText, isInteractable);
             RenderSelector(_rightNumberView, rightText, isInteractable);
-            RenderSelector(_rightOperatorView, operatorText, isInteractable);
 
             if (_answerText != null)
             {
@@ -68,9 +66,8 @@ namespace Ccc.Infrastructure.Gameplay
         private void ConnectSelectorInputs()
         {
             SubscribeSelector(_leftNumberView, GameplayInputKind.ChangeLeftNumber);
-            SubscribeSelector(_leftOperatorView, GameplayInputKind.ChangeLeftOperator);
+            SubscribeSelector(_operatorView, GameplayInputKind.ChangeOperator);
             SubscribeSelector(_rightNumberView, GameplayInputKind.ChangeRightNumber);
-            SubscribeSelector(_rightOperatorView, GameplayInputKind.ChangeRightOperator);
         }
 
         private void SubscribeSelector(CycleSelectorView selector, GameplayInputKind inputKind)

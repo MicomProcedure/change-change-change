@@ -156,8 +156,7 @@ namespace Ccc.Presentation
                     _audio.PlaySE(AudioKey.SEUIInput);
                     _flow.ChangeNumber(PlayerSide.Right);
                     break;
-                case GameplayInputKind.ChangeLeftOperator:
-                case GameplayInputKind.ChangeRightOperator:
+                case GameplayInputKind.ChangeOperator:
                     if (!CanForwardGameplayInput())
                     {
                         return;

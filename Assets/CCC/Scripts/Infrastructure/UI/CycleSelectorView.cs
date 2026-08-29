@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using R3;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,13 +14,13 @@ namespace Ccc.Infrastructure.UI
     public sealed class CycleSelectorView : MonoBehaviour
     {
         [SerializeField] private TextMeshProUGUI valueText;
-        [SerializeField] private PointerDownInputView changeInputView;
+        [SerializeField] private List<PointerDownInputView> changeInputViews = new();
         [Tooltip("入力受付可否の視覚的なフィードバックをCanvasGroupで設定する場合はこちらを利用。")]
         [SerializeField] private CanvasGroup interactionCanvasGroup;
         [SerializeField] private Graphic disabledGraphic;
 
         private Subject<Unit> _changeRequestedSubject = new();
-        private IDisposable _pressedSubscription;
+        private readonly List<IDisposable> _pressedSubscriptions = new();
 
         /// <summary>
         ///     変更要求のイベント。
@@ -32,15 +33,22 @@ namespace Ccc.Infrastructure.UI
 
             ChangeRequested = _changeRequestedSubject;
 
-            _pressedSubscription = changeInputView.Pressed.Subscribe(_ => _changeRequestedSubject.OnNext(Unit.Default));
+            for (int index = 0; index < changeInputViews.Count; index++)
+            {
+                PointerDownInputView changeInputView = changeInputViews[index];
+                _pressedSubscriptions.Add(
+                    changeInputView.Pressed.Subscribe(_ => _changeRequestedSubject.OnNext(Unit.Default)));
+            }
         }
 
         private void OnDestroy()
         {
-            if (_pressedSubscription != null)
+            for (int index = 0; index < _pressedSubscriptions.Count; index++)
             {
-                _pressedSubscription.Dispose();
+                _pressedSubscriptions[index].Dispose();
             }
+
+            _pressedSubscriptions.Clear();
 
             if (_changeRequestedSubject != null)
             {
@@ -60,9 +68,13 @@ namespace Ccc.Infrastructure.UI
                 valueText.text = state.ValueText;
             }
 
-            if (changeInputView != null)
+            for (int index = 0; index < changeInputViews.Count; index++)
             {
-                changeInputView.SetInteractable(state.IsInteractable);
+                PointerDownInputView changeInputView = changeInputViews[index];
+                if (changeInputView != null)
+                {
+                    changeInputView.SetInteractable(state.IsInteractable);
+                }
             }
 
             ApplyDisabledVisualState(state.IsInteractable);
@@ -75,9 +87,18 @@ namespace Ccc.Infrastructure.UI
                 throw new InvalidOperationException("CycleSelectorView requires a Text reference.");
             }
 
-            if (changeInputView == null)
+            if (changeInputViews == null || changeInputViews.Count == 0)
             {
-                throw new InvalidOperationException("CycleSelectorView requires a PointerDownInputView reference.");
+                throw new InvalidOperationException("CycleSelectorView requires at least one PointerDownInputView reference.");
+            }
+
+            for (int index = 0; index < changeInputViews.Count; index++)
+            {
+                if (changeInputViews[index] == null)
+                {
+                    throw new InvalidOperationException(
+                        $"CycleSelectorView requires a PointerDownInputView reference at index {index}.");
+                }
             }
 
             if (interactionCanvasGroup == null && disabledGraphic == null)

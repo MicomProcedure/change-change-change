@@ -13,19 +13,14 @@ namespace Ccc.Presentation
         ChangeLeftNumber = 0,
 
         /// <summary>
-        /// 左側の演算子変更を要求します。
+        /// 演算子変更を要求します。
         /// </summary>
-        ChangeLeftOperator,
+        ChangeOperator,
 
         /// <summary>
         /// 右側の数字変更を要求します。
         /// </summary>
         ChangeRightNumber,
-
-        /// <summary>
-        /// 右側の演算子変更を要求します。
-        /// </summary>
-        ChangeRightOperator,
 
         /// <summary>
         /// 現在の式の提出を要求します。

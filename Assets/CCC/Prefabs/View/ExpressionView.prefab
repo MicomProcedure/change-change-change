@@ -369,9 +369,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.Gameplay.ExpressionView
   _leftNumberView: {fileID: 6771537710734414903}
-  _leftOperatorView: {fileID: 4469120949953480113}
+  _operatorView: {fileID: 4469120949953480113}
   _rightNumberView: {fileID: 1696348193414454650}
-  _rightOperatorView: {fileID: 4469120949953480113}
   _answerText: {fileID: 1973674385861515486}
 --- !u!225 &4262410078004578765
 CanvasGroup:
@@ -398,8 +397,12 @@ PrefabInstance:
       value: 70.65
       objectReference: {fileID: 0}
     - target: {fileID: 1786020754010852366, guid: 06d0614d20dea4fe6a18f0f567e287a9, type: 3}
-      propertyPath: changeInputView
-      value: 
+      propertyPath: changeInputViews.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1786020754010852366, guid: 06d0614d20dea4fe6a18f0f567e287a9, type: 3}
+      propertyPath: changeInputViews.Array.data[0]
+      value:
       objectReference: {fileID: 6225245880956205911}
     - target: {fileID: 6005614927733658156, guid: 06d0614d20dea4fe6a18f0f567e287a9, type: 3}
       propertyPath: m_Name
@@ -623,7 +626,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 74f054df7684a433690e9e2c8a886872, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.UI.PointerDownInputView
 --- !u!224 &4924332501968963567 stripped
 RectTransform:
@@ -741,7 +744,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 74f054df7684a433690e9e2c8a886872, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.UI.PointerDownInputView
 --- !u!1001 &6547944821046544961
 PrefabInstance:
@@ -836,9 +839,17 @@ PrefabInstance:
       value: View_OperatorDisplay
       objectReference: {fileID: 0}
     - target: {fileID: 7267535241587019760, guid: 105f4d4be0de147b5b6330cefeee9360, type: 3}
-      propertyPath: changeInputView
-      value: 
+      propertyPath: changeInputViews.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7267535241587019760, guid: 105f4d4be0de147b5b6330cefeee9360, type: 3}
+      propertyPath: changeInputViews.Array.data[0]
+      value:
       objectReference: {fileID: 1611093931831215858}
+    - target: {fileID: 7267535241587019760, guid: 105f4d4be0de147b5b6330cefeee9360, type: 3}
+      propertyPath: changeInputViews.Array.data[1]
+      value:
+      objectReference: {fileID: 7195906195177616731}
     - target: {fileID: 8923827520536609849, guid: 105f4d4be0de147b5b6330cefeee9360, type: 3}
       propertyPath: m_fontSize
       value: 70.65
@@ -873,12 +884,16 @@ PrefabInstance:
     m_TransformParent: {fileID: 1394572742154358061}
     m_Modifications:
     - target: {fileID: 2990754932714152593, guid: a954bbea3c0eb4b57821e9ec51ea60f3, type: 3}
-      propertyPath: changeInputView
-      value: 
+      propertyPath: changeInputViews.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2990754932714152593, guid: a954bbea3c0eb4b57821e9ec51ea60f3, type: 3}
+      propertyPath: changeInputViews.Array.data[0]
+      value:
       objectReference: {fileID: 521766754743932678}
     - target: {fileID: 2990754932714152593, guid: a954bbea3c0eb4b57821e9ec51ea60f3, type: 3}
       propertyPath: disabledGraphic
-      value: 
+      value:
       objectReference: {fileID: 5063504831484570080}
     - target: {fileID: 3931078247452862808, guid: a954bbea3c0eb4b57821e9ec51ea60f3, type: 3}
       propertyPath: m_fontSize
@@ -987,7 +1002,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6fc33b8bcced0440c9f09211f1575b0d, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.UI.CycleSelectorView
 --- !u!1001 &8877877336160820621
 PrefabInstance:
@@ -1091,6 +1106,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 443995319310262977, guid: 8633dad9c22884cb49c8c28aaa932cf0, type: 3}
   m_PrefabInstance: {fileID: 8877877336160820621}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &7195906195177616731 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7195906195177616730, guid: 8633dad9c22884cb49c8c28aaa932cf0, type: 3}
+  m_PrefabInstance: {fileID: 8877877336160820621}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74f054df7684a433690e9e2c8a886872, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.UI.PointerDownInputView
 --- !u!1001 &9138858233724351046
 PrefabInstance:
   m_ObjectHideFlags: 0
