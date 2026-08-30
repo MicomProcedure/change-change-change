@@ -1,6 +1,3 @@
-using System;
-
-
 namespace Ccc.Presentation.Navigation
 {
     /// <summary>
@@ -13,6 +10,9 @@ namespace Ccc.Presentation.Navigation
 
         /// <summary>メインメニューです。</summary>
         MainMenu,
+
+        /// <summary>ゲーム開始条件を選択する画面です。</summary>
+        Stage,
 
         /// <summary>オプション画面です。</summary>
         OptionMenu,
