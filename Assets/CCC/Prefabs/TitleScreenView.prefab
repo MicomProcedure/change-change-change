@@ -46,10 +46,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.Navigation.TitleScreenView
   _titleScreenRoot: {fileID: 0}
   _mainMenuRoot: {fileID: 0}
+  _stageRoot: {fileID: 0}
   _optionMenuRoot: {fileID: 0}
   _creditRoot: {fileID: 0}
   _enterMainMenuButton: {fileID: 0}
-  _difficultySelectionButton: {fileID: 0}
+  _openStageButton: {fileID: 0}
+  _startGameplayButton: {fileID: 0}
   _openOptionButton: {fileID: 0}
   _closeOptionButton: {fileID: 0}
   _openCreditButton: {fileID: 0}
