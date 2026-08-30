@@ -1,0 +1,160 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2cf0c824b9d564c27835a05b78995a8b, type: 3}
+  m_Name: FullTierMissionPreset
+  m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.Assets.MissionPresetAsset
+  entries:
+  - kind: 0
+    parameterA: 0
+    parameterB: 0
+    isNegated: 0
+    tier: 1
+  - kind: 1
+    parameterA: 0
+    parameterB: 0
+    isNegated: 0
+    tier: 1
+  - kind: 2
+    parameterA: 0
+    parameterB: 0
+    isNegated: 0
+    tier: 1
+  - kind: 3
+    parameterA: 0
+    parameterB: 0
+    isNegated: 0
+    tier: 1
+  - kind: 6
+    parameterA: 0
+    parameterB: 0
+    isNegated: 0
+    tier: 1
+  - kind: 4
+    parameterA: 0
+    parameterB: 0
+    isNegated: 0
+    tier: 1
+  - kind: 5
+    parameterA: 0
+    parameterB: 0
+    isNegated: 0
+    tier: 1
+  - kind: 10
+    parameterA: 20
+    parameterB: 0
+    isNegated: 0
+    tier: 2
+  - kind: 11
+    parameterA: -18
+    parameterB: 0
+    isNegated: 0
+    tier: 2
+  - kind: 7
+    parameterA: 0
+    parameterB: 0
+    isNegated: 0
+    tier: 2
+  - kind: 8
+    parameterA: 0
+    parameterB: 0
+    isNegated: 0
+    tier: 2
+  - kind: 9
+    parameterA: 0
+    parameterB: 0
+    isNegated: 0
+    tier: 2
+  - kind: 12
+    parameterA: 4
+    parameterB: 0
+    isNegated: 0
+    tier: 2
+  - kind: 12
+    parameterA: 10
+    parameterB: 0
+    isNegated: 0
+    tier: 2
+  - kind: 12
+    parameterA: -4
+    parameterB: 0
+    isNegated: 0
+    tier: 2
+  - kind: 12
+    parameterA: -9
+    parameterB: 0
+    isNegated: 0
+    tier: 2
+  - kind: 12
+    parameterA: -10
+    parameterB: 0
+    isNegated: 0
+    tier: 2
+  - kind: 13
+    parameterA: 7
+    parameterB: 0
+    isNegated: 0
+    tier: 2
+  - kind: 14
+    parameterA: 3
+    parameterB: 0
+    isNegated: 0
+    tier: 2
+  - kind: 14
+    parameterA: 1
+    parameterB: 0
+    isNegated: 0
+    tier: 2
+  - kind: 15
+    parameterA: 8
+    parameterB: 0
+    isNegated: 0
+    tier: 2
+  - kind: 15
+    parameterA: 2
+    parameterB: 0
+    isNegated: 0
+    tier: 2
+  - kind: 16
+    parameterA: 5
+    parameterB: 0
+    isNegated: 0
+    tier: 3
+  - kind: 16
+    parameterA: 2
+    parameterB: 0
+    isNegated: 0
+    tier: 3
+  - kind: 17
+    parameterA: 12
+    parameterB: 15
+    isNegated: 0
+    tier: 2
+  - kind: 17
+    parameterA: 3
+    parameterB: 5
+    isNegated: 0
+    tier: 1
+  - kind: 17
+    parameterA: -5
+    parameterB: 2
+    isNegated: 0
+    tier: 2
+  - kind: 18
+    parameterA: 3
+    parameterB: 1
+    isNegated: 0
+    tier: 2
+  - kind: 18
+    parameterA: 3
+    parameterB: 2
+    isNegated: 0
+    tier: 2

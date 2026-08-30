@@ -103,23 +103,23 @@ namespace Ccc.Core.Logic
                 // ==========================================
                 // Tier 3 / Tier 4 (将来用拡張)
                 // ==========================================
-                // case MissionKind.Absolute:
-                //     return value.IsInteger && Math.Abs(value.Numerator) == condition.ParameterA;
+                case MissionKind.Absolute:
+                    return value.IsInteger && Math.Abs(value.Numerator) == condition.ParameterA;
 
-                // case MissionKind.OnesDigit:
-                //     return value.IsInteger && Math.Abs(value.Numerator) % 10 == condition.ParameterA;
+                case MissionKind.OnesDigit:
+                    return value.IsInteger && Math.Abs(value.Numerator) % 10 == condition.ParameterA;
 
-                // case MissionKind.Composite:
-                //     // 合成数: 1より大きく素数ではない整数
-                //     return value.IsInteger && value.Numerator > 1 && !IsPrime(value.Numerator);
+                case MissionKind.Composite:
+                    // 合成数: 1より大きく素数ではない整数
+                    return value.IsInteger && value.Numerator > 1 && !IsPrime(value.Numerator);
 
-                // case MissionKind.Modulo:
-                //     // ユークリッド剰余: 0 <= 余り < divisor
-                //     return value.IsInteger && EuclideanModulo(value.Numerator, condition.ParameterA) == condition.ParameterB;
+                case MissionKind.Modulo:
+                    // ユークリッド剰余: 0 <= 余り < divisor
+                    return value.IsInteger && EuclideanModulo(value.Numerator, condition.ParameterA) == condition.ParameterB;
 
-                // case MissionKind.DecimalFirstDigit:
-                //     // 小数第1位（有限小数の筆算方式）
-                //     return !value.IsInteger && (Math.Abs(value.Numerator) * 10 / value.Denominator) % 10 == condition.ParameterA;
+                case MissionKind.DecimalFirstDigit:
+                    // 小数第1位（有限小数の筆算方式）
+                    return !value.IsInteger && (Math.Abs(value.Numerator) * 10 / value.Denominator) % 10 == condition.ParameterA;
 
                 default:
                     throw new ArgumentOutOfRangeException(nameof(condition.Kind), $"Unsupported MissionKind: {condition.Kind}");
