@@ -38,7 +38,7 @@ namespace Ccc.Bootstrap
             }
 
             builder.Register<ISceneNavigator, SceneNavigator>(Lifetime.Singleton);
-            builder.RegisterInstance(new TitleStartRequest(TitleScreenState.TitleScreen));
+            builder.RegisterInstance(new TitleStartRequest(TitleScreenState.MainMenu));
         }
     }
 }
