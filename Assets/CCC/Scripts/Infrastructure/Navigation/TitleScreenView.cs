@@ -22,6 +22,7 @@ namespace Ccc.Infrastructure.Navigation
         [SerializeField] private GameObject _stageRoot;
         [SerializeField] private GameObject _optionMenuRoot;
         [SerializeField] private GameObject _creditRoot;
+        
 
         [Header("ボタン")]
         [SerializeField] private Button _enterMainMenuButton;

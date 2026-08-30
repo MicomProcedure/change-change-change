@@ -4602,7 +4602,7 @@ PrefabInstance:
     - target: {fileID: 261515358696362688, guid: 74ec38daf5b744bed944e3ab4d8af3f6, type: 3}
       propertyPath: _creditRoot
       value: 
-      objectReference: {fileID: 332393994}
+      objectReference: {fileID: 906072963}
     - target: {fileID: 261515358696362688, guid: 74ec38daf5b744bed944e3ab4d8af3f6, type: 3}
       propertyPath: _mainMenuRoot
       value: 
