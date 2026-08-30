@@ -61,6 +61,8 @@ namespace Ccc.Infrastructure.Gameplay
             await canvasGroup
                 .DOFade(0f, animationDurationSeconds)
                 .ToUniTask(TweenCancelBehaviour.KillAndCancelAwait, cancellationToken);
+            canvasGroup.blocksRaycasts = false;
+            gameObject.SetActive(false);
         }
 
         /// <summary>
