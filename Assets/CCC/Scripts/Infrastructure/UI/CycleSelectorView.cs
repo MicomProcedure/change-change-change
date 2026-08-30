@@ -26,6 +26,7 @@ namespace Ccc.Infrastructure.UI
         private IRuntimeMode _runtimeMode;
         private bool _referencesValidated;
         private bool _canFlipAnimate = false;
+        private string _lastValueText;
 
         /// <summary>
         ///     変更要求のイベント。
@@ -117,7 +118,13 @@ namespace Ccc.Infrastructure.UI
                 }
             }
 
-            TryPlayFlipAnimation(state);
+            // ValueTextの変更があった場合のみFlipアニメーションを再生する
+            if (_lastValueText != state.ValueText)
+            {
+                _lastValueText = state.ValueText;
+                TryPlayFlipAnimation(state);
+            }
+
 
             // ApplyDisabledVisualState(state.IsInteractable);
         }
