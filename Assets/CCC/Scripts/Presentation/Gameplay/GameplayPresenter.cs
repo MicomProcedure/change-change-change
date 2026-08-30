@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
 using Ccc.Core.Logic;
@@ -39,8 +38,8 @@ namespace Ccc.Presentation
         private bool _hasExpression;
         private bool _hasTimerSnapshot;
         private bool _isFeedbackRunning;
-        private readonly HashSet<TimeWarningKey> _timeWarningKeys =
-            new HashSet<TimeWarningKey>();
+        private bool _isTimeWarningPlaying;
+        private MissionId _timeWarningMissionId;
         private bool _isStarted;
         private bool _isDisposed;
         private bool _isNavigationInProgress;
@@ -137,6 +136,7 @@ namespace Ccc.Presentation
             _feedbackCancellationSource?.Dispose();
             _feedbackCancellationSource = null;
             _isFeedbackRunning = false;
+            StopTimeWarning();
             _subscriptions.Dispose();
         }
 
@@ -196,11 +196,17 @@ namespace Ccc.Presentation
 
         private void HandleState(GameplayState state)
         {
-            if (_latestState == null ||
-                _latestState.CurrentMission.Id != state.CurrentMission.Id)
+            bool isMissionChanged = _latestState == null ||
+                                    _latestState.CurrentMission.Id != state.CurrentMission.Id;
+            if (isMissionChanged)
             {
                 _hasTimerSnapshot = false;
-                _timeWarningKeys.Clear();
+                StopTimeWarning();
+            }
+
+            if (state.Status != GameplayStatus.Playing)
+            {
+                StopTimeWarning();
             }
 
             _latestState = state;
@@ -223,7 +229,7 @@ namespace Ccc.Presentation
 
             _latestTimerSnapshot = snapshot;
             _hasTimerSnapshot = true;
-            PlayTimeWarningIfNeeded(snapshot);
+            UpdateTimeWarning(snapshot);
             RenderLatestViewState();
         }
 
@@ -253,6 +259,7 @@ namespace Ccc.Presentation
         {
             if (!_isDisposed)
             {
+                StopTimeWarning();
                 _view.ShowFatalError(failure.Message);
             }
         }
@@ -495,59 +502,38 @@ namespace Ccc.Presentation
             }
         }
 
-        private void PlayTimeWarningIfNeeded(SectionTimerSnapshot snapshot)
+        private void UpdateTimeWarning(SectionTimerSnapshot snapshot)
         {
-            if (snapshot.Status != SectionTimerStatus.Running ||
+            if (_latestState == null ||
+                _latestState.Status != GameplayStatus.Playing ||
+                snapshot.Status != SectionTimerStatus.Running ||
                 snapshot.RemainingTime > TimeSpan.FromSeconds(TimeWarningThresholdSeconds))
             {
+                StopTimeWarning();
                 return;
             }
 
-            int remainingSecond = Math.Max(
-                0,
-                (int)Math.Ceiling(snapshot.RemainingTime.TotalSeconds));
-            if (remainingSecond > TimeWarningThresholdSeconds)
+            if (_isTimeWarningPlaying && _timeWarningMissionId == snapshot.MissionId)
             {
                 return;
             }
 
-            if (!_timeWarningKeys.Add(new TimeWarningKey(snapshot.MissionId, remainingSecond)))
-            {
-                return;
-            }
-
-            _audio.PlaySE(AudioKey.SETimeClock);
+            StopTimeWarning();
+            _audio.PlayLoopingSE(AudioKey.SETimeClock);
+            _timeWarningMissionId = snapshot.MissionId;
+            _isTimeWarningPlaying = true;
         }
 
-        private readonly struct TimeWarningKey : IEquatable<TimeWarningKey>
+        private void StopTimeWarning()
         {
-            private readonly MissionId _missionId;
-            private readonly int _remainingSecond;
-
-            public TimeWarningKey(MissionId missionId, int remainingSecond)
+            if (!_isTimeWarningPlaying)
             {
-                _missionId = missionId;
-                _remainingSecond = remainingSecond;
+                return;
             }
 
-            public bool Equals(TimeWarningKey other)
-            {
-                return _missionId == other._missionId &&
-                       _remainingSecond == other._remainingSecond;
-            }
-
-            public override bool Equals(object obj)
-            {
-                return obj is TimeWarningKey other && Equals(other);
-            }
-
-            public override int GetHashCode()
-            {
-                unchecked
-                {
-                    return (_missionId.GetHashCode() * 397) ^ _remainingSecond;
-                }
-            }
+            _audio.StopLoopingSE(AudioKey.SETimeClock);
+            _timeWarningMissionId = default;
+            _isTimeWarningPlaying = false;
         }
 
         private static string FormatOperator(OperatorType @operator)
