@@ -1,6 +1,8 @@
 using System;
 using Ccc.Infrastructure.Navigation;
 using Ccc.Presentation.Audio;
+using Ccc.Presentation.Navigation;
+using R3;
 using VContainer.Unity;
 
 namespace Ccc.Bootstrap
@@ -12,6 +14,8 @@ namespace Ccc.Bootstrap
     {
         private readonly TitleScreenModel _model;
         private readonly IAudioPlayer _audio;
+        private IDisposable _screenSubscription;
+        private TitleScreenState _previousScreen;
 
         /// <summary>
         /// TitleEntryPointを生成します。
@@ -31,6 +35,8 @@ namespace Ccc.Bootstrap
         /// </summary>
         public void Start()
         {
+            _previousScreen = _model.CurrentScreen.CurrentValue;
+            _screenSubscription = _model.CurrentScreen.Subscribe(HandleScreenChanged);
             _audio.PlayBgm(AudioKey.BgmTitle);
         }
 
@@ -39,7 +45,21 @@ namespace Ccc.Bootstrap
         /// </summary>
         public void Dispose()
         {
+            _screenSubscription?.Dispose();
+            _screenSubscription = null;
             _model.Dispose();
+        }
+
+        private void HandleScreenChanged(TitleScreenState currentScreen)
+        {
+            if ((_previousScreen == TitleScreenState.OptionMenu ||
+                 _previousScreen == TitleScreenState.Credit) &&
+                currentScreen == TitleScreenState.MainMenu)
+            {
+                _audio.PlaySE(AudioKey.SECancelClick);
+            }
+
+            _previousScreen = currentScreen;
         }
     }
 }

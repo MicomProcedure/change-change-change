@@ -12,6 +12,13 @@ namespace Ccc.Infrastructure.Audio
     [CreateAssetMenu(menuName = "CCC/Audio Catalog")]
     public sealed class AudioCatalogAsset : ScriptableObject
     {
+        private enum AudioCategory
+        {
+            Unknown = 0,
+            Se = 1,
+            Bgm = 2
+        }
+
         [SerializeField]
         private List<AudioEntry> seEntries = new List<AudioEntry>();
 
@@ -83,42 +90,8 @@ namespace Ccc.Infrastructure.Audio
                 allEntries.AddRange(bgmEntries);
             }
 
-            foreach (var entry in allEntries)
-            {
-                if (entry == null)
-                {
-                    errors.Add("Catalog contains a null entry.");
-                    continue;
-                }
-
-                if (entry.Key == AudioKey.None)
-                {
-                    errors.Add("AudioKey.None is not allowed in the catalog.");
-                }
-
-                if (entry.Clip == null)
-                {
-                    errors.Add($"{entry.Key} has no AudioClip.");
-                }
-
-                if (float.IsNaN(entry.Volume) || float.IsInfinity(entry.Volume) || entry.Volume < 0f || entry.Volume > 1f)
-                {
-                    errors.Add($"{entry.Key} has an invalid volume: {entry.Volume}.");
-                }
-
-                var isSeKey = entry.Key.ToString().StartsWith("SE", StringComparison.Ordinal);
-                var isBgmKey = entry.Key.ToString().StartsWith("Bgm", StringComparison.Ordinal);
-
-                if (isSeKey && (seEntries == null || !seEntries.Contains(entry)))
-                {
-                    errors.Add($"{entry.Key} should be registered in the SE list.");
-                }
-
-                if (isBgmKey && (bgmEntries == null || !bgmEntries.Contains(entry)))
-                {
-                    errors.Add($"{entry.Key} should be registered in the BGM list.");
-                }
-            }
+            ValidateEntries(seEntries, AudioCategory.Se, "SE", errors);
+            ValidateEntries(bgmEntries, AudioCategory.Bgm, "BGM", errors);
 
             foreach (var duplicateGroup in allEntries
                          .Where(entry => entry != null)
@@ -135,14 +108,21 @@ namespace Ccc.Infrastructure.Audio
                     continue;
                 }
 
-                var registeredCount = allEntries.Count(entry => entry != null && entry.Key == key);
-                if (registeredCount == 0)
+                AudioCategory expectedCategory = GetCategory(key);
+                int registeredCount = allEntries.Count(entry => entry != null && entry.Key == key);
+                if (registeredCount != 1)
                 {
-                    errors.Add($"{key} is not registered in any catalog list.");
-                    continue;
+                    if (registeredCount == 0)
+                    {
+                        errors.Add($"{key} is not registered in any catalog list.");
+                    }
+                    else
+                    {
+                        errors.Add($"{key} must be registered exactly once in the catalog.");
+                    }
                 }
 
-                if (key.ToString().StartsWith("SE", StringComparison.Ordinal))
+                if (expectedCategory == AudioCategory.Se)
                 {
                     var seCount = seEntries == null ? 0 : seEntries.Count(entry => entry != null && entry.Key == key);
                     if (seCount != 1)
@@ -151,7 +131,7 @@ namespace Ccc.Infrastructure.Audio
                     }
                 }
 
-                if (key.ToString().StartsWith("Bgm", StringComparison.Ordinal))
+                if (expectedCategory == AudioCategory.Bgm)
                 {
                     var bgmCount = bgmEntries == null ? 0 : bgmEntries.Count(entry => entry != null && entry.Key == key);
                     if (bgmCount != 1)
@@ -162,6 +142,81 @@ namespace Ccc.Infrastructure.Audio
             }
 
             return errors.Distinct().ToArray();
+        }
+
+        private static void ValidateEntries(
+            IReadOnlyList<AudioEntry> entries,
+            AudioCategory expectedCategory,
+            string categoryName,
+            ICollection<string> errors)
+        {
+            if (entries == null)
+            {
+                return;
+            }
+
+            for (int index = 0; index < entries.Count; index++)
+            {
+                AudioEntry entry = entries[index];
+                if (entry == null)
+                {
+                    errors.Add($"{categoryName} list contains a null entry.");
+                    continue;
+                }
+
+                if (entry.Key == AudioKey.None)
+                {
+                    errors.Add("AudioKey.None is not allowed in the catalog.");
+                }
+
+                if (GetCategory(entry.Key) != expectedCategory)
+                {
+                    errors.Add($"{entry.Key} should be registered in the {categoryName} list.");
+                }
+
+                if (entry.Clip == null)
+                {
+                    errors.Add($"{entry.Key} has no AudioClip.");
+                }
+
+                if (!IsValidVolume(entry.Volume))
+                {
+                    errors.Add($"{entry.Key} has an invalid volume: {entry.Volume}.");
+                }
+            }
+        }
+
+        private static AudioCategory GetCategory(AudioKey key)
+        {
+            switch (key)
+            {
+                case AudioKey.BgmTitle:
+                case AudioKey.BgmGameplayNormal:
+                case AudioKey.BgmGameplayDifficult:
+                case AudioKey.BgmResult:
+                    return AudioCategory.Bgm;
+                case AudioKey.SEChangeClick:
+                case AudioKey.SEMissionPresented:
+                case AudioKey.SENormalClick:
+                case AudioKey.SECorrect:
+                case AudioKey.SEWrong:
+                case AudioKey.SETimeClock:
+                case AudioKey.SEGameOver:
+                case AudioKey.SECancelClick:
+                case AudioKey.SeCuntdown:
+                case AudioKey.SEHizimere:
+                    return AudioCategory.Se;
+                default:
+                    return AudioCategory.Unknown;
+            }
+        }
+
+        private static bool IsValidVolume(float volume)
+        {
+            return !float.IsNaN(volume) &&
+                   !float.IsInfinity(volume) &&
+                   volume >= 0f &&
+                   volume <= 1f;
         }
 
         private void LogValidationErrors()

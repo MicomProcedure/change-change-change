@@ -129,6 +129,27 @@ namespace Ccc.Infrastructure.UI
             // ApplyDisabledVisualState(state.IsInteractable);
         }
 
+        /// <summary>
+        /// Selector入力の受付状態を切り替えます。
+        /// </summary>
+        /// <param name="isEnabled">入力を受け付ける場合はtrue。</param>
+        public void SetInputEnabled(bool isEnabled)
+        {
+            if (changeInputViews != null)
+            {
+                for (int index = 0; index < changeInputViews.Count; index++)
+                {
+                    PointerDownInputView changeInputView = changeInputViews[index];
+                    if (changeInputView != null)
+                    {
+                        changeInputView.SetInteractable(isEnabled);
+                    }
+                }
+            }
+
+            ApplyDisabledVisualState(isEnabled);
+        }
+
         private void ValidateSerializedFields()
         {
             if (_referencesValidated)

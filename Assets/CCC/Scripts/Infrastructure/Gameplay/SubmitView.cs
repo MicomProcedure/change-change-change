@@ -17,6 +17,8 @@ namespace Ccc.Infrastructure.Gameplay
         private Subject<GameplayInput> _inputsSubject;
         private PointerDownInputView _submitInputView;
         private IDisposable _submitInputSubscription;
+        private bool _isInputEnabled = true;
+        private bool _isSubmitInteractable;
 
         /// <summary>
         /// 提出入力のストリームを取得します。
@@ -47,15 +49,27 @@ namespace Ccc.Infrastructure.Gameplay
         /// <param name="isInteractable">提出可能かどうか。</param>
         public void Render(bool isInteractable)
         {
+            _isSubmitInteractable = isInteractable;
+            bool canInteract = isInteractable && _isInputEnabled;
             if (_submitButton != null)
             {
-                _submitButton.interactable = isInteractable;
+                _submitButton.interactable = canInteract;
             }
 
             if (_submitInputView != null)
             {
-                _submitInputView.SetInteractable(isInteractable);
+                _submitInputView.SetInteractable(canInteract);
             }
+        }
+
+        /// <summary>
+        /// 提出入力の受付状態を切り替えます。
+        /// </summary>
+        /// <param name="isEnabled">入力を受け付ける場合はtrue。</param>
+        public void SetInputEnabled(bool isEnabled)
+        {
+            _isInputEnabled = isEnabled;
+            Render(_isSubmitInteractable);
         }
 
         private void OnDestroy()
