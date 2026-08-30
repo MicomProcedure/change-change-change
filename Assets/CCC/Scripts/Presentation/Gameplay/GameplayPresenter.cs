@@ -17,7 +17,7 @@ namespace Ccc.Presentation
     public sealed class GameplayPresenter : IDisposable
     {
         private const int TimeWarningThresholdSeconds = 3;
-        private const string HiddenAnswerText = "？";
+        private const string HiddenAnswerText = "?";
 
         private readonly IGameplayFlow _flow;
         private readonly IGameplayView _view;
