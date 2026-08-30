@@ -17,7 +17,7 @@ namespace Ccc.Presentation
     public sealed class GameplayPresenter : IDisposable
     {
         private const int TimeWarningThresholdSeconds = 3;
-        private const string HiddenAnswerText = "？";
+        private const string HiddenAnswerText = "?";
 
         private readonly IGameplayFlow _flow;
         private readonly IGameplayView _view;
@@ -466,12 +466,12 @@ namespace Ccc.Presentation
             string terminationReasonText = FormatTerminationReason(result.TerminationReason);
             string resultText = string.Join(
                 Environment.NewLine,
-                $"終了理由: {terminationReasonText}",
-                $"最後のMission: {lastMissionText}",
-                $"最終式: {finalExpressionText}",
-                $"最終結果: {finalResultText}",
-                $"正解数: {result.CorrectAnswerCount}",
-                $"最終Section: {result.FinalSection}");
+                //$"終了理由: {terminationReasonText}",
+                //$"最後のMission: {lastMissionText}",
+                //$"最終式: {finalExpressionText}",
+                //$"最終結果: {finalResultText}",
+                $"Your Score: {result.CorrectAnswerCount}");
+                //$"最終Section: {result.FinalSection}");
 
             return new GameplayResultViewStateDto(resultText);
         }
