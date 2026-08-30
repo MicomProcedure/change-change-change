@@ -56,6 +56,8 @@ namespace Ccc.Infrastructure.Navigation
             TRequest request)
             where TRequest : class
         {
+            Debug.Log($"[SceneNavigator] LoadSceneAsync: {sceneName} with request: {request}");
+
             if (request == null)
             {
                 throw new ArgumentNullException(nameof(request));

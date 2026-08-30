@@ -130,11 +130,14 @@ namespace Ccc.Infrastructure.Navigation
         {
             ThrowIfDisposed();
 
-            if (_currentScreen.Value != TitleScreenState.MainMenu ||
-                _isBusy.Value)
-            {
-                return;
-            }
+            // if (_currentScreen.Value != TitleScreenState.MainMenu ||
+            //     _isBusy.Value)
+            // {
+            //     Debug.LogWarning(
+            //         "[TitleScreenModel] StartGameplayAsync called in invalid state. " +
+            //         $"CurrentScreen: {_currentScreen.Value}, IsBusy: {_isBusy.Value}");
+            //     return;
+            // }
 
             _errorMessage.Value = string.Empty;
             _isBusy.Value = true;
