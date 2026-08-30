@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using Ccc.Presentation;
 using Cysharp.Threading.Tasks;
 using R3;
@@ -27,7 +26,7 @@ namespace Ccc.Infrastructure.Gameplay
         [SerializeField] private TMP_Text _difficultyText;
 
         [Header("Countdown")]
-        [SerializeField] private TMP_Text _countdownText;
+        [SerializeField] private CountdownView _countdownView;
         [SerializeField] private CanvasGroup _inputBlocker;
 
         private Subject<GameplayInput> _inputsSubject;
@@ -144,21 +143,12 @@ namespace Ccc.Infrastructure.Gameplay
         /// <param name="remainingSeconds">表示する残り秒数。</param>
         public void ShowCountdown(int remainingSeconds)
         {
-            if (remainingSeconds <= 0)
-            {
-                throw new ArgumentOutOfRangeException(
-                    nameof(remainingSeconds),
-                    remainingSeconds,
-                    "Countdown seconds must be positive.");
-            }
-
-            if (_countdownText == null)
+            if (_countdownView == null)
             {
                 return;
             }
 
-            _countdownText.text = remainingSeconds.ToString(CultureInfo.InvariantCulture);
-            _countdownText.gameObject.SetActive(true);
+            _countdownView.ShowCountdown(remainingSeconds);
         }
 
         /// <summary>
@@ -166,13 +156,12 @@ namespace Ccc.Infrastructure.Gameplay
         /// </summary>
         public void HideCountdown()
         {
-            if (_countdownText == null)
+            if (_countdownView == null)
             {
                 return;
             }
 
-            _countdownText.text = string.Empty;
-            _countdownText.gameObject.SetActive(false);
+            _countdownView.HideCountdown();
         }
 
         /// <summary>
@@ -344,7 +333,7 @@ namespace Ccc.Infrastructure.Gameplay
             LogMissingReferenceIfNecessary(_feedbackView, nameof(_feedbackView));
             LogMissingReferenceIfNecessary(_gameModeText, nameof(_gameModeText));
             LogMissingReferenceIfNecessary(_difficultyText, nameof(_difficultyText));
-            LogMissingReferenceIfNecessary(_countdownText, nameof(_countdownText));
+            LogMissingReferenceIfNecessary(_countdownView, nameof(_countdownView));
             LogMissingReferenceIfNecessary(_inputBlocker, nameof(_inputBlocker));
         }
 

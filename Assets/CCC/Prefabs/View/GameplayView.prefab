@@ -223,6 +223,7 @@ GameObject:
   - component: {fileID: 803000000000000002}
   - component: {fileID: 803000000000000009}
   - component: {fileID: 803000000000000003}
+  - component: {fileID: 803000000000000010}
   m_Layer: 5
   m_Name: CountdownText
   m_TagString: Untagged
@@ -349,6 +350,19 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &803000000000000010
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 803000000000000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d0c5fb3f3d64f9aa6bdf3d0c7e64851, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.Gameplay.CountdownView
+  _countdownText: {fileID: 803000000000000003}
 --- !u!1 &803000000000000004
 GameObject:
   m_ObjectHideFlags: 0
@@ -492,7 +506,7 @@ MonoBehaviour:
   _feedbackView: {fileID: 8923899223853996699}
   _gameModeText: {fileID: 0}
   _difficultyText: {fileID: 0}
-  _countdownText: {fileID: 803000000000000003}
+  _countdownView: {fileID: 803000000000000010}
   _inputBlocker: {fileID: 803000000000000008}
 --- !u!1 &3045744979491556323
 GameObject:
