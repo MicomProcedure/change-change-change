@@ -32,7 +32,7 @@ MonoBehaviour:
     parameterA: 0
     parameterB: 0
     isNegated: 0
-    tier: 1
+    tier: 2
   - kind: 6
     parameterA: 0
     parameterB: 0
@@ -68,8 +68,8 @@ MonoBehaviour:
     parameterB: 0
     isNegated: 0
     tier: 2
-  - kind: 9
-    parameterA: 0
+  - kind: 12
+    parameterA: 2
     parameterB: 0
     isNegated: 0
     tier: 2
@@ -153,8 +153,18 @@ MonoBehaviour:
     parameterB: 1
     isNegated: 0
     tier: 2
-  - kind: 18
+  - kind: 12
+    parameterA: 1
+    parameterB: 0
+    isNegated: 0
+    tier: 2
+  - kind: 12
     parameterA: 3
-    parameterB: 2
+    parameterB: 0
+    isNegated: 0
+    tier: 2
+  - kind: 12
+    parameterA: -1
+    parameterB: 0
     isNegated: 0
     tier: 2

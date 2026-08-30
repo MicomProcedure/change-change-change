@@ -23,7 +23,7 @@ MonoBehaviour:
   minimumDurationSeconds: 3
   tierStartSections: 0100000004000000080000000c000000
   showCurrentAnswer: 0
-  minimumExpressionMatchRatio: 0.05
+  minimumExpressionMatchRatio: 0.001
   maximumExpressionMatchRatio: 0.8
   minimumExpressionMatchCount: 2
   zeroAndPrimeMinimumExpressionMatchCount: 1
