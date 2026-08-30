@@ -165,23 +165,23 @@ namespace Ccc.Infrastructure.Navigation
 
         private void RenderScreen(TitleScreenState screenState)
         {
-            SetActiveIfAvailable(
+            RenderScreenRoot(
                 _titleScreenRoot,
                 screenState == TitleScreenState.TitleScreen);
 
-            SetActiveIfAvailable(
+            RenderScreenRoot(
                 _mainMenuRoot,
                 screenState == TitleScreenState.MainMenu);
 
-            SetActiveIfAvailable(
+            RenderScreenRoot(
                 _stageRoot,
                 screenState == TitleScreenState.Stage);
 
-            SetActiveIfAvailable(
+            RenderScreenRoot(
                 _optionMenuRoot,
                 screenState == TitleScreenState.OptionMenu);
 
-            SetActiveIfAvailable(
+            RenderScreenRoot(
                 _creditRoot,
                 screenState == TitleScreenState.Credit);
         }
@@ -321,7 +321,7 @@ namespace Ccc.Infrastructure.Navigation
             get { return _runtimeMode != null && _runtimeMode.IsDebugMode; }
         }
 
-        private static void SetActiveIfAvailable(GameObject target, bool isActive)
+        private static void RenderScreenRoot(GameObject target, bool shouldShow)
         {
             if (target == null)
             {
@@ -330,7 +330,7 @@ namespace Ccc.Infrastructure.Navigation
 
             if (target.GetComponent<PanelScaleAnimation>() is PanelScaleAnimation panelScaleAnimation)
             {
-                if (isActive)
+                if (shouldShow)
                 {
                     panelScaleAnimation.Show();
                 }
@@ -341,7 +341,7 @@ namespace Ccc.Infrastructure.Navigation
                 return;
             }
 
-            target.SetActive(isActive);
+            target.SetActive(shouldShow);
         }
 
         private static void SetInteractableIfAvailable(

@@ -364,12 +364,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95ca08c76bc08764180ba2821e3e007d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Ccc.Infrustracture::PanelScaleAnimation
-  showDuration: 0.4
-  startScale: 0.7
-  showEase: 27
-  hideDuration: 0.3
-  endScale: 0.7
-  hideEase: 26
+  _showDuration: 0.4
+  _startScale: 0.7
+  _showEase: 27
+  _hideDuration: 0.3
+  _endScale: 0.7
+  _hideEase: 26
 --- !u!1 &8605614523531088603
 GameObject:
   m_ObjectHideFlags: 0
