@@ -44,34 +44,34 @@ namespace Ccc.Infrastructure.Gameplay
             FeedbackViewDataDto feedback,
             CancellationToken cancellationToken)
         {
-            if (feedback == null)
-            {
-                throw new ArgumentNullException(nameof(feedback));
-            }
+            // if (feedback == null)
+            // {
+            //     throw new ArgumentNullException(nameof(feedback));
+            // }
 
-            if (_canvasGroup == null)
-            {
-                return;
-            }
+            // if (_canvasGroup == null)
+            // {
+            //     return;
+            // }
 
             cancellationToken.ThrowIfCancellationRequested();
 
             HideResultAnimations();
 
-            gameObject.SetActive(true);
-            _canvasGroup.gameObject.SetActive(true);
+            // gameObject.SetActive(true);
+            // _canvasGroup.gameObject.SetActive(true);
 
-            if (_feedbackText != null)
-            {
-                _feedbackText.text = feedback.IsSuccess
-                    ? $"正解！\n{feedback.AnswerText}"
-                    : $"不正解…\n正解例：{feedback.AnswerText}";
-            }
+            // if (_feedbackText != null)
+            // {
+            //     _feedbackText.text = feedback.IsSuccess
+            //         ? $"正解！\n{feedback.AnswerText}"
+            //         : $"不正解…\n正解例：{feedback.AnswerText}";
+            // }
 
-            _canvasGroup.DOKill();
-            _canvasGroup.alpha = 0f;
-            _canvasGroup.interactable = false;
-            _canvasGroup.blocksRaycasts = false;
+            // _canvasGroup.DOKill();
+            // _canvasGroup.alpha = 0f;
+            // _canvasGroup.interactable = false;
+            // _canvasGroup.blocksRaycasts = false;
 
             try
             {
