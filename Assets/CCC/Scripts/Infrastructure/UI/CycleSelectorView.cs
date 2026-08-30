@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Ccc.Presentation;
 using R3;
 using UnityEngine;
 using UnityEngine.UI;
@@ -21,6 +22,8 @@ namespace Ccc.Infrastructure.UI
 
         private Subject<Unit> _changeRequestedSubject = new();
         private readonly List<IDisposable> _pressedSubscriptions = new();
+        private IRuntimeMode _runtimeMode;
+        private bool _referencesValidated;
 
         /// <summary>
         ///     変更要求のイベント。
@@ -29,16 +32,36 @@ namespace Ccc.Infrastructure.UI
 
         private void Awake()
         {
-            ValidateSerializedFields();
-
             ChangeRequested = _changeRequestedSubject;
+
+            if (changeInputViews == null)
+            {
+                return;
+            }
 
             for (int index = 0; index < changeInputViews.Count; index++)
             {
                 PointerDownInputView changeInputView = changeInputViews[index];
+                if (changeInputView == null)
+                {
+                    continue;
+                }
+
                 _pressedSubscriptions.Add(
                     changeInputView.Pressed.Subscribe(_ => _changeRequestedSubject.OnNext(Unit.Default)));
             }
+        }
+
+        [VContainer.Inject]
+        private void InjectRuntimeMode(IRuntimeMode runtimeMode)
+        {
+            _runtimeMode = runtimeMode;
+            ValidateSerializedFields();
+        }
+
+        private void Start()
+        {
+            ValidateSerializedFields();
         }
 
         private void OnDestroy()
@@ -68,12 +91,15 @@ namespace Ccc.Infrastructure.UI
                 valueText.text = state.ValueText;
             }
 
-            for (int index = 0; index < changeInputViews.Count; index++)
+            if (changeInputViews != null)
             {
-                PointerDownInputView changeInputView = changeInputViews[index];
-                if (changeInputView != null)
+                for (int index = 0; index < changeInputViews.Count; index++)
                 {
-                    changeInputView.SetInteractable(state.IsInteractable);
+                    PointerDownInputView changeInputView = changeInputViews[index];
+                    if (changeInputView != null)
+                    {
+                        changeInputView.SetInteractable(state.IsInteractable);
+                    }
                 }
             }
 
@@ -82,22 +108,29 @@ namespace Ccc.Infrastructure.UI
 
         private void ValidateSerializedFields()
         {
+            if (_referencesValidated)
+            {
+                return;
+            }
+
+            _referencesValidated = true;
             if (valueText == null)
             {
-                throw new InvalidOperationException("CycleSelectorView requires a Text reference.");
+                LogMissingReference("valueText");
             }
 
             if (changeInputViews == null || changeInputViews.Count == 0)
             {
-                throw new InvalidOperationException("CycleSelectorView requires at least one PointerDownInputView reference.");
+                LogMissingReference("changeInputViews");
             }
-
-            for (int index = 0; index < changeInputViews.Count; index++)
+            else
             {
-                if (changeInputViews[index] == null)
+                for (int index = 0; index < changeInputViews.Count; index++)
                 {
-                    throw new InvalidOperationException(
-                        $"CycleSelectorView requires a PointerDownInputView reference at index {index}.");
+                    if (changeInputViews[index] == null)
+                    {
+                        LogMissingReference($"changeInputViews[{index}]");
+                    }
                 }
             }
 
@@ -106,6 +139,23 @@ namespace Ccc.Infrastructure.UI
                 UnityEngine.Debug.LogWarning(
                     "CycleSelectorView has neither a CanvasGroup nor a disabled Graphic for visual feedback. " +
                     "Consider adding one for better user experience.");
+            }
+        }
+
+        private void LogMissingReference(string fieldName)
+        {
+            string message =
+                $"{nameof(CycleSelectorView)}: {fieldName}が未設定です。" +
+                (_runtimeMode != null && _runtimeMode.IsDebugMode
+                    ? "DebugModeのため処理を継続します。"
+                    : "該当するUI入力または表示を無効にして処理を継続します。");
+            if (_runtimeMode != null && _runtimeMode.IsDebugMode)
+            {
+                Debug.LogError(message, this);
+            }
+            else
+            {
+                Debug.LogWarning(message, this);
             }
         }
 

@@ -50,7 +50,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.Gameplay.MissionView
   _sectionText: {fileID: 6262548278640108661}
-  _tierText: {fileID: 0}
   _missionText: {fileID: 3887685224056217541}
 --- !u!1 &4187996788127812712
 GameObject:

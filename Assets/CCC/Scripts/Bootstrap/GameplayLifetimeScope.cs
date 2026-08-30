@@ -46,9 +46,20 @@ namespace Ccc.Bootstrap
                 {
                     MissionTextAsset missionTextAsset =
                         resolver.Resolve<GameplayConfigEntry>().MissionTextAsset;
-                    return missionTextAsset == null
-                        ? new FallbackMissionTextSource()
-                        : missionTextAsset;
+                    if (missionTextAsset != null)
+                    {
+                        return missionTextAsset;
+                    }
+
+                    IRuntimeMode runtimeMode = resolver.Resolve<IRuntimeMode>();
+                    if (!runtimeMode.IsDebugMode)
+                    {
+                        throw new InvalidOperationException(
+                            "GameplayConfigEntry has no MissionTextAsset. " +
+                            "Fallback mission text is available only in DebugMode.");
+                    }
+
+                    return new FallbackMissionTextSource();
                 },
                 Lifetime.Scoped);
 

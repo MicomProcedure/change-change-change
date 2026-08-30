@@ -87,7 +87,7 @@ namespace Ccc.Infrastructure.Gameplay
 
             if (_missionView != null)
             {
-                _missionView.Render(state.Section, state.Tier, state.MissionText);
+                _missionView.Render(state.Section, state.MissionText);
             }
 
             if (_gameModeText != null)

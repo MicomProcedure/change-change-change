@@ -360,7 +360,6 @@ namespace Ccc.Presentation
                 _gameplayRequest.GameMode.ToString(),
                 _gameplayRequest.Difficulty.ToString(),
                 gameplayState.Section,
-                gameplayState.CurrentMission.Tier,
                 gameplayState.Life,
                 missionText,
                 expression.Left.ToString(CultureInfo.InvariantCulture),

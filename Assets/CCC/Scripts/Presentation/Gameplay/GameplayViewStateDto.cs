@@ -23,11 +23,6 @@ namespace Ccc.Presentation
         public int Section { get; }
 
         /// <summary>
-        /// 現在のTierを取得します。
-        /// </summary>
-        public int Tier { get; }
-
-        /// <summary>
         /// 残りLifeを取得します。
         /// </summary>
         public int Life { get; }
@@ -80,10 +75,9 @@ namespace Ccc.Presentation
         /// <summary>
         /// 指定された表示値からGameplay画面の表示状態を生成します。
         /// </summary>
-        /// <param name="section">現在のSection。</param>
         /// <param name="gameModeText">ゲームモード表示文言。</param>
         /// <param name="difficultyText">難易度表示文言。</param>
-        /// <param name="tier">現在のTier。</param>
+        /// <param name="section">現在のSection。</param>
         /// <param name="life">残りLife。</param>
         /// <param name="missionText">ミッションの表示文言。</param>
         /// <param name="leftText">式の左側の表示文言。</param>
@@ -100,7 +94,6 @@ namespace Ccc.Presentation
             string gameModeText,
             string difficultyText,
             int section,
-            int tier,
             int life,
             string missionText,
             string leftText,
@@ -160,7 +153,6 @@ namespace Ccc.Presentation
             GameModeText = gameModeText;
             DifficultyText = difficultyText;
             Section = section;
-            Tier = tier;
             Life = life;
             MissionText = missionText;
             LeftText = leftText;
