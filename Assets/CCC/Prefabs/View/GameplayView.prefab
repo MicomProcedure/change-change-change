@@ -1360,6 +1360,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2399140040760384901, guid: 7e9c0040f812a41eba89d40866b00d6a, type: 3}
+      propertyPath: m_fontSize
+      value: 240
+      objectReference: {fileID: 0}
+    - target: {fileID: 2399140040760384901, guid: 7e9c0040f812a41eba89d40866b00d6a, type: 3}
+      propertyPath: m_fontSizeBase
+      value: 240
+      objectReference: {fileID: 0}
     - target: {fileID: 2399140040760384903, guid: 7e9c0040f812a41eba89d40866b00d6a, type: 3}
       propertyPath: m_Name
       value: CountdownText
@@ -1588,10 +1596,6 @@ PrefabInstance:
     - target: {fileID: 7328130956364682962, guid: 54178c4690343497b9230582e57e03f6, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -262
-      objectReference: {fileID: 0}
-    - target: {fileID: 7842011513924630105, guid: 54178c4690343497b9230582e57e03f6, type: 3}
-      propertyPath: m_Color.a
-      value: 0.11764706
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
