@@ -21,6 +21,7 @@ namespace Ccc.Infrastructure.Gameplay
 
         private readonly List<IDisposable> _inputSubscriptions = new List<IDisposable>();
         private Subject<GameplayInput> _inputsSubject;
+        private bool _isInputEnabled = true;
 
         /// <summary>
         /// 式入力で発生したGameplay入力のストリームを取得します。
@@ -53,14 +54,26 @@ namespace Ccc.Infrastructure.Gameplay
             string answerText,
             bool isInteractable)
         {
-            RenderSelector(_leftNumberView, leftText, isInteractable);
-            RenderSelector(_operatorView, operatorText, isInteractable);
-            RenderSelector(_rightNumberView, rightText, isInteractable);
+            RenderSelector(_leftNumberView, leftText, isInteractable && _isInputEnabled);
+            RenderSelector(_operatorView, operatorText, isInteractable && _isInputEnabled);
+            RenderSelector(_rightNumberView, rightText, isInteractable && _isInputEnabled);
 
             if (_answerText != null)
             {
                 _answerText.text = answerText;
             }
+        }
+
+        /// <summary>
+        /// 式入力の受付状態を切り替えます。
+        /// </summary>
+        /// <param name="isEnabled">入力を受け付ける場合はtrue。</param>
+        public void SetInputEnabled(bool isEnabled)
+        {
+            _isInputEnabled = isEnabled;
+            RenderSelectorInputState(_leftNumberView, isEnabled);
+            RenderSelectorInputState(_operatorView, isEnabled);
+            RenderSelectorInputState(_rightNumberView, isEnabled);
         }
 
         private void ConnectSelectorInputs()
@@ -89,6 +102,16 @@ namespace Ccc.Infrastructure.Gameplay
             if (selector != null)
             {
                 selector.Render(new CycleSelectorStateDto(valueText, isInteractable));
+            }
+        }
+
+        private static void RenderSelectorInputState(
+            CycleSelectorView selector,
+            bool isEnabled)
+        {
+            if (selector != null)
+            {
+                selector.SetInputEnabled(isEnabled);
             }
         }
 

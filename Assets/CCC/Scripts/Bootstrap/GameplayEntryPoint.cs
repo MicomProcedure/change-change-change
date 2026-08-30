@@ -5,6 +5,7 @@ using Ccc.Core.UseCases;
 using Ccc.Infrastructure.Assets;
 using Ccc.Presentation;
 using Ccc.Presentation.Audio;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using VContainer.Unity;
 using NavigationGameplayStartRequest = Ccc.Presentation.Navigation.GameplayNavigationRequest;
@@ -17,12 +18,18 @@ namespace Ccc.Bootstrap
     /// </summary>
     public sealed class GameplayEntryPoint : IStartable, IDisposable
     {
+        private const int CountdownStartSeconds = 3;
+        private const int CountdownEndSeconds = 1;
+        private static readonly TimeSpan CountdownInterval = TimeSpan.FromSeconds(1);
+
         private readonly GameplayStartContext _startContext;
         private readonly IGameplayFlow _flow;
         private readonly GameplayPresenter _presenter;
         private readonly IGameplayView _view;
+        private readonly IGameplayCountdownView _countdownView;
         private readonly IAudioPlayer _audio;
         private readonly IRuntimeMode _runtimeMode;
+        private CancellationTokenSource _startupCancellationSource;
         private bool _isStarted;
         private bool _isDisposed;
 
@@ -33,6 +40,7 @@ namespace Ccc.Bootstrap
         /// <param name="flow">Gameplayフロー。</param>
         /// <param name="presenter">Gameplay Presenter。</param>
         /// <param name="view">Gameplay View。</param>
+        /// <param name="countdownView">Gameplay開始前のCountdown View。</param>
         /// <param name="audio">Audio再生ポート。</param>
         /// <param name="runtimeMode">アプリケーションの実行モード。</param>
         /// <exception cref="ArgumentNullException">依存のいずれかがnullの場合。</exception>
@@ -41,6 +49,7 @@ namespace Ccc.Bootstrap
             IGameplayFlow flow,
             GameplayPresenter presenter,
             IGameplayView view,
+            IGameplayCountdownView countdownView,
             IAudioPlayer audio,
             IRuntimeMode runtimeMode)
         {
@@ -48,6 +57,7 @@ namespace Ccc.Bootstrap
             _flow = flow ?? throw new ArgumentNullException(nameof(flow));
             _presenter = presenter ?? throw new ArgumentNullException(nameof(presenter));
             _view = view ?? throw new ArgumentNullException(nameof(view));
+            _countdownView = countdownView ?? throw new ArgumentNullException(nameof(countdownView));
             _audio = audio ?? throw new ArgumentNullException(nameof(audio));
             _runtimeMode = runtimeMode ?? throw new ArgumentNullException(nameof(runtimeMode));
         }
@@ -66,6 +76,8 @@ namespace Ccc.Bootstrap
             }
 
             _isStarted = true;
+            _countdownView.HideCountdown();
+            _countdownView.SetInputEnabled(false);
             var validationErrors = new List<string>();
             GameplayConfigEntry configEntry = _startContext.ConfigEntry;
             validationErrors.AddRange(configEntry.GameplayConfigAsset.Validate());
@@ -97,22 +109,10 @@ namespace Ccc.Bootstrap
             CancellationToken destroyCancellationToken = viewBehaviour == null
                 ? CancellationToken.None
                 : viewBehaviour.destroyCancellationToken;
-            _presenter.Start(destroyCancellationToken);
-
-            CoreGameplayStartRequest sessionRequest =
-                new CoreGameplayStartRequest(
-                ConvertGameMode(_startContext.Request.GameMode),
-                ConvertDifficulty(_startContext.Request.Difficulty),
-                candidates);
-            GameplayStartResult startResult = _flow.StartSession(sessionRequest);
-            if (!startResult.IsSuccess)
-            {
-                _view.ShowFatalError(startResult.Failure.Message);
-                _presenter.Dispose();
-                return;
-            }
-
             _audio.PlayBgm(AudioKey.BgmGameplayNormal);
+            _startupCancellationSource =
+                CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
+            StartGameplayAsync(candidates, _startupCancellationSource.Token).Forget(HandleAsyncFailure);
         }
 
         /// <summary>
@@ -126,6 +126,9 @@ namespace Ccc.Bootstrap
             }
 
             _isDisposed = true;
+            _startupCancellationSource?.Cancel();
+            _startupCancellationSource?.Dispose();
+            _startupCancellationSource = null;
             _presenter.Dispose();
             if (_flow is IDisposable disposableFlow)
             {
@@ -194,6 +197,68 @@ namespace Ccc.Bootstrap
             {
                 throw new ObjectDisposedException(nameof(GameplayEntryPoint));
             }
+        }
+
+        private async UniTask StartGameplayAsync(
+            IReadOnlyList<Ccc.Core.Model.MissionParameterCandidate> candidates,
+            CancellationToken cancellationToken)
+        {
+            for (int remainingSeconds = CountdownStartSeconds;
+                 remainingSeconds >= CountdownEndSeconds;
+                 remainingSeconds--)
+            {
+                if (_isDisposed)
+                {
+                    return;
+                }
+
+                _countdownView.ShowCountdown(remainingSeconds);
+                if (remainingSeconds == CountdownStartSeconds)
+                {
+                    _audio.PlaySE(AudioKey.SeCuntdown);
+                }
+
+                await UniTask.Delay(
+                    CountdownInterval,
+                    cancellationToken: cancellationToken);
+            }
+
+            if (_isDisposed)
+            {
+                return;
+            }
+
+            _countdownView.HideCountdown();
+            _presenter.Start(cancellationToken);
+
+            CoreGameplayStartRequest sessionRequest =
+                new CoreGameplayStartRequest(
+                    ConvertGameMode(_startContext.Request.GameMode),
+                    ConvertDifficulty(_startContext.Request.Difficulty),
+                    candidates);
+            GameplayStartResult startResult = _flow.StartSession(sessionRequest);
+            if (!startResult.IsSuccess)
+            {
+                _view.ShowFatalError(startResult.Failure.Message);
+                _presenter.Dispose();
+                return;
+            }
+
+            _audio.PlaySE(AudioKey.SEHizimere);
+            _countdownView.SetInputEnabled(true);
+        }
+
+        private void HandleAsyncFailure(Exception exception)
+        {
+            if (_isDisposed || exception is OperationCanceledException)
+            {
+                return;
+            }
+
+            _countdownView.HideCountdown();
+            _countdownView.SetInputEnabled(false);
+            _presenter.Dispose();
+            _view.ShowFatalError($"Gameplay startup failed: {exception.Message}");
         }
 
         private static Ccc.Core.Model.GameMode ConvertGameMode(

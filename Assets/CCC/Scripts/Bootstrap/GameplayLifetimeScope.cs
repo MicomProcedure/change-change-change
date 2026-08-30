@@ -89,7 +89,8 @@ namespace Ccc.Bootstrap
                     resolver.Resolve<MissionTextFormatter>()),
                 Lifetime.Scoped);
 
-            builder.RegisterComponentInHierarchy<GameplayView>().As<IGameplayView>();
+            builder.RegisterComponentInHierarchy<GameplayView>()
+                .As<IGameplayView, IGameplayCountdownView>();
             builder.RegisterEntryPoint<GameplayEntryPoint>();
         }
 

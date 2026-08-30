@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Ccc.Presentation;
 using Cysharp.Threading.Tasks;
 using R3;
@@ -11,7 +12,7 @@ namespace Ccc.Infrastructure.Gameplay
     /// <summary>
     /// Gameplay画面の表示とユーザー入力をPresentationポートへ適合させるViewです。
     /// </summary>
-    public sealed class GameplayView : MonoBehaviour, IGameplayView
+    public sealed class GameplayView : MonoBehaviour, IGameplayView, IGameplayCountdownView
     {
         [Header("Gameplay Views")]
         [SerializeField] private MissionView _missionView;
@@ -25,6 +26,10 @@ namespace Ccc.Infrastructure.Gameplay
         [SerializeField] private TMP_Text _gameModeText;
         [SerializeField] private TMP_Text _difficultyText;
 
+        [Header("Countdown")]
+        [SerializeField] private TMP_Text _countdownText;
+        [SerializeField] private CanvasGroup _inputBlocker;
+
         private Subject<GameplayInput> _inputsSubject;
         private readonly List<IDisposable> _inputSubscriptions = new List<IDisposable>();
         private bool _isDestroyed;
@@ -34,6 +39,8 @@ namespace Ccc.Infrastructure.Gameplay
         private bool _navigationInputConnected;
         private IRuntimeMode _runtimeMode;
         private bool _referencesValidated;
+        private bool _isGameplayInputEnabled;
+        private GameplayViewStateDto _latestState;
 
         /// <summary>
         /// Gameplay画面入力のストリームを取得します。
@@ -47,6 +54,9 @@ namespace Ccc.Infrastructure.Gameplay
         {
             _inputsSubject = new Subject<GameplayInput>();
             Inputs = _inputsSubject;
+            _isGameplayInputEnabled = false;
+            HideCountdown();
+            SetInputEnabled(false);
 
             if (_gameplayNavigationView != null)
             {
@@ -85,6 +95,8 @@ namespace Ccc.Infrastructure.Gameplay
                 throw new ArgumentNullException(nameof(state));
             }
 
+            _latestState = state;
+
             if (_missionView != null)
             {
                 _missionView.Render(state.Section, state.MissionText);
@@ -117,12 +129,80 @@ namespace Ccc.Infrastructure.Gameplay
                     state.OperatorText,
                     state.RightText,
                     state.AnswerText,
-                    state.CanSubmit);
+                    state.CanSubmit && _isGameplayInputEnabled);
             }
 
             if (_submitView != null)
             {
-                _submitView.Render(state.CanSubmit);
+                _submitView.Render(state.CanSubmit && _isGameplayInputEnabled);
+            }
+        }
+
+        /// <summary>
+        /// Countdownの残り秒数を中央に表示します。
+        /// </summary>
+        /// <param name="remainingSeconds">表示する残り秒数。</param>
+        public void ShowCountdown(int remainingSeconds)
+        {
+            if (remainingSeconds <= 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(remainingSeconds),
+                    remainingSeconds,
+                    "Countdown seconds must be positive.");
+            }
+
+            if (_countdownText == null)
+            {
+                return;
+            }
+
+            _countdownText.text = remainingSeconds.ToString(CultureInfo.InvariantCulture);
+            _countdownText.gameObject.SetActive(true);
+        }
+
+        /// <summary>
+        /// Countdown表示を非表示にします。
+        /// </summary>
+        public void HideCountdown()
+        {
+            if (_countdownText == null)
+            {
+                return;
+            }
+
+            _countdownText.text = string.Empty;
+            _countdownText.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// Gameplay入力の受付状態と入力ブロックUIを更新します。
+        /// </summary>
+        /// <param name="isEnabled">入力を受け付ける場合はtrue。</param>
+        public void SetInputEnabled(bool isEnabled)
+        {
+            _isGameplayInputEnabled = isEnabled;
+
+            if (_inputBlocker != null)
+            {
+                _inputBlocker.alpha = 0f;
+                _inputBlocker.interactable = false;
+                _inputBlocker.blocksRaycasts = !isEnabled;
+            }
+
+            if (_expressionView != null)
+            {
+                _expressionView.SetInputEnabled(isEnabled);
+            }
+
+            if (_submitView != null)
+            {
+                _submitView.SetInputEnabled(isEnabled);
+            }
+
+            if (_latestState != null)
+            {
+                Render(_latestState);
             }
         }
 
@@ -264,6 +344,8 @@ namespace Ccc.Infrastructure.Gameplay
             LogMissingReferenceIfNecessary(_feedbackView, nameof(_feedbackView));
             LogMissingReferenceIfNecessary(_gameModeText, nameof(_gameModeText));
             LogMissingReferenceIfNecessary(_difficultyText, nameof(_difficultyText));
+            LogMissingReferenceIfNecessary(_countdownText, nameof(_countdownText));
+            LogMissingReferenceIfNecessary(_inputBlocker, nameof(_inputBlocker));
         }
 
         private void LogMissingReferenceIfNecessary(
@@ -302,8 +384,16 @@ namespace Ccc.Infrastructure.Gameplay
                 return false;
             }
 
-            _inputSubscriptions.Add(inputStream.Subscribe(input => _inputsSubject.OnNext(input)));
+            _inputSubscriptions.Add(inputStream.Subscribe(ForwardInput));
             return true;
+        }
+
+        private void ForwardInput(GameplayInput input)
+        {
+            if (_isGameplayInputEnabled && _inputsSubject != null)
+            {
+                _inputsSubject.OnNext(input);
+            }
         }
     }
 }
