@@ -222,6 +222,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5238326301545750790}
   - component: {fileID: 3960598941001036360}
+  - component: {fileID: 3214611552013863482}
   m_Layer: 5
   m_Name: CycleSelectorView
   m_TagString: Untagged
@@ -266,3 +267,19 @@ MonoBehaviour:
   changeInputViews: []
   interactionCanvasGroup: {fileID: 0}
   disabledGraphic: {fileID: 491042019446335259}
+  flipAnimation: {fileID: 3214611552013863482}
+--- !u!114 &3214611552013863482
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9036434565173111914}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68e26b809a5bd9049a25fefafff7c2ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.UI.CardFlipAnimation
+  duration: 0.08
+  ease: 1
+  pivot: {x: 0.5, y: 0.5}

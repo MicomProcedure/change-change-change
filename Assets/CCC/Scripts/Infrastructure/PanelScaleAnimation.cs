@@ -1,81 +1,139 @@
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class PanelScaleAnimation : MonoBehaviour
 {
     [Header("表示")]
-    [SerializeField] private float showDuration = 0.4f;
-    [SerializeField] private float startScale = 0.7f;
-    [SerializeField] private Ease showEase = Ease.OutBack;
+    [FormerlySerializedAs("showDuration")]
+    [SerializeField] private float _showDuration = 0.4f;
+
+    [FormerlySerializedAs("startScale")]
+    [SerializeField] private float _startScale = 0.7f;
+
+    [FormerlySerializedAs("showEase")]
+    [SerializeField] private Ease _showEase = Ease.OutBack;
 
     [Header("消去")]
-    [SerializeField] private float hideDuration = 0.3f;
-    [SerializeField] private float endScale = 0.7f;
-    [SerializeField] private Ease hideEase = Ease.InBack;
+    [FormerlySerializedAs("hideDuration")]
+    [SerializeField] private float _hideDuration = 0.3f;
 
-    private CanvasGroup canvasGroup;
-    private Vector3 defaultScale;
+    [FormerlySerializedAs("endScale")]
+    [SerializeField] private float _endScale = 0.7f;
 
-    public bool IsShowing { get; private set; }
+    [FormerlySerializedAs("hideEase")]
+    [SerializeField] private Ease _hideEase = Ease.InBack;
+
+    private CanvasGroup _canvasGroup;
+    private Vector3 _defaultScale;
+    private bool _isInitialized;
+    private bool _isHiding;
 
     /// <summary>
-    /// PanelManagerから呼び出して初期化する
+    /// パネルが表示状態へ遷移中または表示済みかどうかを取得します。
     /// </summary>
-    public void Initialize()
+    public bool IsShowing { get; private set; }
+
+    private void Awake()
     {
-        defaultScale = transform.localScale;
-
-        canvasGroup = GetComponent<CanvasGroup>();
-
-        if (canvasGroup == null)
-        {
-            canvasGroup = gameObject.AddComponent<CanvasGroup>();
-        }
+        EnsureInitialized();
     }
 
+    /// <summary>
+    /// パネルを表示し、表示アニメーションを再生します。
+    /// </summary>
     public void Show()
     {
+        EnsureInitialized();
+
+        if (IsShowing && gameObject.activeSelf)
+        {
+            return;
+        }
+
         gameObject.SetActive(true);
 
-        transform.DOKill();
-        canvasGroup.DOKill();
+        KillAnimation();
+        _isHiding = false;
 
-        transform.localScale = defaultScale * startScale;
-        canvasGroup.alpha = 0f;
+        transform.localScale = _defaultScale * _startScale;
+        _canvasGroup.alpha = 0f;
 
         transform
-            .DOScale(defaultScale, showDuration)
-            .SetEase(showEase);
+            .DOScale(_defaultScale, _showDuration)
+            .SetEase(_showEase);
 
-        canvasGroup
-            .DOFade(1f, showDuration)
+        _canvasGroup
+            .DOFade(1f, _showDuration)
             .SetEase(Ease.OutQuad);
 
         IsShowing = true;
     }
 
+    /// <summary>
+    /// パネルを非表示にし、非表示アニメーションを再生します。
+    /// </summary>
     public void Hide()
     {
-        transform.DOKill();
-        canvasGroup.DOKill();
+        EnsureInitialized();
+
+        if (!gameObject.activeSelf)
+        {
+            IsShowing = false;
+            _isHiding = false;
+            return;
+        }
+
+        if (_isHiding)
+        {
+            return;
+        }
+
+        KillAnimation();
+        IsShowing = false;
+        _isHiding = true;
 
         transform
-            .DOScale(defaultScale * endScale, hideDuration)
-            .SetEase(hideEase);
+            .DOScale(_defaultScale * _endScale, _hideDuration)
+            .SetEase(_hideEase);
 
-        canvasGroup
-            .DOFade(0f, hideDuration)
-            .SetEase(hideEase)
+        _canvasGroup
+            .DOFade(0f, _hideDuration)
+            .SetEase(_hideEase)
             .OnComplete(() =>
             {
+                _isHiding = false;
                 gameObject.SetActive(false);
-                IsShowing = false;
             });
+    }
+
+    private void EnsureInitialized()
+    {
+        if (_isInitialized)
+        {
+            return;
+        }
+
+        _defaultScale = transform.localScale;
+        _canvasGroup = GetComponent<CanvasGroup>();
+
+        if (_canvasGroup == null)
+        {
+            _canvasGroup = gameObject.AddComponent<CanvasGroup>();
+        }
+
+        _isInitialized = true;
+    }
+
+    private void KillAnimation()
+    {
+        transform.DOKill();
+        _canvasGroup.DOKill();
     }
 
     private void OnDestroy()
     {
         transform.DOKill();
-        canvasGroup?.DOKill();
+        _canvasGroup?.DOKill();
     }
 }

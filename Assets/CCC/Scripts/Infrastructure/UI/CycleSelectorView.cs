@@ -19,11 +19,13 @@ namespace Ccc.Infrastructure.UI
         [Tooltip("入力受付可否の視覚的なフィードバックをCanvasGroupで設定する場合はこちらを利用。")]
         [SerializeField] private CanvasGroup interactionCanvasGroup;
         [SerializeField] private Graphic disabledGraphic;
+        [SerializeField] private CardFlipAnimation flipAnimation;
 
         private Subject<Unit> _changeRequestedSubject = new();
         private readonly List<IDisposable> _pressedSubscriptions = new();
         private IRuntimeMode _runtimeMode;
         private bool _referencesValidated;
+        private bool _canFlipAnimate = false;
 
         /// <summary>
         ///     変更要求のイベント。
@@ -49,6 +51,18 @@ namespace Ccc.Infrastructure.UI
 
                 _pressedSubscriptions.Add(
                     changeInputView.Pressed.Subscribe(_ => _changeRequestedSubject.OnNext(Unit.Default)));
+            }
+
+            if (flipAnimation == null)
+            {
+                Debug.LogWarning(
+                    $"{nameof(CycleSelectorView)}: {nameof(flipAnimation)}が未設定です。Flipアニメーションは再生されません。",
+                    this);
+                _canFlipAnimate = false;
+            }
+            else
+            {
+                _canFlipAnimate = true;
             }
         }
 
@@ -103,7 +117,9 @@ namespace Ccc.Infrastructure.UI
                 }
             }
 
-            ApplyDisabledVisualState(state.IsInteractable);
+            TryPlayFlipAnimation(state);
+
+            // ApplyDisabledVisualState(state.IsInteractable);
         }
 
         private void ValidateSerializedFields()
@@ -173,6 +189,14 @@ namespace Ccc.Infrastructure.UI
                 var color = disabledGraphic.color;
                 color.a = isInteractable ? 1f : 0.4f;
                 disabledGraphic.color = color;
+            }
+        }
+
+        private void TryPlayFlipAnimation(CycleSelectorStateDto state)
+        {
+            if (_canFlipAnimate)
+            {
+                flipAnimation.Play();
             }
         }
     }
