@@ -11,7 +11,7 @@ namespace Ccc.Infrastructure.Gameplay
     public sealed class LifeView : MonoBehaviour
     {
         [SerializeField] private TMP_Text _lifeText;
-        [SerializeField] private List<Image> _lifeImages;
+        [SerializeField] private List<GameObject> _sprites;
 
         private void Awake()
         {
@@ -34,29 +34,29 @@ namespace Ccc.Infrastructure.Gameplay
                 _lifeText.text = life.ToString();
             }
 
-            if (_lifeImages == null || _lifeImages.Count == 0)
+            if (_sprites == null || _sprites.Count == 0)
             {
                 return;
             }
 
-            if (life > _lifeImages.Count)
+            if (life > _sprites.Count)
             {
                 throw new System.ArgumentOutOfRangeException(
                     nameof(life),
                     life,
-                    $"LifeView: Render called with life={life}, but only {_lifeImages.Count} images are available.");
+                    $"LifeView: Render called with life={life}, but only {_sprites.Count} images are available.");
             }
 
-            for (int index = 0; index < _lifeImages.Count; index++)
+            for (int index = 0; index < _sprites.Count; index++)
             {
-                Image lifeImage = _lifeImages[index];
-                if (lifeImage == null)
+                GameObject sprite = _sprites[index];
+                if (sprite == null)
                 {
                     continue;
                 }
 
                 bool isEnabled = index < life;
-                lifeImage.gameObject.SetActive(isEnabled);
+                sprite.SetActive(isEnabled);
             }
         }
     }
