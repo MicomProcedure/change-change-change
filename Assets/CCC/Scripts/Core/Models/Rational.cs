@@ -79,7 +79,7 @@ namespace Ccc.Core.Model
                 scaleFactor *= 10m;
             }
 
-            long numerator = checked((long)(decimal.Abs(value) * scaleFactor));
+            long numerator = checked((long)(Math.Abs(value) * scaleFactor));
             if (isNegative)
             {
                 numerator = checked(-numerator);

@@ -8,6 +8,7 @@ using Ccc.Infrastructure.Random;
 using Ccc.Infrastructure.Time;
 using Ccc.Infrastructure.Navigation;
 using Ccc.Infrastructure.Gameplay;
+using Ccc.Presentation.Audio;
 using Ccc.Presentation;
 using Ccc.Presentation.Navigation;
 using UnityEngine;
@@ -111,7 +112,7 @@ namespace Ccc.Bootstrap
                     string.Join(" | ", catalogErrors));
             }
 
-            NavigationGameplayStartRequest request;
+            GameplayNavigationRequest request;
             if (!resolver.TryResolve(out request))
             {
                 request = configCatalogAsset.CreateDefaultRequest();
