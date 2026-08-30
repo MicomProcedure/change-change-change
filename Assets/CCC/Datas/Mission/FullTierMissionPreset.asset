@@ -68,11 +68,6 @@ MonoBehaviour:
     parameterB: 0
     isNegated: 0
     tier: 2
-  - kind: 9
-    parameterA: 0
-    parameterB: 0
-    isNegated: 0
-    tier: 2
   - kind: 12
     parameterA: 4
     parameterB: 0
