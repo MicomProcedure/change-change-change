@@ -19,14 +19,16 @@ namespace Ccc.Infrastructure.Navigation
         [Header("画面Root")]
         [SerializeField] private GameObject _titleScreenRoot;
         [SerializeField] private GameObject _mainMenuRoot;
+        [SerializeField] private GameObject _stageRoot;
         [SerializeField] private GameObject _optionMenuRoot;
         [SerializeField] private GameObject _creditRoot;
 
         [Header("ボタン")]
         [SerializeField] private Button _enterMainMenuButton;
+        [SerializeField] private Button _openStageButton;
 
-        [FormerlySerializedAs("_startGameplayButton")]
-        [SerializeField] private Button _difficultySelectionButton;
+        [FormerlySerializedAs("_difficultySelectionButton")]
+        [SerializeField] private Button _startGameplayButton;
 
         [SerializeField] private Button _openOptionButton;
         [SerializeField] private Button _closeOptionButton;
@@ -62,9 +64,14 @@ namespace Ccc.Infrastructure.Navigation
                 _enterMainMenuButton.onClick.AddListener(_model.EnterMainMenu);
             }
 
-            if (_difficultySelectionButton != null)
+            if (_startGameplayButton != null)
             {
-                _difficultySelectionButton.onClick.AddListener(HandleStartGameplay);
+                _startGameplayButton.onClick.AddListener(HandleStartGameplay);
+            }
+
+            if (_openStageButton != null)
+            {
+                _openStageButton.onClick.AddListener(_model.OpenStage);
             }
 
             if (_openOptionButton != null)
@@ -120,10 +127,15 @@ namespace Ccc.Infrastructure.Navigation
                     _model.EnterMainMenu);
             }
 
-            if (_difficultySelectionButton != null)
+            if (_startGameplayButton != null)
             {
-                _difficultySelectionButton.onClick.RemoveListener(
+                _startGameplayButton.onClick.RemoveListener(
                     HandleStartGameplay);
+            }
+
+            if (_openStageButton != null)
+            {
+                _openStageButton.onClick.RemoveListener(_model.OpenStage);
             }
 
             if (_openOptionButton != null)
@@ -153,19 +165,23 @@ namespace Ccc.Infrastructure.Navigation
 
         private void RenderScreen(TitleScreenState screenState)
         {
-            SetActiveIfAvailable(
+            RenderScreenRoot(
                 _titleScreenRoot,
                 screenState == TitleScreenState.TitleScreen);
 
-            SetActiveIfAvailable(
+            RenderScreenRoot(
                 _mainMenuRoot,
                 screenState == TitleScreenState.MainMenu);
 
-            SetActiveIfAvailable(
+            RenderScreenRoot(
+                _stageRoot,
+                screenState == TitleScreenState.Stage);
+
+            RenderScreenRoot(
                 _optionMenuRoot,
                 screenState == TitleScreenState.OptionMenu);
 
-            SetActiveIfAvailable(
+            RenderScreenRoot(
                 _creditRoot,
                 screenState == TitleScreenState.Credit);
         }
@@ -175,7 +191,8 @@ namespace Ccc.Infrastructure.Navigation
             bool isInteractable = !isBusy;
 
             SetInteractableIfAvailable(_enterMainMenuButton, isInteractable);
-            SetInteractableIfAvailable(_difficultySelectionButton, isInteractable);
+            SetInteractableIfAvailable(_openStageButton, isInteractable);
+            SetInteractableIfAvailable(_startGameplayButton, isInteractable);
             SetInteractableIfAvailable(_openOptionButton, isInteractable);
             SetInteractableIfAvailable(_closeOptionButton, isInteractable);
             SetInteractableIfAvailable(_openCreditButton, isInteractable);
@@ -223,6 +240,11 @@ namespace Ccc.Infrastructure.Navigation
                 LogMissingReference(nameof(_mainMenuRoot));
             }
 
+            if (_stageRoot == null)
+            {
+                LogMissingReference(nameof(_stageRoot));
+            }
+
             if (_optionMenuRoot == null)
             {
                 LogMissingReference(nameof(_optionMenuRoot));
@@ -238,9 +260,14 @@ namespace Ccc.Infrastructure.Navigation
                 LogMissingReference(nameof(_enterMainMenuButton));
             }
 
-            if (_difficultySelectionButton == null)
+            if (_openStageButton == null)
             {
-                LogMissingReference(nameof(_difficultySelectionButton));
+                LogMissingReference(nameof(_openStageButton));
+            }
+
+            if (_startGameplayButton == null)
+            {
+                LogMissingReference(nameof(_startGameplayButton));
             }
 
             if (_openOptionButton == null)
@@ -294,12 +321,27 @@ namespace Ccc.Infrastructure.Navigation
             get { return _runtimeMode != null && _runtimeMode.IsDebugMode; }
         }
 
-        private static void SetActiveIfAvailable(GameObject target, bool isActive)
+        private static void RenderScreenRoot(GameObject target, bool shouldShow)
         {
-            if (target != null)
+            if (target == null)
             {
-                target.SetActive(isActive);
+                return;
             }
+
+            if (target.GetComponent<PanelScaleAnimation>() is PanelScaleAnimation panelScaleAnimation)
+            {
+                if (shouldShow)
+                {
+                    panelScaleAnimation.Show();
+                }
+                else
+                {
+                    panelScaleAnimation.Hide();
+                }
+                return;
+            }
+
+            target.SetActive(shouldShow);
         }
 
         private static void SetInteractableIfAvailable(

@@ -94,6 +94,16 @@ namespace Ccc.Infrastructure.Navigation
         }
 
         /// <summary>
+        /// MainMenuからStageへ遷移します。
+        /// </summary>
+        public void OpenStage()
+        {
+            ChangeScreen(
+                TitleScreenState.MainMenu,
+                TitleScreenState.Stage);
+        }
+
+        /// <summary>
         /// OptionMenuからMainMenuへ戻ります。
         /// </summary>
         public void CloseOptionMenu()
@@ -124,20 +134,17 @@ namespace Ccc.Infrastructure.Navigation
         }
 
         /// <summary>
-        /// MainMenuからGameSceneを開始します。
+        /// StageからGameSceneを開始します。
         /// </summary>
         public async UniTask StartGameplayAsync()
         {
             ThrowIfDisposed();
 
-            // if (_currentScreen.Value != TitleScreenState.MainMenu ||
-            //     _isBusy.Value)
-            // {
-            //     Debug.LogWarning(
-            //         "[TitleScreenModel] StartGameplayAsync called in invalid state. " +
-            //         $"CurrentScreen: {_currentScreen.Value}, IsBusy: {_isBusy.Value}");
-            //     return;
-            // }
+            if (_currentScreen.Value != TitleScreenState.Stage ||
+                _isBusy.Value)
+            {
+                return;
+            }
 
             _errorMessage.Value = string.Empty;
             _isBusy.Value = true;
