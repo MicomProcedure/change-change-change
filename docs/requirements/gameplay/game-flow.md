@@ -1,12 +1,8 @@
 # ゲーム進行
 
 > [ドキュメント一覧](../../README.md) / 区分: 要件
->
-> 正本: [Cosense「ゲーム進行」](https://scrapbox.io/proto-TeamL/%E3%82%B2%E3%83%BC%E3%83%A0%E9%80%B2%E8%A1%8C)
-> 取得時点の原文更新日時: 2026-08-26T05:28:04.000Z
 
-
-[CCC要件書](../overview.md)から分離した、Session、Section、Mission準備、Mission抽選、Submit、Life、Tier、タイマーの仕様。
+[CCC要件書](../overview.md)から分離した、セッション（Session）、セクション（Section）、ミッション準備・抽選、提出（Submit）、ライフ（Life）、Tier（ティア）、タイマーの進行仕様について説明する。
 
 ## ゲーム全体の基本ループ
 
@@ -29,78 +25,68 @@ flowchart TD
  M -->|はい| N[結果画面]
 ```
 
-MissionCatalogの準備はGameplay開始時に1回だけ行う。
-Missionの抽選は各Section開始時と、失敗後に同じSectionで再出題するときに行う。
-式が途中でMissionを満たしても自動クリアしない。
-Submitまたは時間切れで確定した瞬間のCurrentExpressionだけを回答として使う。
+- **`MissionCatalog` の準備**: Gameplay 開始時に1回だけ実行すること。
+- **ミッションの抽選**: 各 Section 開始時、および解答失敗後に同じ Section で再出題するタイミングで実行すること。
+- **判定のタイミング**: 操作の途中で式がミッションの条件を満たしても自動クリアはしないこと。手動での `Submit` または時間切れによって確定した瞬間の `CurrentExpression` のみを回答として判定すること。
 
 ## Gameplay開始時のMissionCatalog準備
 
-この段階では実際に出題するMissionを選ばない。
+この段階では、実際に出題するミッションの選出は行わない。
 
-- 1. ゲームモードとGameDifficultyからSession設定を確定する。
-- 2. 数字範囲内の正常なExpressionCandidateを列挙する。
-- 3. 実装段階に対応するMissionパラメータ候補を取得する。
-- 4. 各候補をすべての正常なExpressionCandidateで評価する。
-- 5. 式適合割合と最小適合式数の条件を通過した候補だけをMissionCatalogへ登録する。
-- 6. TierとKindから抽選できる状態に整理する。
+1. ゲームモードおよび `GameDifficulty` から Session 設定を確定すること。
+2. 数字範囲内の正常な式候補（`ExpressionCandidate`）をすべて列挙すること。
+3. 実装段階に対応するミッションパラメータ候補を取得すること。
+4. 各候補をすべての正常な `ExpressionCandidate` で評価すること。
+5. 式適合割合（`MatchRatio`）および最小適合式数の条件をクリアした候補のみを `MissionCatalog` に登録すること。
+6. Tier と Kind ごとに抽選可能な状態へ分類・整理すること。
 
-簡易版では[Missionパラメータ候補プリセット](../missions/candidate-presets.md)に用意された候補だけを評価する。
-簡易版ではパラメータ候補を自動生成しない。
-本実装版では到達可能な結果からパラメータ候補を生成できる。
-共通の成立条件は[Missionカタログ・抽選内部仕様](../missions/catalog-and-draw.md)に定義する。
+> [!NOTE]
+> 簡易版では [Missionパラメータ候補プリセット](../missions/candidate-presets.md) に定義された候補のみを評価し、自動生成は行わないこと。本実装版では到達可能な結果からパラメータ候補を動的生成可能とする。共通の成立条件については [Missionカタログ・抽選内部仕様](../missions/catalog-and-draw.md) を参照すること。
 
 ## 簡易版：Session中のMission抽選
 
-最初の完成対象では次の手順だけを実装する。
+初回実装フェーズでは、以下の手順で抽選を行うこと。
 
-- 1. Sectionから現在Tierと解放済みの下位Tierを求める。
-- 2. 現在Tierを相対重み0.60、下位Tier全体を相対重み0.40としてTierを選ぶ。
-- 3. 選ばれたTierで候補が存在するKindを一様に選ぶ。
-- 4. 選ばれたKindのパラメータ候補を一様に選ぶ。
-- 5. 選ばれたMissionに新しいMissionIdを採番する。
+1. 現在の Section から、該当する Tier（現在Tier）および解放済みの下位 Tier を求めること。
+2. 現在 Tier の相対重みを `0.60`、解放済み下位 Tier 全体の相対重みを `0.40` として対象 Tier を抽選すること。
+3. 選択された Tier 内で候補が存在する Kind を一律（等確率）に選定すること。
+4. 選ばれた Kind 内のパラメータ候補を等確率で1つ決定すること。
+5. 決定されたミッションに対して新しい `MissionId` を採番すること。
 
-簡易版のMission抽選はCurrentExpressionを参照しない。
-簡易版のMission抽選は直前のMissionと出題履歴を参照しない。
-簡易版ではNegatedMissionを生成も抽選もしない。
-簡易版では複合Missionを生成も抽選もしない。
-候補が0件のTierまたはKindは抽選母集団から除外する。
-利用可能なMission候補が全体で0件の場合は設定エラーとしてGameplayを開始しない。
+※簡易版のミッション抽選では、`CurrentExpression` や直前の出題履歴・ミッションを参照しないこと。また、`NegatedMission` や複合ミッションの生成・抽選も行わないこと。
+※候補が0件の Tier や Kind は抽選対象から除外すること。利用可能なミッション候補が全体で0件の場合は設定エラーとし、Gameplay を開始しないこと。
 
 ## 本実装版：Session中のMission抽選
 
-本実装版へ置き換えるときは次の条件を追加する。
+本実装版に拡張する際は、以下のステップと条件を追加すること。
 
-- 1. CurrentExpressionでは未達成となるMission候補だけを抽出する。
-- 2. 現在Tierと下位Tierを相対重み0.60／0.40で選ぶ。
-- 3. 肯定MissionとNegatedMissionを相対重みで選ぶ。
-- 4. 代替候補がある場合は直前と同じKindかつ同じパラメータを除外する。
-- 5. 候補が存在するKindを一様に選ぶ。
-- 6. 選ばれたKindの候補をTargetExpressionMatchRatioとの差で順位付けする。
-- 7. 上位候補群から1件を抽選する。
-- 8. 選ばれたMissionに新しいMissionIdを採番する。
+1. 現在の `CurrentExpression` では未達成となるミッション候補のみを抽出すること。
+2. 現在 Tier と下位 Tier を相対重み `0.60` / `0.40` で選定すること。
+3. 肯定ミッションと反転ミッション（`NegatedMission`）をそれぞれの相対重みに従って選択すること。
+4. 代替候補が存在する場合は、直前と同じ Kind かつ同じパラメータの組み合わせを除外すること（連続出題防止）。
+5. 候補が存在する Kind を一様（等確率）に選定すること。
+6. 選択された Kind の候補を `TargetExpressionMatchRatio` との差分によって順位付けすること。
+7. 上位候補群の中から1件をランダム抽選すること。
+8. 決定されたミッションに新しい `MissionId` を採番すること。
 
-Negatedの有無だけが異なる候補は、連続出題回避上の同種に含めない。
-途中で候補が0件になった場合は、追加した条件を逆順に緩和する。
-条件緩和の厳密な順序と上位候補群の大きさは、本実装着手前にConfigとして確定する。
-詳細は[Missionカタログ・抽選内部仕様](../missions/catalog-and-draw.md)を参照する。
+※`Negated` の有無のみが異なる候補は、連続出題防止上の同一種類とはみなさないこと。
+※途中で候補が0件になった場合は、追加した制約条件を逆順に緩和すること。条件緩和の厳密な順序や上位候補群のサイズは、本実装着手前に Config 設定として確定すること。詳細は [Missionカタログ・抽選内部仕様](../missions/catalog-and-draw.md) を参照すること。
 
 ## Sessionと初期式
 
-Gameplay開始時または再挑戦時に新しいSessionを開始する。
-Session開始時の式は 1 + 1 とし、数字範囲に1が含まれない場合は1に最も近い数字を使用する。
+Gameplay 開始時またはリトライ（再挑戦）時に新しい Session を開始すること。 Session 開始直後の初期式は `1 + 1` とするが、指定された数字範囲に `1` が含まれない場合は `1` に最も近い数字を使用すること。
 
-| 数字範囲 | 第1SectionのCurrentExpression |
+| 数字範囲 | 第1Sectionの CurrentExpression |
 | --- | --- |
-| 1〜5 | 1 + 1 |
-| 2〜5 | 2 + 2 |
-| -5〜-2 | -2 + -2 |
-| -1〜1 | 1 + 1 |
+| 1〜5 | `1 + 1` |
+| 2〜5 | `2 + 2` |
+| -5〜-2 | `-2 + -2` |
+| -1〜1 | `1 + 1` |
 
-- 成功後はSubmitした式を次のSectionへ引き継ぐ。
-- 失敗後はSubmitした式を同じSectionの次Missionへ引き継ぐ。
-- Missionに合わせて開始式を変更しない。
-- 再挑戦では進行状態を再利用せず、新しいSessionを開始する。
+- **成功時**: Submit した式をそのまま次の Section へ引き継ぐこと。
+- **失敗時**: Submit した式をそのまま同じ Section の次のミッションへ引き継ぐこと。
+- 出題されたミッションに合わせて初期式を自動変更しないこと。
+- リトライ時は旧 Session の進行状態を再利用せず、新規 Session を立ち上げること。
 
 ## Tier進行
 
@@ -111,21 +97,23 @@ Session開始時の式は 1 + 1 とし、数字範囲に1が含まれない場�
 | 8〜11 | Tier3 |
 | 12以降 | Tier4 |
 
-Section境界とTier対応はConfig対象とする。
+※Section の区切りと Tier の対応関係は `Config` 設定で調整可能とする。
 
-### Tier抽選
+### Tier抽選ルール
 
-- 現在Tierの相対重み：0.60
-- 解放済み下位Tier全体の相対重み：0.40
-- 現在Tierだけに候補がある場合：現在Tierを選ぶ
-- 下位Tierだけに候補がある場合：候補が存在する下位Tierを選ぶ
-- 下位Tierが複数ある場合：候補が存在する下位Tier間で一様に選ぶ
-- どの解放済みTierにも候補がない場合：設定エラー
+- **現在 Tier の相対重み**: `0.60`
+- **解放済み下位 Tier 全体の相対重み**: `0.40`
+- **選定パターン**:
+  - 現在 Tier にのみ候補がある場合: 現在 Tier を選択すること。
+  - 下位 Tier にのみ候補がある場合: 候補が存在する下位 Tier を選択すること。
+  - 複数の下位 Tier に候補が存在する場合: 候補が存在する下位 Tier 間で等確率抽出すること。
+  - 解放済みのいずれの Tier にも候補がない場合: 設定エラーを検出すること。
 
-Tierの0.60／0.40は簡易版と本実装版の両方で使用する。
-値はGameDifficultyごとのConfig対象とする。
+※重み設定 `0.60` / `0.40` は簡易版・本実装版の両方で共通して使用すること。値は `GameDifficulty` ごとに Config で変更可能とする。
 
 ## タイマー
+
+制限時間の計算式は以下の通りとする。
 
 ```text
 制限時間 = max(
@@ -141,46 +129,44 @@ Tierの0.60／0.40は簡易版と本実装版の両方で使用する。
 | 5 | 8秒 |
 | 十分に進行した後 | 最低3秒 |
 
-タイマー開始と同時に入力を受け付ける。
-開始前カウントダウンは設けない。
-タイマー通知には対象のMissionIdを対応付ける。
-現在のMissionIdと一致しない時間切れ通知は無視する。
+- タイマーのカウント開始と同時に入力受付を開始すること（事前カウントダウンは行わないこと）。
+- タイマー通知には対象となる `MissionId` を紐付けること。現在処理中の `MissionId` と一致しない時間切れ通知は無視すること。
 
 ## Submitと判定
 
-Submitまたは時間切れでCurrentExpressionを確定する。
-最初の有効なSubmitを受け付けた時点で入力受付を停止する。
-手動Submitと時間切れが重なっても判定は1回だけ行う。
-判定中と遷移中の入力は無視する。
+プレイヤーによる提出（Submit）または制限時間切れによって `CurrentExpression` を確定すること。
 
-### 成功
+- 最初に受信した有効な Submit の時点で入力受付を停止すること。
+- 手動 Submit と時間切れが同一タイミングで発生した場合でも、判定処理は1回のみ実行すること。
+- 判定処理中および画面遷移中の操作入力は無視すること。
 
-- Sectionを1増やす。
-- Lifeは維持する。
-- Submitした式を次のSectionへ引き継ぐ。
-- 成功フィードバック後に次のMissionを抽選する。
+### 成功時の挙動
 
-### 失敗
+- Section 数を 1 加算すること。
+- Life 数は維持すること。
+- Submit した式をそのまま次の Section に引き継ぐこと。
+- 成功時の演出（フィードバック）再生後、次のミッションを抽選すること。
 
-- Lifeを1減らす。
-- Sectionは変更しない。
-- 正常な回答例を表示する。
-- Lifeが残っていれば同じSectionで次のMissionを抽選する。
-- Submitした式を次のMissionへ引き継ぐ。
-- Lifeが0の場合も回答例を表示してから結果画面へ進む。
+### 失敗時の挙動
 
-本実装版では、成功後と失敗後の新Missionを引き継いだCurrentExpressionでは未達成の候補から選ぶ。
-簡易版ではこの条件を適用しない。
+- Life 数を 1 減算すること。
+- Section 数は変更しないこと。
+- 画面に正解となる模範回答例（`AnswerExample`）を表示すること。
+- Life が残っている場合は、同じ Section のまま次のミッションを抽選すること。
+- Submit した式をそのまま次のミッションに引き継ぐこと。
+- Life が 0 になった場合も、模範回答例を表示した後にリザルト（結果）画面へ進むこと。
+
+> [!NOTE]
+> 本実装版では、成功後・失敗後に新しく抽選するミッションは、引き継いだ `CurrentExpression` のままではクリアできない未達成候補から選定すること（簡易版では本制約は適用されない）。
 
 ## ゲームオーバー
 
-結果画面へ移動し、正解した問題数、最終到達Section、最後のMission、式、結果を表示する。
-正解した問題数は max(0, Section - 1) としてSectionから導出する。
-ClearCountは保持しない。
+ゲームオーバー時はリザルト画面に遷移し、正解問題数・最終到達 Section・最終ミッション・式・結果を表示すること。
 
-## 関連仕様
+正解問題数は `max(0, Section - 1)` として Section 数から導出すること。別個の `ClearCount` 変数は保持しないこと。
 
-- [CCC内部仕様](../internals/game-invariants.md)
-- [Missionカタログ・抽選内部仕様](../missions/catalog-and-draw.md)
-- [Missionパラメータ候補プリセット](../missions/candidate-presets.md)
-- [CCCテスト仕様](../testing/acceptance-specification.md)
+---
+- 関連内部仕様: [CCC内部仕様](../internals/game-invariants.md)
+- ミッション抽選仕様: [Missionカタログ・抽選内部仕様](../missions/catalog-and-draw.md)
+- プリセット定義: [Missionパラメータ候補プリセット](../missions/candidate-presets.md)
+- テスト検証要件: [CCCテスト仕様](../testing/acceptance-specification.md)

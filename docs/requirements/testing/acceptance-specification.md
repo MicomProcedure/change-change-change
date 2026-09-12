@@ -1,137 +1,137 @@
 # CCCテスト仕様
 
 > [ドキュメント一覧](../../README.md) / 区分: テスト仕様
->
-> 正本: [Cosense「CCCテスト仕様」](https://scrapbox.io/proto-TeamL/CCC%E3%83%86%E3%82%B9%E3%83%88%E4%BB%95%E6%A7%98)
-> 取得時点の原文更新日時: 2026-08-26T05:31:24.000Z
 
+## ドキュメントの目的
 
-## このページの目的
+各機能要件および仕様を実行可能な自動・手動テストとして検証できるように、原則1項目につき1つのシステム挙動（Behavior）として整理・定義する。
+※特定の C# テストクラス名、テストフレームワーク（NUnit / EditMode / PlayMode）、モック構成には依存しない。簡易版のテスト項目を優先的にパスさせ、本実装版および将来機能の検証項目は機能切り替え時に段階的に有効化すること。
 
-仕様を実行可能なテストへ落とすため、1項目につき原則1つの振る舞いを記述する。
-具体的なテストクラス、テストフレームワーク、モック構成は定義しない。
-簡易版の項目を先に満たし、本実装版の項目は切替時に有効化する。
+## 正確な数値計算に関する検証要件
 
-## 正確な数値計算
+- 数学的に同値な分数は、常に等しい有理数（`Rational`）として判定されること。
+- 同値な分数は、常に同一のハッシュ値を返却すること。
+- 有理数は、常に約分済みの最簡形で保持されること。
+- 有理数の分母は、常に正（`> 0`）の値として正規化されること。
+- 0 は `0/1` として正規化保持されること。
+- 除数が 0 である式（0除算）は、正常な計算結果を返却しないこと。
+- 0除算発生時の画面表示文字列は `？` となること。
+- Mission の成否判定処理は、表示用に丸めた小数ではなく、正確な有理数を用いること。
+- 式適合割合（`MatchRatio`）の算出にあたっては、正常な `ExpressionCandidate` のみを分母として計算すること。
 
--  同値な分数は等しい有理数として判定される。
--  同値な分数は同じハッシュ値を返す。
--  有理数は約分済みで保持される。
--  有理数の分母は正に正規化される。
--  0は0/1に正規化される。
--  除数が0の式は正常な計算結果を返さない。
--  0除算の表示は？になる。
--  Mission判定は表示用小数ではなく正確な値を使う。
--  式適合割合は正常なExpressionCandidateだけを分母に使う。
+## MissionConditionの判定に関する検証要件
 
-## MissionConditionの判定
+- **Even**: 計算結果が偶数整数の場合にのみ `true` を返すこと。
+- **Odd**: 計算結果が奇数整数の場合にのみ `true` を返すこと。
+- **Integer**: 計算結果が整数の場合にのみ `true` を返すこと。
+- **Decimal**: 計算結果が非整数の場合にのみ `true` を返すこと。
+- **Positive**: 計算結果が 0 より大きい場合にのみ `true` を返すこと。
+- **Negative**: 計算結果が 0 より小さい場合にのみ `true` を返すこと。
+- **AtLeast**: 計算結果が指定された下限値 N 以上の場合にのみ `true` を返すこと。
+- **AtMost**: 計算結果が指定された上限値 N 以下の場合にのみ `true` を返すこと。
+- **Exact**: 計算結果が指定された目標値 N と等しい場合にのみ `true` を返すこと。
+- **Prime**: 計算結果が素数整数の場合にのみ `true` を返すこと。
+- **Multiple**: 計算結果が指定値 N の倍数である整数の場合にのみ `true` を返すこと。
+- **Zero**: 計算結果が 0 の場合にのみ `true` を返すこと。
+- **Square**: 計算結果が 0 以上の平方数整数の場合にのみ `true` を返すこと。
+- **Between**: 計算結果が下限 N 以上かつ上限 (N+W) 以下の場合にのみ `true` を返すこと。
+- **Absolute**: 整数計算結果の絶対値が指定値 N と等しい場合にのみ `true` を返すこと。
+- **OnesDigit**: 整数計算結果の符号を除いた一の位が指定値 N と等しい場合にのみ `true` を返すこと。
+- **Composite**: 計算結果が 1 より大きい合成数整数の場合にのみ `true` を返すこと。
+- **Modulo**: 整数計算結果が指定した法 N と剰余 M のユークリッド条件を満たす場合にのみ `true` を返すこと。
+- **DecimalFirstDigit**: 非整数計算結果の符号を除いた小数第1位が指定値 N と等しい場合にのみ `true` を返すこと。
+- 0除算等で正常な計算結果を持たない式は、いかなる `MissionCondition` も成立しない（`false` となる）こと。
 
--  Evenは結果が偶数整数のときだけ成立する。
--  Oddは結果が奇数整数のときだけ成立する。
--  Integerは結果が整数のときだけ成立する。
--  Decimalは結果が非整数のときだけ成立する。
--  Positiveは結果が0より大きいときだけ成立する。
--  Negativeは結果が0より小さいときだけ成立する。
--  AtLeastは結果が下限以上のときだけ成立する。
--  AtMostは結果が上限以下のときだけ成立する。
--  Exactは結果が目標値と等しいときだけ成立する。
--  Primeは結果が素数整数のときだけ成立する。
--  Multipleは結果が指定値の倍数である整数のときだけ成立する。
--  Zeroは結果が0のときだけ成立する。
--  Squareは結果が0以上の平方数整数のときだけ成立する。
--  Betweenは結果が下限以上かつ下限と幅の和以下のときだけ成立する。
--  Absoluteは整数結果の絶対値が指定値と等しいときだけ成立する。
--  OnesDigitは整数結果の符号を除いた一の位が指定値と等しいときだけ成立する。
--  Compositeは結果が1より大きい合成数整数のときだけ成立する。
--  Moduloは整数結果が指定した法と剰余の条件を満たすときだけ成立する。
--  DecimalFirstDigitは非整数結果の符号を除いた小数第1位が指定値と等しいときだけ成立する。
--  正常な計算結果を持たない式はいずれのMissionConditionも成立しない。
+## 簡易版：パラメータ候補に関する検証要件
 
-## 簡易版：パラメータ候補
+- 簡易版では、[候補プリセット](../missions/candidate-presets.md) に定義された候補のみを評価すること。
+- 簡易版では、プリセットに存在しないパラメータを自動生成しないこと。
+- パラメータを必要としない Kind は、空パラメータとして正しく評価すること。
+- `Between` の上限値は、下限 N と幅 W の和（`N + W`）として算出すること。
+- `Between` の幅 W が `1未満` の候補は採用しないこと。
+- `Between` は、プリセットで明示された下限 N と幅 W のペアのみを評価すること。
+- `Modulo` の剰余 M が `0未満` の候補は採用しないこと。
+- `Modulo` の剰余 M が 法 N 以上（`M >= N`）の候補は採用しないこと。
+- 同一 Kind かつ同一パラメータを持つ重複候補は、1件に一元正規化すること。
+- 簡易版では `NegatedMission` 候補を生成しないこと。
+- 簡易版では複合ミッション（`CompoundMission`）候補を生成しないこと。
 
--  簡易版はプリセットに記載された候補だけを評価する。
--  簡易版はプリセットにないパラメータを自動生成しない。
--  パラメータを持たないKindは空のパラメータで評価される。
--  Betweenの上限は下限と幅の和から求められる。
--  Betweenの幅が1未満の候補は採用されない。
--  Betweenは明示された下限と幅の組だけを評価する。
--  Moduloの剰余が0未満の候補は採用されない。
--  Moduloの剰余が法以上の候補は採用されない。
--  同じKindと同じパラメータの重複候補は1件に正規化される。
--  簡易版はNegatedMission候補を生成しない。
--  簡易版は複合Mission候補を生成しない。
+## 共通：MissionCatalog生成に関する検証要件
 
-## 共通：MissionCatalog生成
+- `MissionCatalog` は、Gameplay 開始時に 1回 のみ生成すること。
+- `MissionCatalog` は、同一 Session 内で再生成しないこと。
+- 各パラメータ候補は、正常なすべての `ExpressionCandidate` に対して評価すること。
+- `ExpressionMatchCount` が、条件を満たす正常な `ExpressionCandidate` の正確な件数となること。
+- `ExpressionMatchRatio` が、`ExpressionMatchCount / (正常なExpressionCandidate総数)` と一致すること。
+- `MinExpressionMatchRatio` 未満の候補は採用しないこと。
+- `MaxExpressionMatchRatio` を超える候補は採用しないこと。
+- `Zero` は `ExpressionMatchCount == 1` で件数要件をパスすること。
+- `Prime` は `ExpressionMatchCount == 1` で件数要件をパスすること。
+- `Zero` および `Prime` 以外の Kind は `ExpressionMatchCount == 1` では不採用とすること。
+- `Zero` および `Prime` 以外の Kind は `ExpressionMatchCount >= 2` で件数要件をパスすること。
+- 正常な `ExpressionCandidate` が 0件 の場合、Gameplay を開始せず設定エラーとすること。
+- 有効な `MissionCatalog` が 0件 の場合、Gameplay を開始せず設定エラーとすること。
 
--  MissionCatalogはGameplay開始時に1回生成される。
--  MissionCatalogは同じSession中に再生成されない。
--  各パラメータ候補はすべての正常なExpressionCandidateで評価される。
--  ExpressionMatchCountはMissionを満たすExpressionCandidateの件数になる。
--  ExpressionMatchRatioはExpressionMatchCountを正常なExpressionCandidate総数で割った値になる。
--  MinExpressionMatchRatio未満の候補は採用されない。
--  MaxExpressionMatchRatioを超える候補は採用されない。
--  ZeroのExpressionMatchCountが1なら件数条件を通過する。
--  PrimeのExpressionMatchCountが1なら件数条件を通過する。
--  ZeroとPrime以外のExpressionMatchCountが1なら採用されない。
--  ZeroとPrime以外のExpressionMatchCountが2なら件数条件を通過する。
--  正常なExpressionCandidateが0件ならGameplayを開始しない。
--  MissionCatalogが0件ならGameplayを開始しない。
+## 簡易版：Session中の抽選に関する検証要件
 
-## 簡易版：Session中の抽選
+- 解放済みの下位 Tier が存在する場合、現在 Tier が相対重み `0.60` で抽出されること。
+- 解放済みの下位 Tier が存在する場合、下位 Tier 全体が相対重み `0.40` で抽出されること。
+- 解放済みの下位 Tier が存在しない場合、現在 Tier が確実に抽出されること。
+- 下位 Tier 範囲からは、候補が存在する Tier のみが抽出対象となること。
+- 候補が存在する Kind のみが抽選の母集団となること。
+- 選択された Tier 内の Kind は、等確率でランダム選定すること。
+- 選択された Kind 内のパラメータ候補は、等確率でランダム選定すること。
+- 簡易版の抽選結果は、`CurrentExpression` の達成・未達成状態に依存しないこと。
+- 簡易版の抽選結果は、直前の出題履歴・ミッションに依存しないこと。
+- 簡易版の抽選結果に `NegatedMission` が含まれないこと。
+- 簡易版の抽選結果に複合ミッションが含まれないこと。
+- 新しく出題される Mission には、直前より `1` 加算された `MissionId` が割り当てられること。
 
--  下位Tierがある場合は現在Tierが相対重み0.60で選ばれる。
--  下位Tierがある場合は下位Tier全体が相対重み0.40で選ばれる。
--  下位Tierがない場合は現在Tierが選ばれる。
--  下位Tier範囲からは候補が存在するTierだけが選ばれる。
--  候補が存在するKindだけが抽選母集団になる。
--  選ばれたTier内のKindは一様に選ばれる。
--  選ばれたKind内のパラメータ候補は一様に選ばれる。
--  簡易版の抽選結果はCurrentExpressionの達成状態に依存しない。
--  簡易版の抽選結果は直前のMissionに依存しない。
--  簡易版の抽選結果にNegatedMissionは含まれない。
--  簡易版の抽選結果に複合Missionは含まれない。
--  新しいMissionには直前より1大きいMissionIdが付く。
+## Session進行に関する検証要件
 
-## Session進行
+- 新規 Session 開始時の `Section` は `1` から始まること。
+- Mission 成功時、`Section` が `1` 加算されること。
+- Mission 失敗時、`Section` は変化しないこと。
+- Mission 失敗時、`Life` が `1` 減算されること。
+- `Life` が 0 に達した場合、次の Mission を出題せず結果画面へ遷移すること。
+- 正解問題数が `max(0, Section - 1)` として正常に算出されること。
+- 正解問題数が独立した変数として保持されないこと。
+- 同一の `MissionId` に対する 2回目以降の Submit が無視されること。
+- 現在処理中と異なる `MissionId` を対象とするタイマー通知が無視されること。
+- 画面遷移中（`IsTransitioning == true`）の Submit 操作が無視されること。
+- 画面遷移中（`IsTransitioning == true`）の式の変更操作が無視されること。
 
--  新しいSessionのSectionは1から始まる。
--  Mission成功時にSectionは1増える。
--  Mission失敗時にSectionは変わらない。
--  Mission失敗時にLifeは1減る。
--  Lifeが0になると次のMissionを出題せず結果画面へ進む。
--  正解数はSectionから max(0, Section - 1) として求められる。
--  正解数は独立した進行状態として保持されない。
--  同じMissionIdに対する2回目のSubmitは無視される。
--  現在と異なるMissionIdのタイマー通知は無視される。
--  遷移中のSubmitは無視される。
--  遷移中の式変更は無視される。
+## 入力と表示に関する検証要件
 
-## 入力と表示
+- PLAYER A の数字変更操作は、左側の数字のみを繰り上げ変更すること。
+- PLAYER B の数字変更操作は、右側の数字のみを繰り上げ変更すること。
+- いずれのプレイヤーの演算子操作も、同一の共有演算子を変更すること。
+- 1回のタッチ操作が、重複して複数の操作として処理されないこと。
+- `ShowCurrentAnswer == true` の場合、`CurrentExpression` の計算結果が画面に表示されること。
+- `ShowCurrentAnswer == false` の場合でも、内部的に Mission の成否判定処理が正しく行われること。
+- `CurrentExpression` が 0除算となった場合、計算結果表示欄に `？` が表示されること。
+- Mission 成功演出の表示再生が完了するまで、次の入力操作を受け付けないこと。
+- Mission 失敗演出の表示再生が完了するまで、次の入力操作を受け付けないこと。
 
--  PLAYER Aの数字操作は左の数字だけを変更する。
--  PLAYER Bの数字操作は右の数字だけを変更する。
--  どちらのプレイヤーの演算子操作も共有演算子を変更する。
--  同一タッチは複数の操作として処理されない。
--  ShowCurrentAnswerが有効ならCurrentExpressionの計算結果が表示される。
--  ShowCurrentAnswerが無効でもMission判定は行われる。
--  CurrentExpressionが0除算なら計算結果欄に？が表示される。
--  Mission成功時の表示が完了するまで次の入力を受け付けない。
--  Mission失敗時の表示が完了するまで次の入力を受け付けない。
+## 本実装版：将来有効化する検証チェックリスト
 
-## 本実装版：将来有効化するチェックリスト
+- 自動生成する境界値が、到達可能な整数結果集合を生成元とすること。
+- 新規出題される Mission は、抽選時点の `CurrentExpression` では未達成であること。
+- 肯定 Mission と `NegatedMission` の相対重みが `1.00` 対 Config設定値 となること。
+- `NegatedMissionSelectionWeight == 0.60` の場合、他条件が同等であれば期待出題比率が `6 : 10` となること。
+- `NegatedMissionSelectionWeight == 1.00` の場合でも、`NegatedMission` のみに偏らないこと。
+- 直前と同一の Kind かつ同一パラメータのミッションが、代替候補が存在する場合に連続出題されないこと。
+- `Negated` の有無のみが異なるミッションは、連続出題回避上の同種に含まれないこと。
+- `TargetExpressionMatchRatio` が難易度 Config から正しく取得・適用されること。
+- 候補が 0件 となった際、追加された抽選制約が定義通りの逆順で緩和されること。
 
--  自動生成する境界値は到達可能な整数結果を生成元にする。
--  新Missionは抽選時のCurrentExpressionでは未達成である。
--  肯定MissionとNegatedMissionの相対重みは1.00対設定値になる。
--  NegatedMissionSelectionWeightが0.60なら他条件が同じとき期待出題比率は6対10になる。
--  NegatedMissionSelectionWeightが1.00でもNegatedMissionだけにはならない。
--  直前と同じKindかつ同じパラメータは代替候補があるとき連続しない。
--  Negatedの有無だけが異なるMissionは連続回避上の同種に含まれない。
--  TargetExpressionMatchRatioは難易度Configから取得される。
--  候補0件時は追加した抽選条件が逆順に緩和される。
+## 複合Mission：将来有効化する検証チェックリスト
 
-## 複合Mission：将来有効化するチェックリスト
+- 簡易版における `CompoundMissionSelectionWeight` が `0` であること。
+- 複合ミッションは、含まれるすべての構成条件を満たした場合にのみ成功となること。
+- 複合ミッションの生成・抽出に失敗した場合、単一ミッションへ自動フォールバックすること。
 
--  簡易版ではCompoundMissionSelectionWeightが0である。
--  複合Missionはすべての条件を満たしたときだけ成功する。
--  複合Missionの生成失敗時は単一Missionへフォールバックする。
+---
+- ドキュメント一覧: [README](../../README.md)
+- 仕様全般: [CCC要件書](../overview.md)
+- 内部仕様: [CCC内部仕様](../internals/game-invariants.md)

@@ -1,49 +1,54 @@
-# CCC UnityAudioクラス設計
+# CCC Unity Audio クラス設計
 
 > [ドキュメント一覧](../../README.md) / 区分: クラス設計
->
-> 正本: [Cosense「CCC UnityAudioクラス設計」](https://scrapbox.io/proto-TeamL/CCC%20UnityAudio%E3%82%AF%E3%83%A9%E3%82%B9%E8%A8%AD%E8%A8%88)
-> 取得時点の原文更新日時: 2026-08-28T23:41:54.000Z
 
-> 対象：SE／BGMの指定、Unity Audio再生、Clip設定、DI lifetime
+> **対象範囲**: SE / BGM の指定、Unity Audio 再生処理、Clip 設定、DI ライフタイム管理
+
+---
 
 ## 1. 目的
 
-Audioの責務を、ゲーム上の再生判断とUnity上の再生処理へ分離する。
+オーディオ（Audio）の責務を、「ゲーム上の再生トリガー判断（いつ、どの音を鳴らすか）」と「Unity上の実際の再生処理」に明確に分離すること。
 
-- PresenterまたはEntryPointが「いつ、どの音を鳴らすか」を`AudioKey`で指定する。
-- `IAudioPlayer`はSE再生、BGM再生、BGM停止を受け付ける出力ポートとする。
-- `UnityAudioPlayer`はSE／BGMそれぞれのKeyから設定を検索し、対応する`AudioSource`で再生する。
-- `AudioCatalogAsset`はKeyとSE／BGM用`AudioClip`の紐付けをUnity Editorで編集可能にする。
+- Presenter や EntryPoint がサウンドの再生タイミングにおいて `AudioKey` を指定すること。
+- `IAudioPlayer` は SE再生、BGM再生、BGM停止を受け付ける出力ポート（インターフェース）を提供すること。
+- `UnityAudioPlayer` は SE / BGM の各 Key から対応する設定を検索し、適切な `AudioSource` を使用して再生処理を行うこと。
+- `AudioCatalogAsset` は `AudioKey` と実際の `AudioClip` の紐付けを Unity Inspector 上で安全に編集・設定可能とすること。
 
-## 2. 設計判断
+---
 
-KeyとClipの紐付けにはScriptableObjectを使用する。
+## 2. 設計方針・判断理由
 
-理由：
+Key と `AudioClip` の紐付け管理には `ScriptableObject` を採用する。
 
-- Clipの差し替えをコード変更なしで行える。
-- Audio担当者がInspector上で設定できる。
-- Key重複、Clip欠落、音量範囲をSession開始前に検証できる。
-- Presenterは`AudioClip`や`AudioSource`を参照せず、意味のあるEnumだけを指定できる。
-- Title、Gameplay、Resultで同じCatalogを共有できる。
+> **採用理由**
+> - スクリプトコードの変更なしに Inspector 上で Sound Assets（AudioClip）の差し替えが可能。
+> - オーディオ担当者が Inspector 上で直感的にボリュームやアセットの設定・調整を行える。
+> - Key の重複、Clip の割り当て欠落、音量範囲の異常などをセッション開始前に事前検証できる。
+> - Presenter は `AudioClip` や `AudioSource` などの Unity API 型に依存せず、意味を持つ enum（`AudioKey`）のみを指定できる。
+> - Title、Gameplay、Result などの各画面で同一のカタログアセットを共有可能。
 
-JSONやResourcesの文字列Keyは使用しない。プロトスプリントリーグ版では、SE一覧とBGM一覧を持つ単一の`AudioCatalogAsset`と、BGM用／SE用の2つの`AudioSource`で構成する。SEはすべて`PlayOneShot`で再生し、BGMはLoop再生する。
+※ JSON や Resources による文字列指定の Key は採用しない。  
+※ プロトスプリントリーグ版では、SE一覧およびBGM一覧を保持する単一の `AudioCatalogAsset` と、BGM用・SE用の2つの `AudioSource` コンポーネントで構成する。SEはすべて `PlayOneShot` で重ねて再生し、BGMはループ再生（Loop = true）すること。
 
-## 3. Assemblyと名前空間
+---
 
-| 型 | assembly／名前空間 | 理由 |
+## 3. アセンブリと名前空間
+
+| 型名 | 配置アセンブリ / 名前空間 | 役割・分類の理由 |
 | --- | --- | --- |
-| `AudioKey` | `Ccc.Presentation.Audio` | Presenter／EntryPointが指定する表示・演出上の意味 |
-| `IAudioPlayer` | `Ccc.Presentation.Audio` | Presentationから外側へ向けた出力ポート |
-| `AudioEntry` | `Ccc.Infrastructure.Audio` | `AudioClip`を含むUnity用設定 |
-| `AudioCatalogAsset` | `Ccc.Infrastructure.Audio` | Inspector編集用ScriptableObject |
-| `UnityAudioPlayer` | `Ccc.Infrastructure.Audio` | `AudioSource`を扱うMonoBehaviour実装 |
-| `ApplicationLifetimeScope` | `Ccc.Bootstrap` | 全画面から同じAudio instanceを解決するComposition Root |
+| `AudioKey` | `Ccc.Presentation.Audio` | Presenter / EntryPoint が指定する演出上の意味的なサウンド識別子 |
+| `IAudioPlayer` | `Ccc.Presentation.Audio` | Presentation層から外部へ向けたサウンド再生の出力ポート |
+| `AudioEntry` | `Ccc.Infrastructure.Audio` | `AudioClip` や音量設定を含む Unity 依存の設定構造 |
+| `AudioCatalogAsset` | `Ccc.Infrastructure.Audio` | Inspector 編集用の `ScriptableObject` 実装 |
+| `UnityAudioPlayer` | `Ccc.Infrastructure.Audio` | `AudioSource` を操作する `MonoBehaviour` 具象クラス |
+| `ApplicationLifetimeScope` | `Ccc.Bootstrap` | 全画面で同一の Audio インスタンスを解決・提供する Composition Root |
 
-依存方向は`Bootstrap -> Infrastructure -> Presentation`とする。`Ccc.Core`はAudio関連型を参照しない。
+※ 依存関係の方向は `Bootstrap` → `Infrastructure` → `Presentation` とすること。`Ccc.Core` は Audio 関連の型を一切参照しない。
 
-## 4. クラス関係
+---
+
+## 4. クラス関係図
 
 ```mermaid
 classDiagram
@@ -95,11 +100,14 @@ AudioEntry --> AudioKey
 ApplicationLifetimeScope o-- UnityAudioPlayer : registers
 ```
 
-`GameplayPresenter`はGameplay Eventや入力に応じてKeyを選ぶ。BGMは各画面のEntryPointまたはPresenterが画面開始時に選び、Gameplayでは`GameplayEntryPoint`が担当する。
+- `GameplayPresenter` は Gameplay イベントやプレイヤー入力に応じて適切な `AudioKey` を選択する。
+- BGM の選定・制御は、各画面の EntryPoint または Presenter が画面遷移タイミングで行い、Gameplay 画面では `GameplayEntryPoint` が担当する。
 
-## 5. 公開API
+---
 
-### 5.1 AudioKey
+## 5. 公開API定義
+
+### 5.1 AudioKey (enum)
 
 ```csharp
 namespace Ccc.Presentation.Audio;
@@ -122,12 +130,12 @@ public enum AudioKey
 }
 ```
 
-- Key名は`Bgm`または`SE`で始め、Inspector上でも用途を判断可能にする。
-- `None`は未設定値であり、Catalogへの登録と`PlaySE`／`PlayBgm`への指定を禁止する。
-- 同じClipを複数Keyへ割り当てることは許可する。
-- コードはClip名やAsset pathを参照しない。
+- Key の名称は `Bgm` または `SE` のプレフィックスから始め、Inspector 上でも直感的に用途を識別できるようにすること。
+- `None` は未設定状態を表すデフォルト値であり、Catalog への登録や `PlaySE` / `PlayBgm` への指定は禁止とする。
+- 同一の `AudioClip` を複数の `AudioKey` に割り当てることは許可する。
+- ロジックコードが AudioClip のファイル名やアセットパスを文字列で直接参照しないこと。
 
-### 5.2 IAudioPlayer
+### 5.2 IAudioPlayer (interface)
 
 ```csharp
 namespace Ccc.Presentation.Audio;
@@ -140,11 +148,12 @@ public interface IAudioPlayer
 }
 ```
 
-`PlaySE`はCatalogのSE一覧、`PlayBgm`はBGM一覧からKeyを検索する。呼び出し側は`AudioSource`、Clip、Volumeを知らない。
+- `PlaySE` は Catalog の SE 一覧から、`PlayBgm` は BGM 一覧から該当する Key を検索して再生すること。呼び出し側は `AudioSource` や `AudioClip`、Volume などの詳細を知る必要はない。
+- `PlaySE` および `PlayBgm` は再生要求を同期的に受け付けること。画面演出の進行はサウンドの再生完了をブロックして待たない。
 
-`PlaySE`と`PlayBgm`は再生要求を同期的に受け付ける。演出進行はAudioの再生完了を待たない。再生完了待ちが必要になった場合は、既存APIを変更せず別の演出用APIとして追加する。
+---
 
-## 6. ScriptableObject設計
+## 6. ScriptableObject の設計仕様
 
 ### 6.1 AudioCatalogAsset
 
@@ -187,18 +196,19 @@ public sealed class AudioEntry
 }
 ```
 
-Catalogの検証条件：
+> **Catalog（アセット）の検証・バリデーション条件**
+> - `AudioKey.None` が登録されていないこと。
+> - SE一覧および BGM一覧の中で Key が重複して登録されていないこと。
+> - アプリケーションで使用するすべての Key がそれぞれ1件ずつ登録されていること。
+> - 割り当てられている `AudioClip` が `null` でないこと。
+> - `Volume` が 0.0 以上 1.0 以下の正常範囲であり、`NaN` や無限大でないこと。
+> - `SE` プレフィックスの Key は SE一覧に、`Bgm` プレフィックスの Key は BGM一覧に正しく分類されていること。
 
-- `AudioKey.None`が登録されていない。
-- SE一覧とBGM一覧をまたいでKeyが重複していない。
-- 実際に使用する全Keyが1件ずつ登録されている。
-- `AudioClip`がnullではない。
-- Volumeが0以上1以下であり、`NaN`または無限大ではない。
-- `SE`接頭辞のKeyはSE一覧、`Bgm`接頭辞のKeyはBGM一覧へ登録されている。
+※ 検証エラーは一覧として取得可能にし、アプリケーション起動時にエラーログを出力した上で該当 Key の再生を安全にスキップすること。オーディオ設定の不備によってゲームの中核ロジック（Core）が停止しないように設計すること。
 
-検証エラーは一覧で返す。起動時にエラーをログへ出し、該当Keyの再生を行わない。Audio設定不正によってGameplayのCore進行は停止させない。
+---
 
-## 7. UnityAudioPlayer
+## 7. UnityAudioPlayer の実装仕様
 
 ```csharp
 namespace Ccc.Infrastructure.Audio;
@@ -222,18 +232,17 @@ public sealed class UnityAudioPlayer : MonoBehaviour, IAudioPlayer
 }
 ```
 
-#### DI
-
-Application Rootの1 componentを`IAudioPlayer`として登録する。LifetimeはApplication固定。
+### DI登録
+Application Root の単一コンポーネントとして `IAudioPlayer` インターフェースで登録すること。ライフタイムは Application 固定とする。
 
 ```csharp
 builder.RegisterComponent(audioPlayer)
-   .As<IAudioPlayer>();
+       .As<IAudioPlayer>();
 ```
 
-子Scopeへ再登録しない。Presenter／EntryPointはconstructorで`IAudioPlayer`を受ける。
+※ 子 Scope に再登録しないこと。Presenter や EntryPoint はコンストラクタ経由で `IAudioPlayer` を受け取ること。
 
-再生処理：
+### 再生処理フロー
 
 ```mermaid
 flowchart TD
@@ -256,36 +265,37 @@ flowchart TD
     Same -->|いいえ| Bgm
 ```
 
-- SEは`AudioSource.PlayOneShot`で再生し、複数SEの重なりを許可する。
-- BGMは専用`AudioSource`を使用し、常にLoop再生する。LoopしないジングルはSEとして登録する。
-- 同じBGM Keyが再指定された場合は先頭から再生し直さない。
-- 別BGM Keyが指定された場合は現在BGMを停止して切り替える。
-- プロトスプリントリーグ版ではフェード、SE pool、同時発音数制限を実装範囲に含めない。
+- SE再生は `AudioSource.PlayOneShot` を使用し、複数の効果音が重なって再生されることを許可すること。
+- BGM再生は専用の `AudioSource` を使用し、常にループ再生を行うこと。
+- 既に再生中の BGM と同じ `AudioKey` が再指定された場合は、曲を最初から再生し直さずにそのまま再生を維持すること。
+- 異なる `AudioKey` の BGM が指定された場合は、現在の BGM を停止して新しい BGM へ速やかに切り替えること。
 
-## 8. 再生判断の担当
+---
 
-Audio固有のEventはCoreへ追加しない。既存の論理Event、View入力、画面lifecycleをPresentation側でAudioKeyへ変換する。
+## 8. 再生判断の割り当てマトリクス
 
-| タイミング | 判断するクラス | 入力 | 指定するKey |
+Core層に Audio 固有のイベントを設けないこと。既存の論理イベント、View 入力、および画面ライフサイクルを Presentation 側で受けて `AudioKey` へ変換・指定すること。
+
+| 再生タイミング | 判断を行うクラス | 判定のトリガー | 指定する AudioKey |
 | --- | --- | --- | --- |
-| Title開始 | TitleのPresenter／EntryPoint | 画面開始 | `PlayBgm(BgmTitle)` |
-| Gameplay開始 | `GameplayEntryPoint` | Gameplay scope開始 | `PlayBgm(BgmGameplay)` |
-| Result開始 | ResultのPresenter／EntryPoint | Result画面開始 | `PlayBgm(BgmResult)` |
-| 数字・演算子操作 | `GameplayPresenter` | `GameplayInput` | `PlaySE(SEUIInput)` |
-| Submit操作 | `GameplayPresenter` | Submit入力 | `PlaySE(SESubmit)` |
+| Title画面開始 | Title の Presenter / EntryPoint | 画面ロード完了 | `PlayBgm(BgmTitle)` |
+| Gameplay開始 | `GameplayEntryPoint` | Gameplay Scope 開始 | `PlayBgm(BgmGameplay)` |
+| Result画面開始 | Result の Presenter / EntryPoint | Result 画面表示 | `PlayBgm(BgmResult)` |
+| 数字・演算子の変更 | `GameplayPresenter` | `GameplayInput` | `PlaySE(SEUIInput)` |
+| Submit操作 | `GameplayPresenter` | Submit 入力 | `PlaySE(SESubmit)` |
 | Mission提示 | `GameplayPresenter` | `MissionPresentedEvent` | `PlaySE(SEMissionPresented)` |
-| 成功確定 | `GameplayPresenter` | 成功した`SubmissionResolvedEvent` | `PlaySE(SESuccess)` |
-| 失敗確定 | `GameplayPresenter` | 失敗した`SubmissionResolvedEvent` | `PlaySE(SEFailure)` |
-| 残り3秒以下への到達 | `GameplayPresenter` | `SectionTimerSnapshot` | `PlaySE(SETimeWarning)` |
+| 成功確定 | `GameplayPresenter` | 成功の `SubmissionResolvedEvent` | `PlaySE(SESuccess)` |
+| 失敗確定 | `GameplayPresenter` | 失敗の `SubmissionResolvedEvent` | `PlaySE(SEFailure)` |
+| 残り3秒以下到達 | `GameplayPresenter` | `SectionTimerSnapshot` | `PlaySE(SETimeWarning)` |
 | Session終了 | `GameplayPresenter` | `SessionEndedEvent` | `PlaySE(SEGameOver)` |
 
-`SETimeWarning`は同じMissionId・同じ整数秒で1回だけ鳴らす。Timer Snapshotが同じ秒に複数届いても再生しない。新しいMissionIdで警告済み秒をリセットする。
+※ `SETimeWarning` は同一 MissionId・同一整数秒において一度だけ再生すること。タイマー更新スナップショットが同一秒内で複数回届いても重複再生しないこと。
 
-入力音はPresenterがView入力を受けてControllerへ渡す箇所で再生する。Transitioning中はViewを操作不可表示にし、Controllerが拒否する状態で入力音を鳴らさない。
+---
 
-## 9. DIとlifetime
+## 9. DIとライフタイム設計
 
-BGMをTitle、Gameplay、Resultで共有するため、`UnityAudioPlayer`はProject Rootの`ApplicationLifetimeScope`へ1 instance登録する。各画面のLifetimeScopeはその子Scopeとし、`IAudioPlayer`を親から解決する。
+BGM を Title、Gameplay、Result の各画面間でシームレスに引き継ぐため、`UnityAudioPlayer` は Project Root の `ApplicationLifetimeScope` に1つのインスタンスとして登録すること。各画面の LifetimeScope はその子 Scope となり、`IAudioPlayer` を親 Scope から解決して利用すること。
 
 ```mermaid
 flowchart TB
@@ -315,147 +325,22 @@ public sealed class ApplicationLifetimeScope : LifetimeScope
     protected override void Configure(IContainerBuilder builder)
     {
         builder.RegisterComponent(audioPlayer)
-            .AsImplementedInterfaces();
+               .AsImplementedInterfaces();
     }
 }
 ```
 
-- `ApplicationLifetimeScope` prefabをVContainerSettingsのRoot Lifetime Scopeへ設定する。
-- `UnityAudioPlayer`と2つの`AudioSource`を同じRoot prefabへ配置する。
-- Presenterはconstructorで`IAudioPlayer`を受け取る。
-- `AudioManager.Instance`、static accessor、`FindObjectOfType`を使用しない。
-- AudioPlayerはGameplay Eventを自分で購読しない。
+- `ApplicationLifetimeScope` プレハブを VContainerSettings の Root Lifetime Scope に設定すること。
+- `UnityAudioPlayer` と2つの `AudioSource` コンポーネントを同じ Root プレハブ上に配置すること。
+- `AudioManager.Instance` や `FindObjectOfType` などの Singleton / グローバルアクセスを使用しないこと。
 
-## 10. Presenterとの接続例 （高草木等が担当）
+---
 
-```csharp
-public sealed class GameplayPresenter : IDisposable
-{
-    private readonly IGameplayFlow flow;
-    private readonly IGameplayView view;
-    private readonly IAudioPlayer audio;
+## 10. 受け入れ条件（Acceptance Criteria）
 
-    public GameplayPresenter(
-        IGameplayFlow flow,
-        IGameplayView view,
-        IAudioPlayer audio)
-    {
-        this.flow = flow;
-        this.view = view;
-        this.audio = audio;
-    }
-
-    private void HandleEvent(GameplayEvent gameplayEvent)
-    {
-        switch (gameplayEvent)
-        {
-            case MissionPresentedEvent:
-                audio.PlaySE(AudioKey.SEMissionPresented);
-                break;
-
-            case SubmissionResolvedEvent e when e.Resolution.IsSuccess:
-                audio.PlaySE(AudioKey.SESuccess);
-                break;
-
-            case SubmissionResolvedEvent:
-                audio.PlaySE(AudioKey.SEFailure);
-                break;
-
-            case SessionEndedEvent:
-                audio.PlaySE(AudioKey.SEGameOver);
-                break;
-        }
-    }
-}
-```
-
-AudioのためにView契約を増やさない。
-
-## 11. 実装範囲
-
-プロトスプリントリーグ版で実装するもの：
-
-- `AudioKey`
-- `IAudioPlayer`
-- `AudioCatalogAsset`／`AudioEntry`
-- `UnityAudioPlayer`
-- BGM用／SE用`AudioSource`
-- Presenter／EntryPointからのKey指定
-- Catalog Validation
-
-後から必要に応じて追加するもの：
-
-- BGMクロスフェード
-- AudioMixerの設定画面連携
-- SE同時発音数制限
-- 3D Audio
-- AddressablesによるClip読み込み
-- Audio再生完了待ち
-
-## 12. 受け入れ条件
-
-- 呼び出し側が`PlaySE(AudioKey)`、`PlayBgm(AudioKey)`、`StopBgm()`で再生を制御できる。
-- KeyとClip、Volumeの対応をSE一覧／BGM一覧としてInspectorで編集できる。
-- Audio設定不正を起動時に一覧で検出できる。
-- Presenter／EntryPointが再生タイミングとKeyを決定する。
-- `UnityAudioPlayer`はゲームルールやGameplay Eventの意味を判断しない。
-- Coreが`AudioKey`、`AudioClip`、`AudioSource`を参照しない。
-- 同じAudio instanceを子LifetimeScopeから`IAudioPlayer`として解決できる。
-- static Singletonを使用しない。
-
-## 13. 実装パケット
-
-### 13.1 ファイル配置
-
-| 型 | 配置 |
-| --- | --- |
-| `AudioKey`、`IAudioPlayer` | `Assets/CCC/Scripts/Presentation/Audio/` |
-| `AudioEntry`、`AudioCatalogAsset`、`UnityAudioPlayer` | `Assets/CCC/Scripts/Infrastructure/Audio/` |
-| `ApplicationLifetimeScope` | `Assets/CCC/Scripts/Bootstrap/` |
-
-1 public型1ファイルを基本とし、ファイル名を型名と一致させる。`AudioEntry`だけはAudioCatalogAsset.csと同居してもよい。
-
-### 13.2 UnityAudioPlayerの初期化と失敗契約
-
-Awakeでcatalog、bgmSource、seSourceのnullを検証する。Inspector参照欠落は`InvalidOperationException`として起動を失敗させ、名前検索、GetComponent自動取得、Resources.Loadで補わない。2つのAudioSourceが同一instanceなら`InvalidOperationException`。
-
-Catalogの`Validate()`は全項目を最後まで確認し、入力順のエラー配列を返す。UnityAudioPlayerは起動時に全エラーを各1回ログへ出すが、正常entryの再生は許可する。Catalog全体の不正でGameplay Flowを止めない。
-
-Play method：
-
-- `AudioKey.None`、種別違い、未登録、null Clipは例外にせず、Keyと理由をWarningへ1回だけ記録して再生しない。
-- 同じ不正Keyを繰り返しても同じ理由のWarningを増やさない。
-- PlaySEは`seSource.PlayOneShot(entry.Clip, entry.Volume)`。
-- PlayBgmは別Keyまたは停止中なら、Stop、Clip設定、Volume設定、Loop true、Playの順。
-- 同じKeyかつ`bgmSource.isPlaying == true`なら何もしない。
-- StopBgmはStop後にclipをnull、currentBgmKeyをNoneへ戻す。停止済みでも安全。
-- 公開methodはUnity main threadから呼ぶ。async処理を開始しない。
-
-AudioSourceの基本volumeは1とし、entry.Volumeを最終再生volumeとして使う。seSource側のvolumeとPlayOneShotのvolumeScaleを二重適用しない。
-
-### 13.3 Catalog検索契約
-
-`TryGetSE`／`TryGetBgm`はNone、種別違い、未登録でfalseとし、out entryはnull。重複Keyがある不正Catalogでは最初のentryを返すが、Validateで必ず重複エラーを報告する。
-
-検索をDictionaryへcacheするかListを線形探索するかは自由とする。ただしInspectorでCatalogが変更されたEditor再生開始時に古いcacheを再利用しない。Asset自体へScene依存の状態やAudioSourceを持たせない。
-
-### 13.4 Audio接続の順序
-
-- Title EntryPoint：View接続後にBgmTitle。
-- GameplayEntryPoint：Config／Catalog／Session開始成功後にBgmGameplay。
-- Result表示：GameScreenModelがResultへ切り替わった後にBgmResult。
-- MainMenu復帰：TitleScene起動後にBgmTitle。ロード前にBGMを止めて無音区間を作らない。
-- Session終了SE：BgmResultへ切り替える前にSEGameOverを1回。
-
-SETimeWarningの重複抑止状態はGameplayPresenterが`MissionId + 整数残り秒`で保持する。UnityAudioPlayerはTimer、MissionId、Gameplay Eventを参照しない。
-
-### 13.5 Audio受け入れ条件
-
-- Audio関連型と接続はプロトスプリントリーグ版の必須実装範囲に含まれる。
-- 正常KeyのSEとBGMをInspector割当どおり再生できる。
-- 同じBGMの再指定で先頭へ戻らない。
-- Stop後の同じBGM指定では再生を開始する。
-- 不正Key／設定でCore進行が止まらず、Warningが無限に増えない。
-- Title、Gameplay、Resultで同じIAudioPlayer instanceを使用する。
-- Scene往復後もAudioSourceが重複生成されない。
-- AudioPlayerがGameplay Eventを購読せず、Presenter／EntryPointがKeyを決める。
+- 呼び出し側が `PlaySE(AudioKey)`、`PlayBgm(AudioKey)`、`StopBgm()` を用いてサウンド再生を制御できること。
+- Key と `AudioClip`、Volume の対応関係を Inspector 上で安全に編集・登録できること。
+- 設定の不備（Key欠落・Clip未設定等）を起動時に一覧ログとして検出できること。
+- `UnityAudioPlayer` がゲームルールや Gameplay イベントの意味を直接判断しないこと。
+- `Ccc.Core` が `AudioKey`、`AudioClip`、`AudioSource` を一切参照しないこと。
+- static Singleton を使用せず、VContainer 経由で依存関係が正常に注入されること。

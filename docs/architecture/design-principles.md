@@ -1,106 +1,121 @@
 # CCC実装における設計原則
 
 > [ドキュメント一覧](../README.md) / 区分: 設計原則
->
-> 正本: [Cosense「CCC実装における設計原則」](https://scrapbox.io/proto-TeamL/CCC%E5%AE%9F%E8%A3%85%E3%81%AB%E3%81%8A%E3%81%91%E3%82%8B%E8%A8%AD%E8%A8%88%E5%8E%9F%E5%89%87)
-> 取得時点の原文更新日時: 2026-08-28T23:45:16.000Z
 
-### 1 依存方向を一方向にする
+---
+
+## 1. 依存方向の一方向化（単一方向依存の徹底）
 
 ```mermaid
 flowchart LR
-   Bootstrap[Ccc.Bootstrap] --> Infrastructure[Ccc.Infrastructure]
-   Infrastructure --> Presentation[Ccc.Presentation]
-   Presentation --> Core[Ccc.Core]
+    Bootstrap[Ccc.Bootstrap] --> Infrastructure[Ccc.Infrastructure]
+    Infrastructure --> Presentation[Ccc.Presentation]
+    Presentation --> Core[Ccc.Core]
 ```
 
-矢印は参照可能な依存先を表す。外側のassemblyは必要な内側のassemblyを直接参照できるが、逆方向の参照は禁止する。製品コードのasmdefは`Ccc.Core`、`Ccc.Presentation`、`Ccc.Infrastructure`、`Ccc.Bootstrap`の4つとする。
+- 矢印は参照可能な依存方向（依存先）を示す。
+- 外側に位置するアセンブリは、より内側に位置する必要なアセンブリを直接参照できるが、**逆方向（内側から外側）の参照は厳禁**とする。
+- プロダクションコードにおけるアセンブリ（asmdef）は、`Ccc.Core`、`Ccc.Presentation`、`Ccc.Infrastructure`、`Ccc.Bootstrap` の4つで構成すること。
 
-### 2 Modelの責務
+---
 
-- `Ccc.Core.Model`名前空間は標準C#で構成する。
-- 表示文字列、Scene、GameObject、時間取得、乱数生成は外側のassemblyが所有する。
-- 値オブジェクトは生成時に不正値を拒否する不変型とする。
-- Unityのシリアライズ対象はInfrastructure、純C# ModelはCoreに定義する。
-- `GameplayState`はSession進行の不変スナップショットであり、次StateはReducerが生成する。
-- 編集中の式は`ExpressionInput`が保持する。
+## 2. Model層の責務と制約
 
-### 3 Core.Logicは同期かつ決定的にする
+- **標準C#の維持**: `Ccc.Core.Model` 名前空間は、純粋な標準C#コードのみで構築すること。
+- **外部要素の排除**: 画面表示文字列、Scene、GameObject、システム時刻取得、乱数生成などの処理は、すべて外側のアセンブリに委ねること。
+- **不変値オブジェクト**: 値オブジェクトはインスタンス生成時に不正値を拒否（例外送出）し、状態を変更できない不変型（Immutable）として設計すること。
+- **シリアライズとモデルの分離**: Unityのシリアライズ対象（`ScriptableObject`等）は Infrastructure層に、純粋なC#モデルは Core層に定義すること。
+- **スナップショットと状態遷移**: `GameplayState` はセッション進行状態の不変スナップショットであり、次の State への遷移処理は Reducer が担当すること。
+- **入力状態の保持**: プレイヤーが編集中の計算式データは `ExpressionInput` が管理すること。
 
-- `GameplayReducer`は提出、時間切れ、演出完了、次Mission提示のSession遷移を扱い、同じStateとCommandから必ず同じTransitionを返す。
-- 式評価とMission判定の基準値には`Rational`を使用する。
-- 時刻取得と乱数生成は`Ccc.Core.UseCases`が担当する。
-- Mission抽選Strategyが`IRandomSource`から0以上1未満の`float`を取得し、`Ccc.Core.Logic`の重み付き／一様Index選択へ渡す。
-- View向けの文言、色、Animation名はPresentation DTOが保持する。
+---
 
-### 4 副作用は外側へ閉じ込める
+## 3. Core.Logicの同期性・決定性の担保
 
-- R3による状態・Event配信は`Ccc.Core.UseCases`以降で行う。
-- UniTaskによる演出待機はPresentation以降で行う。
-- InfrastructureがInput System、DOTween、ScriptableObjectとMonoBehaviourの`[Inject]`メソッドを扱う。
-- 通常classはコンストラクタインジェクションを使用する。
-- BootstrapがVContainerの依存登録、Lifetime選択、EntryPoint登録を扱う。
-- CoreとPresentationはVContainerを参照しない。
+- **純粋関数的な状態遷移**: `GameplayReducer` は「計算式の提出」「時間切れ」「演出完了」「次Missionの提示」などのセッション遷移を扱い、同一の State と Command の組み合わせに対して**常に全く同じ Transition（結果）を同期的に返却すること**。
+- **有理数計算の採用**: 数式評価および Mission 条件判定の内部基準値には、浮動小数点数誤差を防ぐため `Rational`（有理数型）を使用すること。
+- **副作用の隔離**: 時刻取得や乱数生成などの副作用を伴う処理は `Ccc.Core.UseCases` 層が担当すること。
+- **乱数供給のインターフェース化**: Mission抽選 Strategy は `IRandomSource` から 0以上1未満の `float` 値を取得し、`Ccc.Core.Logic` の重み付き / 一様インデックス選択処理へ渡すこと。
+- **View用表示データの保持**: UI表示用の文字列、カラーコード、アニメーション名などは Presentation層の DTO が保持すること。
 
-### 5 プロトスプリントリーグ版の実装範囲
+---
 
-- 製品設定は`SimpleMissionDrawStrategy`を使用する。
-- `FixedMissionDrawStrategy`は開発確認用に使用する。
-- 完成範囲はNormal、LifeEndless、Tier 1〜2、簡易版Mission抽選である。
-- Tier 3〜4、本実装版抽選、NegatedMission、複合Missionは拡張点として扱う。
+## 4. 副作用の境界隔離
 
-### 6 命名規則
+- **リアクティブ配信（R3）**: R3 による状態・イベントの配信処理は `Ccc.Core.UseCases` 以降の層で行うこと。
+- **非同期演出待機（UniTask）**: UniTask を用いた演出待機や非同期処理は Presentation層以降で行うこと。
+- **Unity機能との非結合**: Input System、DOTween、`ScriptableObject`、および `MonoBehaviour` での `[Inject]` 属性指定は Infrastructure層に閉じ込めること。
+- **コンストラクタインジェクション**: 通常の pure C# クラスにはコンストラクタインジェクションを採用すること。
+- **VContainerの範囲**: VContainer による依存関係の登録、ライフタイム選択、EntryPoint 登録は Bootstrap層が集中して扱うこと。`Core` および `Presentation` 層は VContainer を直接参照しないこと。
 
-[命名規則](../project/naming-conventions.md)を参照
+---
 
-### 7 クラス設計ページの完成条件
+## 5. プロトスプリントリーグ版の実装スコープ
 
-実装対象classの章は、少なくとも次を含める。
+- **プロダクション設定**: 本番動作時は `SimpleMissionDrawStrategy` を使用すること。
+- **開発確認用設定**: `FixedMissionDrawStrategy` は開発・デバッグ時の動作検証用として使用すること。
+- **必須対応範囲**: Normalモード、LifeEndlessモード、Tier 1〜2、および簡易版 Mission 抽選ロジックを完成範囲とすること。
+- **将来の拡張点**: Tier 3〜4、本実装版抽選ロジック、`NegatedMission`、および複合 Mission は、将来の拡張ポイントとして設計を確保すること。
 
-- 配置file、assembly、namespace。
-- public型、constructor、property、methodのsignature。
-- 正常入力、不正入力、例外型とParamName。
-- 不変条件と状態遷移。
-- 外部へ通知する値と通知順。
-- ownership、lifetime、Dispose後の挙動。
-- DI対象classだけは公開API直後にDIブロックを置き、Scope、Lifetime、解決型、登録時期、登録例を書く。DI対象外にはDI記述を足さない。
-- 具体例またはSequence。
-- 実装側の自由裁量と禁止事項。
-- 観測可能な受け入れ条件。
-- 値や文言を別正本へ委ねる場合の直接リンク。
+---
 
-「責務を担当する」「不正値を拒否する」だけで終わらせず、呼び出し側が分岐を実装できる戻り値、例外、無視条件まで確定する。一方、private helper名、内部Collection、公開挙動へ影響しない最適化は固定しない。
+## 6. 命名規則
 
-### 8 AIへ渡す単位
+詳細については [命名規則](../project/naming-conventions.md) を参照すること。
 
-複雑でないclassは、そのclassの章だけを渡して実装可能な状態を目標とする。複数classの協調が必要な場合は、対象章と章内で直接リンクされたページを渡す。
+---
 
-AIへの実装依頼には次を含める。
+## 7. クラス設計ドキュメントの記載要件（完成条件）
 
-- 対象class／章。
-- 参照を許可する直接リンク。
-- プロトスプリントリーグ版の必須範囲。
-- 変更してよいfile。
-- 完了時に確認する受け入れ条件。
+各クラスの設計仕様を記述する章には、少なくとも以下の項目を明記すること。
 
-章にない製品値、画面文言、Mission候補をAIが推測して追加しない。直接リンク先で未決定なら、勝手な既定値ではなく実装を止める境界として報告する。既存の矛盾は、解消依頼がない限り一方へ統合しない。
+1. **配置情報**: 配置ファイルパス、アセンブリ（asmdef）、および名前空間。
+2. **型定義（Signature）**: 公開型（public class/struct/interface）、コンストラクタ、プロパティ、メソッドのシグネチャ。
+3. **入力と例外**: 正常な入力値、不正な入力値、および発生し得る例外型と `ParamName`。
+4. **不変条件・状態遷移**: オブジェクトが保持すべき不変条件と状態遷移のルール。
+5. **通知仕様**: 外部へ通知する値および通知の実行順序。
+6. **ライフサイクル管理**: 所有権（Ownership）、ライフタイム（Lifetime）、および `Dispose` 呼び出し後の動作。
+7. **DI仕様**: DI対象クラスの場合のみ、公開API直後にDIブロックを設け、Scope、Lifetime、解決される型、登録時期、登録コード例を記載すること。（※DI対象外クラスにはDIブロックを設けない）
+8. **具体的な適用例**: 具体的コード例またはシーケンス図。
+9. **実装上の制約**: 実装側の自由裁量範囲と禁止事項。
+10. **受け入れ条件**: 外部から観測可能なテスト可能な受け入れ条件。
+11. **一元管理リンク**: 値や文言の定義を別ドキュメントに委ねる場合の直接リンク。
 
-### 9 公開契約と実装自由度
+> **明確な境界定義の重要性**  
+> 単に「〜を担当する」「不正値を拒否する」といった曖昧な記述で終わらせず、呼び出し側が条件分岐を正確に実装できるよう、戻り値・送出例外・無視条件まで確定させること。一方で、`private` ヘルパーメソッド名、内部コレクションの選定、公開挙動に影響を与えない局所的な最適化手法などは固定せず、実装者に委ねること。
 
-公開契約として固定するもの：
+---
 
-- 型とmemberの名前、引数、戻り値。
-- 例外型、Resultの成功／失敗条件。
-- State／Eventの順序。
-- 乱数消費回数、Collection順、境界区間など再現性へ影響する規則。
-- Scene／Scope／Sessionをまたぐownership。
+## 8. AIコンテキストへの適用単位
 
-実装側へ任せるもの：
+複雑でないクラスを実装依頼する場合、そのクラスの解説章のみをコンテキストに含めれば実装可能な状態を目指すこと。複数クラスが相互に協調する場合は、対象の章と、章内で直接リンクされている参照ページをまとめて含めること。
 
-- private methodの分割。
-- 同じ計算量と順序を保つ内部Collection。
-- log messageの細かな文面。
-- XML comment、局所変数名。
-- 公開挙動を変えない防御的な最適化。
+> **AIプロンプト作成時の必須記載項目**
+> - 対象クラスおよび該当章
+> - 参照を許可する直接リンク一覧
+> - プロトスプリントリーグ版における必須実装範囲
+> - 変更を許可する対象ファイル一覧
+> - 実装完了時に確認すべき受け入れ条件
 
-自由裁量にした事項を別の公開APIとして増やさない。仕様にないfallback、static Singleton、Service Locator、暗黙clampを追加しない。
+※ 仕様書に記載のないプロダクト値、画面文言、Mission候補等をAIが独自に推測・補完して追加させないこと。リンク先で未決定事項がある場合は、勝手な既定値を設けず「実装を停止して確認すべき境界」として報告させること。また、既存の不整合は明確な解消指示がない限り、一方へ統合しないこと。
+
+---
+
+## 9. 公開契約と実装の自由裁量
+
+### 9.1 公開契約として固めるべき事項（変更不可）
+- 型およびメンバーの名前、引数、戻り値の型。
+- 例外型、ならびに Result 型の成功 / 失敗判定条件。
+- State（状態）および Event（イベント）の発生順序。
+- 乱数消費回数、コレクションの順序、境界区間など、結果の再現性に影響を与える規則。
+- Scene / Scope / Session を跨ぐオブジェクトの所有権（Ownership）。
+
+### 9.2 実装側に委ねる事項（自由裁量）
+- `private` メソッドの分割方法。
+- 同等の計算量と順序性を保つ内部コレクションの選択。
+- ログメッセージの細かな文言。
+- XML ドキュメントコメント、ローカル変数名。
+- 公開挙動を変更しない範囲での防御的最適化。
+
+> **アンチパターンの防止**  
+> 自由裁量として認めた事項を、安易に新しい公開APIとして増やさないこと。仕様に規定されていないフォールバック（fallback）、`static Singleton`、`Service Locator`、および暗黙的なクラムピング（`Mathf.Clamp`等）を実装に追加することは禁止する。

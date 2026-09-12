@@ -1,105 +1,94 @@
 # Missionパラメータ候補プリセット
 
 > [ドキュメント一覧](../../README.md) / 区分: 設定仕様
->
-> 正本: [Cosense「Missionパラメータ候補プリセット」](https://scrapbox.io/proto-TeamL/Mission%E3%83%91%E3%83%A9%E3%83%A1%E3%83%BC%E3%82%BF%E5%80%99%E8%A3%9C%E3%83%97%E3%83%AA%E3%82%BB%E3%83%83%E3%83%88)
-> 取得時点の原文更新日時: 2026-08-26T05:51:20.000Z
 
+## ドキュメントの目的
 
-## このページの目的
+簡易版（初期実装フェーズ）において評価対象とする Mission パラメータ候補群を定義する。
+本ドキュメントに記載された候補データは、Gameplay 開始時に全評価され、成立条件を満たしたもののみが `MissionCatalog` に登録される。簡易版ではパラメータの自動生成は行わないこと。
 
-簡易版で評価対象とするMissionパラメータ候補を定義する。
-ここに記載した候補をGameplay開始時に評価し、成立条件を通過したものだけをMissionCatalogへ登録する。
-候補の自動生成は行わない。
+## 候補データの定義形式
 
-## 記載単位
+表の1行が1つの `MissionParameterCandidate` オブジェクトを表現する。
 
-1行を1つのMissionParameterCandidateとする。
-
-| 項目 | 意味 |
+| 項目名 | 定義内容 |
 | --- | --- |
-| Kind | Missionの種類 |
-| ParameterA | Kindごとの第1パラメータ |
-| ParameterB | Kindごとの第2パラメータ |
-| IntendedTier | 候補を評価するTier |
-| Note | 表示または選定上の注記 |
+| `Kind` | ミッションの種別 |
+| `ParameterA` | Kindごとの第1パラメータ |
+| `ParameterB` | Kindごとの第2パラメータ |
+| `IntendedTier` | 候補を評価対象とする適用 Tier |
+| `Note` | 表示または選定上の補足・注記 |
 
-パラメータを持たないKindはParameterAとParameterBを空欄とする。
-候補表にない値は簡易版では生成しない。
-ParameterAとParameterBの候補集合から直積を作らず、許可する組を1行ずつ明示する。
-同じKind、同じParameterA、同じParameterB、同じIntendedTierの重複行を置かない。
+- パラメータを必要としない Kind の場合、`ParameterA` および `ParameterB` は空欄とすること。
+- 候補表に存在しないパラメーター数値の組み合わせは、簡易版では生成しないこと。
+- パラメータ A と B の集合から機械的な直積（組み合わせ）を生成するのではなく、許可する特定のペアを1行ずつ明示すること。
+- 同一の `Kind`・`ParameterA`・`ParameterB`・`IntendedTier` を持つ完全な重複行は配置不可とする。
 
-## Kindごとの意味
+## Kindごとのパラメータ構造
 
-| Kind | ParameterA | ParameterB |
-| --- | --- | --- |
-| Even | 使用しない | 使用しない |
-| Odd | 使用しない | 使用しない |
-| Integer | 使用しない | 使用しない |
-| Decimal | 使用しない | 使用しない |
-| Positive | 使用しない | 使用しない |
-| Negative | 使用しない | 使用しない |
-| Prime | 使用しない | 使用しない |
-| Zero | 使用しない | 使用しない |
-| Square | 使用しない | 使用しない |
-| Composite | 使用しない | 使用しない |
-| AtLeast | 下限N | 使用しない |
-| AtMost | 上限N | 使用しない |
-| Exact | 目標値N | 使用しない |
-| Multiple | 基準N | 使用しない |
-| Between | 下限N | 幅W |
-| Absolute | 絶対値N | 使用しない |
-| OnesDigit | 一の位N | 使用しない |
-| Modulo | 法N | 剰余M |
-| DecimalFirstDigit | 小数第1位N | 使用しない |
+| Kind | ParameterA | ParameterB | 概要説明 |
+| --- | --- | --- | --- |
+| **Even** | （使用しない） | （使用しない） | 偶数 |
+| **Odd** | （使用しない） | （使用しない） | 奇数 |
+| **Integer** | （使用しない） | （使用しない） | 整数 |
+| **Decimal** | （使用しない） | （使用しない） | 小数（非整数） |
+| **Positive** | （使用しない） | （使用しない） | 正数（> 0） |
+| **Negative** | （使用しない） | （使用しない） | 負数（< 0） |
+| **Prime** | （使用しない） | （使用しない） | 素数 |
+| **Zero** | （使用しない） | （使用しない） | ゼロ（0） |
+| **Square** | （使用しない） | （使用しない） | 平方数（平方根が整数） |
+| **Composite** | （使用しない） | （使用しない） | 合成数 |
+| **AtLeast** | 下限値 N | （使用しない） | N 以上 |
+| **AtMost** | 上限値 N | （使用しない） | N 以下 |
+| **Exact** | 目標値 N | （使用しない） | N と一致 |
+| **Multiple** | 基準値 N | （使用しない） | N の倍数 |
+| **Between** | 下限値 N | 範囲幅 W | N 以上 (N+W) 以下 |
+| **Absolute** | 絶対値 N | （使用しない） | 絶対値が N と一致 |
+| **OnesDigit** | 一の位 N | （使用しない） | 一の位が N と一致 |
+| **Modulo** | 法 N | 剰余 M | N で割った余りが M |
+| **DecimalFirstDigit** | 小数第1位 N | （使用しない） | 小数第1位が N と一致 |
 
-Betweenの上限は N + W として求める。
-BetweenのWは1以上とする。
-ModuloはNを1より大きくし、Mを0以上N未満とする。
+- `Between` の上限値は `N + W` として導出すること（`W >= 1`）。
+- `Modulo` は `N > 1` かつ `0 <= M < N` の範囲とすること。
 
-## 初期実装版の対象外
+## 初期実装版における除外仕様
 
-- NegatedMissionの候補は用意しない。
-- 複合Missionの候補は用意しない。
-- 到達可能な整数結果からの候補自動生成は行わない。
+- `NegatedMission` のパラメータ候補は用意しないこと。
+- 複合ミッション（`CompoundMission`）のパラメータ候補は用意しないこと。
+- 到達可能な整数計算結果からの動的なパラメータ候補自動生成は行わないこと。
 
-## 候補表
+## パラメータ候補一覧表
 
-実際に採用する候補値は、Normal難易度のExpressionCandidateを用いた評価結果を確認して別途確定する。
-パラメータなしの行は、そのまま有効な候補として扱う。
-「（未決定）」を含む行は入力用の雛形であり、MissionParameterCandidateとして読み込まない。
-具体値を決定したら「（未決定）」を整数へ置き換える。
-同じKindに複数の具体値を用意する場合は、そのKindの行を複製し、許可するパラメータの組を1行ずつ入力する。
-未決定行を残したまま実装用Configとして確定しない。
+※プロトタイプ実装において最終採用する具象パラメータ値は、Normal 難易度の `ExpressionCandidate` に対する評価テスト結果を確認して設定すること。
+※「（未決定）」と書かれた行は登録用テンプレートであり、未決定のままでは Config データとしてロードされないこと。具体的な整数値を入力して使用すること。
 
-| Kind | ParameterA | ParameterB | IntendedTier | Note |
+| Kind | ParameterA | ParameterB | IntendedTier | Note（備考） |
 | --- | --- | --- | --- | --- |
-| Even |  |  | Tier1 | パラメータなし・確定 |
-| Odd |  |  | Tier1 | パラメータなし・確定 |
-| Integer |  |  | Tier1 | パラメータなし・確定 |
-| Decimal |  |  | Tier1 | パラメータなし・確定 |
-| Positive |  |  | Tier1 | パラメータなし・確定 |
-| Negative |  |  | Tier1 | パラメータなし・確定 |
-| Prime |  |  | Tier2 | パラメータなし・確定 |
-| Zero |  |  | Tier2 | パラメータなし・確定 |
-| Square |  |  | Tier2 | パラメータなし・確定 |
-| Composite |  |  | Tier3 | パラメータなし・確定 |
-| AtLeast | （未決定） |  | Tier1 | 下限N。必要数だけ行を複製 |
-| AtMost | （未決定） |  | Tier1 | 上限N。必要数だけ行を複製 |
-| Exact | （未決定） |  | Tier2 | 目標値N。必要数だけ行を複製 |
-| Multiple | （未決定） |  | Tier2 | 基準N。必要数だけ行を複製 |
-| Between | （未決定） | （未決定） | Tier2 | 幅広候補。下限Nと幅Wの組 |
-| Between | （未決定） | （未決定） | Tier3 | 幅狭候補。下限Nと幅Wの組 |
-| Absolute | （未決定） |  | Tier3 | 絶対値N。必要数だけ行を複製 |
-| OnesDigit | （未決定） |  | Tier3 | 一の位N。必要数だけ行を複製 |
-| Modulo | （未決定） | （未決定） | Tier4 | 法Nと剰余Mの組 |
-| DecimalFirstDigit | （未決定） |  | Tier4 | 小数第1位N。必要数だけ行を複製 |
+| **Even** | | | Tier1 | パラメータなし・確定 |
+| **Odd** | | | Tier1 | パラメータなし・確定 |
+| **Integer** | | | Tier1 | パラメータなし・確定 |
+| **Decimal** | | | Tier1 | パラメータなし・確定 |
+| **Positive** | | | Tier1 | パラメータなし・確定 |
+| **Negative** | | | Tier1 | パラメータなし・確定 |
+| **Prime** | | | Tier2 | パラメータなし・確定 |
+| **Zero** | | | Tier2 | パラメータなし・確定 |
+| **Square** | | | Tier2 | パラメータなし・確定 |
+| **Composite** | | | Tier3 | パラメータなし・確定 |
+| **AtLeast** | （未決定） | | Tier1 | 下限N。必要な組み合わせ分行を複製 |
+| **AtMost** | （未決定） | | Tier1 | 上限N。必要な組み合わせ分行を複製 |
+| **Exact** | （未決定） | | Tier2 | 目標値N。必要な組み合わせ分行を複製 |
+| **Multiple** | （未決定） | | Tier2 | 基準N。必要な組み合わせ分行を複製 |
+| **Between** | （未決定） | （未決定） | Tier2 | 幅広候補（下限N, 幅Wのペア） |
+| **Between** | （未決定） | （未決定） | Tier3 | 幅狭候補（下限N, 幅Wのペア） |
+| **Absolute** | （未決定） | | Tier3 | 絶対値N。必要な組み合わせ分行を複製 |
+| **OnesDigit** | （未決定） | | Tier3 | 一の位N。必要な組み合わせ分行を複製 |
+| **Modulo** | （未決定） | （未決定） | Tier4 | 法Nと剰余Mのペア |
+| **DecimalFirstDigit** | （未決定） | | Tier4 | 小数第1位N。必要な組み合わせ分行を複製 |
 
-具体値を入力した各行は、[CCCテスト仕様](../testing/acceptance-specification.md)のパラメータ制約とMissionCatalog成立条件をすべて満たすことを確認する。
+具体的なパラメーターが入力された各行は、[CCCテスト仕様](../testing/acceptance-specification.md)のパラメータ制約および `MissionCatalog` 成立要件を満たすことを必須とする。
 
-## 関連仕様
-
-- [生成するMission](./mission-types.md)
-- [Missionカタログ・抽選内部仕様](./catalog-and-draw.md)
-- [ゲームモード・難易度](../gameplay/game-modes-and-difficulty.md)
-- [CCCテスト仕様](../testing/acceptance-specification.md)
+---
+- ミッション種別仕様: [生成するMission](./mission-types.md)
+- カタログ・抽選仕様: [Missionカタログ・抽選内部仕様](./catalog-and-draw.md)
+- ゲームモード・難易度設定: [ゲームモード・難易度](../gameplay/game-modes-and-difficulty.md)
+- テスト要件: [CCCテスト仕様](../testing/acceptance-specification.md)

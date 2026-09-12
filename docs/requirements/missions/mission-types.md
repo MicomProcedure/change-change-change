@@ -1,148 +1,99 @@
 # 生成するMission
 
 > [ドキュメント一覧](../../README.md) / 区分: 要件
->
-> 正本: [Cosense「生成するMission」](https://scrapbox.io/proto-TeamL/%E7%94%9F%E6%88%90%E3%81%99%E3%82%8BMission)
-> 取得時点の原文更新日時: 2026-08-27T06:43:05.000Z
 
+[CCC要件書](../overview.md)から分離した、ミッション（Mission）の種類、成否判定基準、およびカタログ候補への採用成立条件の仕様について定義する。
+※本ドキュメントでは具体的な C# クラス設計や実装構造は扱わないこと。簡易版と本実装版では候補の生成・取得方法および Session 内での抽選アルゴリズムが異なるが、成否判定ロジック（`MissionCondition`）自体は共通とする。
 
-[CCC要件書](../overview.md)から分離した、Missionの種類、判定、候補成立条件の仕様。
-具体的なクラス構成は定義しない。
-簡易版と本実装版で候補の取得方法とSession中の抽選方法が異なるが、MissionConditionの判定規則は共通とする。
+## 通常Mission（肯定条件）一覧
 
-追加したいMission案
-N（m進数表記）を10進数で表せ
-
-## 通常Mission
-
-| Tier | 説明 | 判定 | Key | 表示 |
+| Tier | ミッション種別 | 成否判定条件 | Key (`Kind`) | 画面表示テキスト |
 | --- | --- | --- | --- | --- |
-| 1 | 偶数 | 整数かつ絶対値を2で割った余りが0。0を含む | Even | 偶数にしろ |
-| 1 | 奇数 | 整数かつ絶対値を2で割った余りが1 | Odd | 奇数にしろ |
-| 1 | 整数 | 計算結果に小数部分がない | Integer | 整数にしろ |
-| 1 | 小数 | 計算結果に小数部分がある | Decimal | 小数にしろ |
-| 1 | 正の数 | 0より大きい有理数 | Positive | 正の数にしろ |
-| 1 | 負の数 | 0より小さい有理数 | Negative | 負の数にしろ |
-| 1 | N以上 | Nを含む | AtLeast | N以上にしろ |
-| 1 | N以下 | Nを含む | AtMost | N以下にしろ |
-| 2 | N | 整数かつ値がN | Exact | Nにしろ |
-| 2 | 素数 | 2以上の正の整数かつ約数が1と自身のみ | Prime | 素数にしろ |
-| 2 | Nの倍数 | 整数のみ。負の倍数と0を含む | Multiple | Nの倍数にしろ |
-| 2 | 0 | 整数かつ値が0 | Zero | 0にしろ |
-| 2 | 平方数 | 0以上の整数平方。0と1を含む | Square | 平方数にしろ |
-| 2 | N以上M以下（幅広い） | NとMを両方含む | Between | N以上M以下にしろ |
-| 3 | 絶対値N | 整数結果のみ | Absolute | 絶対値をNにしろ |
-| 3 | 一の位N | 整数結果の符号を除いた一の位 | OnesDigit | 一の位をNにしろ |
-| 3 | 合成数 | 1より大きく素数ではない整数 | Composite | 合成数にしろ |
-| 3 | N以上M以下（幅狭い） | NとMを両方含む | Between | N以上M以下にしろ |
-| 4 | 法NでM | 整数結果のみ。ユークリッド剰余を使用 | Modulo | Nで割った時のあまりをMにしろ |
-| 4 | 小数第1位N | 非整数結果の符号を除いた小数第1位 | DecimalFirstDigit | 小数第1位をNにしろ |
+| **1** | 偶数 | 整数かつ `abs(val) mod 2 == 0`（0を含む） | `Even` | 偶数にしろ |
+| **1** | 奇数 | 整数かつ `abs(val) mod 2 == 1` | `Odd` | 奇数にしろ |
+| **1** | 整数 | 計算結果に小数部分が存在しない（有理数の分母が 1） | `Integer` | 整数にしろ |
+| **1** | 小数 | 計算結果に小数部分が存在する（有理数の分母が 1 以外） | `Decimal` | 小数にしろ |
+| **1** | 正の数 | `val > 0` の有理数 | `Positive` | 正の数にしろ |
+| **1** | 負の数 | `val < 0` の有理数 | `Negative` | 負の数にしろ |
+| **1** | N以上 | `val >= N`（Nを含む） | `AtLeast` | N以上にしろ |
+| **1** | N以下 | `val <= N`（Nを含む） | `AtMost` | N以下にしろ |
+| **2** | N | 整数かつ `val == N` | `Exact` | Nにしろ |
+| **2** | 素数 | `val >= 2` の正の整数かつ約数が1と自身のみ | `Prime` | 素数にしろ |
+| **2** | Nの倍数 | 整数のみ（負の倍数および 0 を含む） | `Multiple` | Nの倍数にしろ |
+| **2** | 0 | 整数かつ `val == 0` | `Zero` | 0にしろ |
+| **2** | 平方数 | `val >= 0` の整数平方数（0, 1を含む） | `Square` | 平方数にしろ |
+| **2** | N以上M以下（幅広） | `N <= val <= M`（両端を含む） | `Between` | N以上M以下にしろ |
+| **3** | 絶対値N | 整数かつ `abs(val) == N` | `Absolute` | 絶対値をNにしろ |
+| **3** | 一の位N | 整数かつ符号を除いた一の位が `N` | `OnesDigit` | 一の位をNにしろ |
+| **3** | 合成数 | `val > 1` かつ素数ではない整数 | `Composite` | 合成数にしろ |
+| **3** | N以上M以下（幅狭） | `N <= val <= M`（両端を含む） | `Between` | N以上M以下にしろ |
+| **4** | 法NでM | 整数かつユークリッド剰余 `val mod N == M` | `Modulo` | Nで割った時のあまりをMにしろ |
+| **4** | 小数第1位N | 非整数かつ符号を除いた小数第1位が `N` | `DecimalFirstDigit` | 小数第1位をNにしろ |
 
-小数桁のお題は第1位だけを使用する。第2位、第3位のお題は出題しない。
+- 小数桁を指定するミッションは「小数第1位」のみとし、第2位・第3位の指定ミッションは出題しないこと。
+- `Between` の表示上の上限値 `M` は、内部パラメータの下限 `N` と範囲幅 `W` から `N + W` として動的計算すること（`W >= 1`）。
+- 簡易版では許可する `N` と `W` の組み対を [候補プリセット](./candidate-presets.md) にて明示指定し、プリセットで定められた `IntendedTier` を使用すること。
+- 本実装版では、`ExpressionMatchRatio` が `BetweenWideRatioThreshold`（`Normal` では `0.25`）以上であれば「幅広（Tier2）」、未満であれば「幅狭（Tier3）」として割り当てること。
 
-Betweenの表示上の上限Mは、内部パラメータの下限Nと幅Wから N + W として求める。Wは1以上とする。
+## NegatedMission（判定反転ミッション / 本実装版のみ）
 
-簡易版では許可するNとWの組を[Missionパラメータ候補プリセット](./candidate-presets.md)へ明示し、プリセットに記載したIntendedTierを使用する。
-本実装版ではExpressionMatchRatioがBetweenWideRatioThreshold以上なら幅広いMissionとしてTier2、未満なら幅狭いMissionとしてTier3にできる。
-Normalの本実装版閾値は0.25とし、同値はTier2とする。
-ここでいう幅広・幅狭は数値上のWだけではなく、到達可能なExpressionCandidateに対する式適合割合を基準とする。
+簡易版では生成・抽選しないこと。本実装版においてのみ、以下の規則に基づいて判定を反転したミッションを適用すること。
 
-## NegatedMission（本実装版）
-
-NegatedMissionは簡易版では生成も抽選もしない。本実装版でのみ次の規則を使用する。
-
-| 元のMission | 生成可否 | NegatedMission | デフォルト実効Tier | 理由 |
+| 元のMission | 生成可否 | 判定反転表示テキスト (`NegatedMission`) | デフォルト実効Tier | 採用・非採用の理由 |
 | --- | --- | --- | --- | --- |
-| 偶数 | 可 | 偶数にするな | Tier2 | 否定形を瞬時に解釈する負荷によって難易度を上げる |
-| 奇数 | 可 | 奇数にするな | Tier2 | 否定形を瞬時に解釈する負荷によって難易度を上げる |
-| 整数 | 可 | 整数にするな | Tier2 | 否定形を瞬時に解釈する負荷によって難易度を上げる |
-| 小数 | 可 | 小数にするな | Tier2 | 否定形を瞬時に解釈する負荷によって難易度を上げる |
-| Nにしろ | 不可 | 生成しない | - | N以外のほぼ全結果が正解となり、Nの設定価値が低い |
-| 正の数 | 可 | 正の数にするな | Tier2 | 0以下を要求する条件になる |
-| 負の数 | 可 | 負の数にするな | Tier2 | 0以上を要求する条件になる |
-| N以上 | 可 | N以上にするな | Tier3 | N未満を要求する条件になる |
-| N以下 | 可 | N以下にするな | Tier3 | Nより大きい値を要求する条件になる |
-| 素数 | 不可 | 生成しない | - | 非整数や負数まで正解となり、正解範囲が広すぎる |
-| Nの倍数 | 不可 | 生成しない | - | Nが大きいほど正解範囲が広くなりすぎる |
-| 0 | 不可 | 生成しない | - | 0以外の全結果が正解となる |
-| 平方数 | 不可 | 生成しない | - | 非整数を含む正解範囲が広すぎる |
-| 小数第1位をN | 不可 | 生成しない | - | 10通り中9通りが許容されやすい |
-| 絶対値をN | 不可 | 生成しない | - | Nと-N以外のほぼ全結果が正解となり、Nの設定価値が低い |
-| 一の位をN | 不可 | 生成しない | - | 10通り中9通りが許容されやすい |
-| 合成数 | 不可 | 生成しない | - | 非整数や1以下まで正解となり、正解範囲が広すぎる |
-| N以上M以下 | 可 | N以上M以下にするな | Tier4 | 指定範囲の外側を要求する条件になる |
-| 法NでM | 不可 | 生成しない | - | 多くの剰余が許容され、Mの設定価値が低い |
+| **偶数** | 可 | 偶数にするな | **Tier2** | 否定条件を即座に脳内変換する思考負荷により難易度をアップ |
+| **奇数** | 可 | 奇数にするな | **Tier2** | 否定条件を即座に脳内変換する思考負荷により難易度をアップ |
+| **整数** | 可 | 整数にするな | **Tier2** | 否定条件を即座に脳内変換する思考負荷により難易度をアップ |
+| **小数** | 可 | 小数にするな | **Tier2** | 否定条件を即座に脳内変換する思考負荷により難易度をアップ |
+| **Nにしろ** | **不可** | （生成しない） | - | N以外のほぼすべての式結果が正解となり、ミッション性が形骸化するため |
+| **正の数** | 可 | 正の数にするな | **Tier2** | `0` 以下の数値を要求する条件として成立 |
+| **負の数** | 可 | 負の数にするな | **Tier2** | `0` 以上の数値を要求する条件として成立 |
+| **N以上** | 可 | N以上にするな | **Tier3** | `N` 未満の数値を要求する条件として成立 |
+| **N以下** | 可 | N以下にするな | **Tier3** | `N` より大きな数値を要求する条件として成立 |
+| **素数** | **不可** | （生成しない） | - | 非整数や負数まで正解対象に含まれ、適合範囲が広すぎるため |
+| **Nの倍数** | **不可** | （生成しない） | - | Nが大きいほど正解の範囲が肥大化しすぎるため |
+| **0** | **不可** | （生成しない） | - | `0` 以外の全結果が正解となり、難易度が崩壊するため |
+| **平方数** | **不可** | （生成しない） | - | 非整数を含め正解範囲が過剰に広くなるため |
+| **小数第1位をN** | **不可** | （生成しない） | - | 10通り中9通りの数字が正解となり、緊張感が薄れるため |
+| **絶対値をN** | **不可** | （生成しない） | - | N と -N 以外のほぼ全数値が正解になりミッション性が失われるため |
+| **一の位をN** | **不可** | （生成しない） | - | 10通り中9通りの数字が正解となり、緊張感が薄れるため |
+| **合成数** | **不可** | （生成しない） | - | 非整数や 1 以下の数まで正解に含まれてしまうため |
+| **N以上M以下** | 可 | N以上M以下にするな | **Tier4** | 指定された数値範囲の外側を要求する難易度の高い条件として成立 |
+| **法NでM** | **不可** | （生成しない） | - | 大半の剰余が許容され、特定のMを指定する価値が低いため |
 
-## 共通：MissionCandidateの評価
+## 共通仕様: MissionCandidateの評価フィルタリング
 
-Gameplay開始時に、正常なExpressionCandidateを基にMissionParameterCandidateを評価する。
-この段階では実際に出題するMissionを選ばない。
-各候補について次を求める。
+Gameplay 開始時、すべての正常な `ExpressionCandidate` に対して `MissionParameterCandidate` を評価すること（この時点では出題ミッションの抽選は行わない）。
 
-```text
-ExpressionMatchCount:
-   Missionに適合する正常なExpressionCandidateの数
-```
+- `ExpressionMatchCount`: ミッション条件を満たす正常な `ExpressionCandidate` の件数
+- `NonMatchingExpressionCount`: ミッション条件を満たさない正常な `ExpressionCandidate` の件数
+- `ExpressionMatchRatio`: `ExpressionMatchCount / (正常なExpressionCandidateの総数)`
 
-- NonMatchingExpressionCount:
-    - Missionに適合しない正常なExpressionCandidateの数
+※ 0除算となる式は正常な `ExpressionCandidate` から除外し、カウントおよび割合の計算対象としないこと。
 
-- ExpressionMatchRatio:
-    - ExpressionMatchCount
-    - ÷
-    - 正常なExpressionCandidateの総数
+`MissionCatalog` には、以下のフィルタリング条件を**すべて満たす**候補のみを登録すること。
 
-0除算は正常なExpressionCandidateに含めず、件数と式適合割合の計算対象にしない。
-MissionCatalogには次をすべて満たす候補だけを登録する。
+1. 正常な適合式が 1件 以上存在すること
+2. 正常な非適合式が 1件 以上存在すること
+3. `ExpressionMatchRatio` が `MinExpressionMatchRatio`（`Normal` では `0.10`）以上であること
+4. `ExpressionMatchRatio` が `MaxExpressionMatchRatio`（`Normal` では `0.50`）以下であること
+5. `Zero` および `Prime` 以外は `ExpressionMatchCount >= 2` であること
+6. `Zero` および `Prime` は `ExpressionMatchCount >= 1` であること
+7. 解答失敗時に表示できる正解模範例（`AnswerExample`）が 1件 以上存在すること
+8. Kind 固有のパラメータ制約を満たすこと
 
-- 正常な適合式が1件以上存在する。
-- 正常な非適合式が1件以上存在する。
-- ExpressionMatchRatioがMinExpressionMatchRatio以上である。
-- ExpressionMatchRatioがMaxExpressionMatchRatio以下である。
-- ZeroとPrime以外はExpressionMatchCountが2以上である。
-- ZeroとPrimeはExpressionMatchCountが1以上である。
-- 失敗時に表示できる正常なAnswerExampleを1件以上持つ。
-- Kind固有のパラメータ条件を満たす。
+※ `TargetExpressionMatchRatio`（`0.25`）は本実装版の Session 中抽選においてのみ参照され、カタログ登録の合否基準には使用しないこと。
 
-Normalの初期値はMinExpressionMatchRatio 0.10、MaxExpressionMatchRatio 0.50とする。
-TargetExpressionMatchRatio 0.25は本実装版のSession中抽選に使用し、MissionCatalogから候補を削除する条件には使用しない。
-これらの値はGameDifficultyごとのConfig対象とする。
+## 簡易版: 用意済み候補の評価
 
-## 簡易版：用意済み候補の評価
+簡易版ではパラメータの動的自動生成を行わないこと。[候補プリセット](./candidate-presets.md) に定義された有限個の候補を読み込み、上記の評価フィルタリングを適用して通過した候補のみを `MissionCatalog` に追加すること。
 
-簡易版ではMissionパラメータを自動生成しない。
-[Missionパラメータ候補プリセット](./candidate-presets.md)に用意された有限個の候補を読み込み、共通の評価規則を適用する。
-評価を通過した候補だけをMissionCatalogへ登録する。
-パラメータを持たないKindも候補表に明示する。
-NegatedMissionと複合Missionの候補は用意しない。
+## 本実装版: 候補の自動生成
 
-Betweenは下限Nと幅Wの許可する組を1行ずつ明示する。
-Nの集合とWの集合から直積を作らない。
-上限はN + Wから求める。
+本実装版では、正常な `ExpressionCandidate` から計算到達可能な整数値集合 `IntegerResults`（およびその境界値 `IntegerBoundaryResults`）を自動抽出し、それらをベースに `AtLeast`・`AtMost`・`Exact`・`Multiple`・`Absolute`・`OnesDigit`・`Modulo`・`Between` 等のパラメータ候補を動的生成すること。生成後の評価・絞り込みは簡易版と共通のルールに従うこと。
 
-## 本実装版：候補の自動生成
-
-本実装版では正常なExpressionCandidateから到達可能な整数結果IntegerResultsを求める。
-AtLeast、AtMost、Exact、Multiple、Absolute、OnesDigit、Moduloなどの候補は、Kind固有の制約を適用して生成する。
-境界値の生成元はThresholdMinからThresholdMaxまでの全整数ではなく、IntegerResultsまたは正常な結果のfloorとceilを重複除去したIntegerBoundaryResultsに限定する。
-Betweenも無制限なNとMの組合せを作らず、到達可能な結果を基準に候補を生成する。
-生成後の候補には簡易版と同じ共通評価規則を適用する。
-
-## Session中の抽選との分離
-
-MissionCatalogの準備ではCurrentExpression、現在Section、直前のMissionを使わない。
-簡易版のSession中抽選ではTierを0.60／0.40で選び、Kindとパラメータを一様抽選する。
-本実装版のSession中抽選ではCurrentExpression未達成条件、NegatedMission相対重み、連続出題回避、TargetExpressionMatchRatioを使用する。
-詳細は[Missionカタログ・抽選内部仕様](./catalog-and-draw.md)を参照する。
-
-## 複合Mission
-
-簡易版では複合Missionを生成、評価、抽選、表示しない。
-将来の成立条件は[複合Mission](./compound-missions.md)に定義する。
-
-## 関連仕様
-
-- [Missionカタログ・抽選内部仕様](./catalog-and-draw.md)
-- [Missionパラメータ候補プリセット](./candidate-presets.md)
-- [ゲームモード・難易度](../gameplay/game-modes-and-difficulty.md)
-- [CCCテスト仕様](../testing/acceptance-specification.md)
+---
+- カタログ・抽選仕様: [Missionカタログ・抽選内部仕様](./catalog-and-draw.md)
+- パラメータプリセット: [Missionパラメータ候補プリセット](./candidate-presets.md)
+- ゲームモード・難易度設定: [ゲームモード・難易度](../gameplay/game-modes-and-difficulty.md)
+- テスト検証要件: [CCCテスト仕様](../testing/acceptance-specification.md)

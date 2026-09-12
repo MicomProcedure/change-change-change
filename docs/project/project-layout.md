@@ -1,12 +1,10 @@
 # Unityプロジェクトファイル構成
 
 > [ドキュメント一覧](../README.md) / 区分: プロジェクト構成
->
-> 正本: [Cosense「Unityプロジェクトファイル構成」](https://scrapbox.io/proto-TeamL/Unity%E3%83%97%E3%83%AD%E3%82%B8%E3%82%A7%E3%82%AF%E3%83%88%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E6%A7%8B%E6%88%90)
-> 取得時点の原文更新日時: 2026-08-28T15:06:29.000Z
 
+---
 
-## 1. Unityプロジェクト直下
+## 1. Unityプロジェクト直下のディレクトリ構成
 
 ```text
 CCC-UnityProject/
@@ -16,12 +14,14 @@ CCC-UnityProject/
 │  ├─ manifest.json
 │  └─ packages-lock.json
 ├─ ProjectSettings/
-└─ UserSettings/                 # Git共有対象外
+└─ UserSettings/                 # Git管理対象外
 ```
 
-PackagesとProjectSettingsはUnityが管理する。
-Library、Temp、Logs、obj、Build、BuildsはGit管理へ含めない。
-Androidの出力先はプロジェクト外、またはGit管理外のBuilds/Androidとする。
+- **Unity管理ディレクトリ**: `Packages` および `ProjectSettings` はUnityが自動管理する設定領域とする。
+- **Git排除対象**: `Library`、`Temp`、`Logs`、`obj`、`Build`、`Builds` などの自動生成フォルダはGit管理に含めないこと。
+- **ビルド出力先**: Androidビルドなどの出力ファイルは、プロジェクト直下から外れたディレクトリ、またはGit管理対象外となる `Builds/Android` 配下に配置すること。
+
+---
 
 ## 2. Assets/CCC 全体構成
 
@@ -92,58 +92,58 @@ Assets/
          └─ Ccc.Editor.Tests.asmdef
 ```
 
-フォルダは必要になった時点で作る。
-空フォルダを維持するためだけのダミーファイルは置かない。
+- **ディレクトリ作成ポリシー**: 必要なファイルが発生した段階でディレクトリを作成すること。
+- **ダミーファイルの禁止**: 空ディレクトリを維持するためだけのプレースホルダーファイル（.gitkeep等）は配置しないこと。
 
-## 3. Scriptsとassemblyの配置
+---
+
+## 3. Scriptsとアセンブリ（Assembly）の配置規約
 
 ### 3.1 Core
+`Assets/CCC/Scripts/Core` には、Unityエンジンに依存しない純粋なC#クラス（Model、同期ロジック、UseCases）を配置する。
 
-Assets/CCC/Scripts/Coreへ、Unity非依存のModel、同期ロジック、UseCasesを置く。
+- **Model**: 不変データ、値オブジェクト、`GameplayConfig`、`GameplayState`、`SessionResult`
+- **Logic**: 式評価、Mission判定、Catalog構築、Selector、Reducer
+- **UseCases**: Controller、`ExpressionInput`、タイマー・乱数のポート定義、Mission抽選Strategy
 
-- Model：不変データ、値オブジェクト、GameplayConfig、GameplayState、SessionResult
-- Logic：式評価、Mission判定、Catalog構築、Selector、Reducer
-- UseCases：Controller、ExpressionInput、Timer・乱数のポート、Mission抽選Strategy
-
-Core内の参照方向はUseCases → Logic → Modelとする。
-ModelとLogicはUnityEngine、UniTask、DOTween、VContainer、Input Systemを参照しない。
-R3はUseCasesだけで使用する。
+> **依存方向と参照制約**
+> - Core内部での依存方向は `UseCases` → `Logic` → `Model` とすること。
+> - `Model` および `Logic` は、`UnityEngine`、`UniTask`、`DOTween`、`VContainer`、`Input System` を参照しないこと。
+> - リアクティブライブラリ（`R3`）は `UseCases` 層でのみ使用可能とする。
 
 ### 3.2 Presentation
+`Assets/CCC/Scripts/Presentation` には、Presenter、View / Navigationインターフェース契約、表示用DTO、Formatterを配置する。
 
-Assets/CCC/Scripts/Presentationへ、Presenter、View／Navigation契約、表示DTO、Formatterを置く。
-Gameplay、Navigation、Formattingのように責務単位で章分けし、画面別のMonoBehaviourは置かない。
-DTOの型名はDtoで終える。
+- `Gameplay`、`Navigation`、`Formatting` のように責務・機能単位でディレクトリを分けること。画面ごとの `MonoBehaviour` はここには配置しない。
+- DTOクラスの型名は必ず `Dto` の接尾辞で終わるようにすること。
 
 ### 3.3 Infrastructure
+`Assets/CCC/Scripts/Infrastructure` には、Unityエンジンやサードパーティライブラリに依存する具体的な実装を配置する。
 
-Assets/CCC/Scripts/Infrastructureへ、Unity依存の実装を置く。
+- **UI**: シーン上のView、子View、画面表示処理
+- **Input**: PointerDown入力処理および Input System との接続
+- **Feedback**: DOTweenを用いた演出制御
+- **Timer**: UniTaskを使用した Section Timer 実装
+- **Config**: ScriptableObjectと純粋C#型とのデータ相互変換
+- **Navigation**: `SceneNavigator` およびシーン内の Screen Model / View
 
-- UI：Scene上のView、子View、画面表示
-- Input：PointerDown入力とInput System接続
-- Feedback：DOTween演出
-- Timer：UniTaskを使うSection Timer
-- Config：ScriptableObjectと純C#型の変換
-- Navigation：SceneNavigator、Scene内Screen Model／View
-
-SceneやPrefabから参照されるMonoBehaviourは、機能に対応するサブフォルダへ置く。
+※ SceneやPrefabから直接参照される `MonoBehaviour` クラスは、対応する機能サブフォルダ配下に配置すること。
 
 ### 3.4 Bootstrap
+`Assets/CCC/Scripts/Bootstrap` には、VContainerの `LifetimeScope`、依存関係の登録（DI）、および `EntryPoint` のみを配置する。
 
-Assets/CCC/Scripts/Bootstrapへ、VContainerのLifetimeScope、依存登録、EntryPointだけを置く。
-Application、Title、GameplayでScope単位に分ける。
-ゲームルールや画面表示処理はBootstrapへ書かない。
+- ライフサイクル単位（`Application`、`Title`、`Gameplay`）ごとにフォルダを分けること。
+- ゲームルールや具体的表示制御などのロジックを Bootstrap 内に記述することは厳禁とする。
 
 ### 3.5 Tests
+Editorテスト用コードは `Assets/CCC/Tests/Editor` に配置し、製品コードと物理的に分離すること。
 
-EditorテストはAssets/CCC/Tests/Editorへ置き、製品コードと物理的に分離する。
+- **Coreテスト対象**: `Rational`（有理数計算）、各種数値計算、Mission、Catalog、Selector、Reducer
+- **PlayModeテスト**: 原則として必須としない。作成が必要となった場合のみ `Tests/PlayMode` および `Ccc.PlayMode.Tests.asmdef` を定義すること。
 
-- Core：Rational、計算、Mission、Catalog、Selector、Reducer
+---
 
-PlayModeテストは必須ではない。
-追加する場合だけTests/PlayModeとCcc.PlayMode.Tests.asmdefを作る。
-
-## 4. Scene構成
+## 4. Scene（シーン）構成
 
 ### 4.1 TitleScene
 
@@ -162,11 +162,10 @@ TitleScene
       └─ ErrorMessageArea
 ```
 
-通常起動ではTitleScreenだけを表示する。
-GameSceneから戻った場合はMainMenuScreenから開始する。
-TitleScreenViewはTitleScreenModelの状態に応じて、4つのScreenのうち1つだけを表示する。
-Sceneロード中はSceneLoadingBlockerを表示し、開始ボタンの連打を受け付けない。
-ErrorMessageAreaはGameScene開始失敗を表示する。
+- **画面初期表示**: 通常起動時は `TitleScreen` のみを表示すること。`GameScene` から戻ってきた場合は `MainMenuScreen` から開始すること。
+- **画面切り替え**: `TitleScreenView` は `TitleScreenModel` の状態に応じて、4つのサブ画面のうち該当する1つのみを表示制御すること。
+- **ロード遮断制御**: シーンロード中は `SceneLoadingBlocker` をアクティブにし、ボタン連打等の誤操作を防止すること。
+- **エラー表示**: `ErrorMessageArea` は `GameScene` の起動失敗時などにエラーメッセージを表示するために使用すること。
 
 ### 4.2 GameScene
 
@@ -200,43 +199,42 @@ GameScene
       └─ SceneLoadingBlocker
 ```
 
-GameScreenViewはGameplayScreenとResultScreenのどちらか一方だけを表示する。
-GameplayViewは子Viewを束ねる親であり、LifeやSectionの更新判断を持たない。
-FeedbackLayerは通常表示より前面、SceneLoadingBlockerはすべての操作より前面に置く。
-Retry失敗時はResultScreenを維持し、RetryButtonを無効、MainMenuButtonを有効にする。
+- **表示切り替え**: `GameScreenView` は `GameplayScreen` または `ResultScreen` のいずれか一方のみを表示制御すること。
+- **親Viewの責務**: `GameplayView` は子View群をまとめる親コンポーネントであり、ライフやセクションの更新判定などの判断ロジックは一切持たないこと。
+- **レイヤー重なり順**: `FeedbackLayer` は通常画面表示より前面に、`SceneLoadingBlocker` はすべての操作を受け付けない最前面に配置すること。
+- **リトライ失敗時**: リトライ処理に失敗した場合は `ResultScreen` の表示を維持し、`RetryButton` を無効化（Interactable=false）、`MainMenuButton` を有効化すること。
 
-### 4.3 EventSystem
+### 4.3 EventSystemの設定
 
-各SceneにEventSystemを1つだけ置く。
-入力moduleはInputSystemUIInputModuleを使用する。
-Gameplay操作はButton.onClickと重複させず、PointerDown通知へ統一する。
-左右同時入力と同一領域への2本指入力を妨げる透明PanelやRaycast Targetを置かない。
+- 各Sceneには `EventSystem` を必ず1つだけ配置すること。
+- 入力モジュールには `InputSystemUIInputModule` を使用すること。
+- Gameplay中の各種操作は `Button.onClick` と重複させず、`PointerDown` イベント通知に一本化すること。
+- 左右同時入力や同一領域への2本指入力を阻害する透明パネルや不要な Raycast Target の配置は避けること。
 
-## 6. Dataと設定Asset
+---
 
-### 6.1 ScriptableObject
+## 5. Dataと設定アセット（Asset）
 
-| 配置例 | 用途 | 生成する実行時データ |
+### 5.1 ScriptableObject
+
+| 配置パス例 | 用途 | 生成される実行時データ |
 | --- | --- | --- |
-| Data/GameplayConfig/NormalGameplayConfig.asset | Normal、LifeEndlessの設定 | GameplayConfig |
-| Data/MissionPreset/NormalMissionPreset.asset | 簡易版Mission候補 | MissionParameterCandidate列 |
-| Data/MissionText/JapaneseMissionText.asset | Mission表示文言 | IMissionTextSourceとして参照 |
-| Data/Feedback/DefaultFeedbackSettings.asset | 成功・失敗演出時間 | 任意。Viewへ直接設定する場合は作らない |
+| Data/GameplayConfig/NormalGameplayConfig.asset | Normal、LifeEndlessモードの設定 | `GameplayConfig` |
+| Data/MissionPreset/NormalMissionPreset.asset | 簡易版Mission候補データ | `MissionParameterCandidate` 配列 |
+| Data/MissionText/JapaneseMissionText.asset | Mission表示用テキスト | `IMissionTextSource` として参照 |
+| Data/Feedback/DefaultFeedbackSettings.asset | 成功・失敗演出の再生時間設定 | 任意（Viewへ直接設定する場合は作成不要） |
 
-ScriptableObjectをCoreへ直接渡さない。
-Gameplay開始時に検証し、純C#型へ変換する。
-Validationエラーは一覧で表示し、Gameplayを開始しない。
-MissionPresetの「未決定」値は実行用Assetへ入力しない。
+> **運用上の注意**
+> - ScriptableObject アセットを `Core` 層に直接渡さないこと。Gameplay開始時に検証を行った上で、純粋なC#型へ変換して渡すこと。
+> - バリデーションエラー検出時は一覧として画面/ログに表示し、Gameplayの開始を中断すること。
+> - `MissionPreset` における「未決定」項目は、実行用アセットに入力しないこと。
 
-### 6.2 Input設定
+### 5.2 Input設定
+Input System の設定アセットを独自に作成・カスタマイズする場合は `Settings/Input` 配下に配置すること。
+標準のUI操作アセットで事足りる場合は、不要な Gameplay Action Map を新設しないこと。`TitleScene` と `GameScene` で同一の設定を参照するように統一すること。
 
-Input Systemの設定Assetを独自作成する場合はSettings/Inputへ置く。
-UI操作だけで既定のUI Actionを使用できる場合は、不要なGameplay Action Mapを作らない。
-EventSystemとInputSystemUIInputModuleの参照はTitleSceneとGameSceneで同じ設定にする。
-
-### 6.3 Build設定
-
-Build ProfileまたはBuild SettingsにはTitleScene、GameSceneの順で登録する。
-起動SceneはTitleSceneとする。
-Androidは横向き固定、Input HandlingはInput Systemを使用する。
-smoke buildの出力はGit管理外へ置く。
+### 5.3 ビルド（Build）設定
+- Build Profile または Build Settings には `TitleScene`、`GameScene` の順序で登録すること。
+- アプリケーションの起動シーンは必ず `TitleScene` とすること。
+- Android向け設定では「画面向き: 横固定（Landscape）」に設定し、Input Handling は Input System に設定すること。
+- スモークテスト用ビルドの出力生成物は、Git管理対象外の場所に配置すること。

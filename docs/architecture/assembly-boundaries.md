@@ -1,89 +1,88 @@
-# CCC_asmdef
+# CCC アセンブリ境界設計（CCC_asmdef）
 
 > [ドキュメント一覧](../README.md) / 区分: Assembly設計
->
-> 正本: [Cosense「CCC_asmdef」](https://scrapbox.io/proto-TeamL/CCC_asmdef)
-> 取得時点の原文更新日時: 2026-08-28T23:12:15.000Z
 
+---
 
-### 3.1 Ccc.Core
+## 1. アセンブリ（asmdef）定義と各層の責務
 
-`Ccc.Core`はModel、同期ロジック、UseCasesを含む単一asmdefである。R3は`Ccc.Core.UseCases`名前空間で使用する。参照packageはR3である。
+### 1.1 Ccc.Core
+`Ccc.Core` は Model、同期ロジック、および UseCases を包含する単一のアセンブリ（asmdef）とする。外部パッケージとしては R3 のみを参照し、`Ccc.Core.UseCases` 名前空間以下でのみ使用すること。
 
-名前空間ごとの責務：
+> **名前空間ごとの責務分類**
+> - **`Ccc.Core.Model`**: 標準C#のみで構成される不変データおよび値オブジェクト。  
+>   （例: `Rational`、`Expression`、`MissionCondition`、`MissionCatalog`、`GameplayConfig`、`GameplayState`、`SessionResult` など）
+> - **`Ccc.Core.Logic`**: `Ccc.Core.Model` を扱う同期・決定的なドメイン計算処理。  
+>   （例: `ExpressionCalculator`、`MissionConditionMatcher`、`MissionCatalogBuilder`、`TierResolver`、Selector、セッション遷移用 `GameplayReducer` など）
+> - **`Ccc.Core.UseCases`**: 状態保持および副作用の調停層。  
+>   （例: `ExpressionInput`、`GameplayController`、Mission抽選Strategy、`ISectionTimer`、`SectionTimerSnapshot`、`IRandomSource` など。状態の非同期配信には R3 を使用）
 
-- `Ccc.Core.Model`：標準C#で構成する不変データと値オブジェクト。`Rational`、`Expression`、`MissionCondition`、`MissionCatalog`、`GameplayConfig`、`GameplayState`、`SessionResult`など。
-- `Ccc.Core.Logic`：`Ccc.Core.Model`を扱う同期・決定的な処理。`ExpressionCalculator`、`MissionConditionMatcher`、`MissionCatalogBuilder`、`TierResolver`、Selector、Session遷移用`GameplayReducer`など。
-- `Ccc.Core.UseCases`：状態保持と副作用の調停。`ExpressionInput`、`GameplayController`、Mission抽選Strategy、`ISectionTimer`、`SectionTimerSnapshot`、`IRandomSource`、開始Result・Failureなど。状態配信にはR3を使用する。
+※ 単一アセンブリ内における `UseCases` → `Logic` → `Model` という依存方向の遵守は、名前空間規約、コードレビュー、および EditMode テストによって検証・維持すること。
 
-単一asmdef内の`UseCases -> Logic -> Model`という参照方向は、名前空間規約、コードレビュー、EditModeテストで検証する。
+### 1.2 Ccc.Presentation
+`Ccc.Core`、R3、および UniTask を参照すること。MVPパターンの Presenter、View / Navigation のインターフェース契約、表示用DTO、Formatter などを配置する。
 
-### 3.2 Ccc.Presentation
+> **主要な型**
+> - `GameplayPresenter`
+> - `IGameplayView` / `IGameplayNavigation`
+> - `GameplayInput`
+> - `GameplayViewStateDto` / `FeedbackViewDataDto`
+> - `RationalDecimalFormatter` / `MissionTextFormatter`
+> - `IMissionTextSource`
 
-`Ccc.Core`、R3、UniTaskを参照する。MVPのPresenter、View／Navigation契約、DTO、Formatterを配置する。
+※ Presentation層が参照する外部パッケージは R3 と UniTask のみに限定すること。
 
-主な型：
+### 1.3 Ccc.Infrastructure
+`Ccc.Core` および `Ccc.Presentation` を参照し、Presentation層や `Ccc.Core.UseCases` で定義されたポートの Unity具体的な実装を提供すること。`UnityEngine`、`Input System`、`DOTween`、`UniTask`、`R3`、`VContainer` を利用可能とする。
 
-- `GameplayPresenter`
-- `IGameplayView`
-- `IGameplayNavigation`
-- `GameplayInput`
-- `GameplayViewStateDto`
-- `FeedbackViewDataDto`
-- `RationalDecimalFormatter`
-- `IMissionTextSource`
-- `MissionTextFormatter`
+> **主要な型**
+> - `GameplayView : MonoBehaviour, IGameplayView`
+> - `PointerDownInputView : MonoBehaviour, IPointerDownHandler`
+> - `ExpressionView`、`MissionView`、`TimerView`、`LifeView`
+> - `DotweenFeedbackView`
+> - `UniTaskSectionTimer : ISectionTimer`
+> - `UnityRandomSource : IRandomSource`
+> - `GameplayConfigAsset` / `MissionPresetAsset` / `MissionTextAsset`（いずれも `ScriptableObject`）
+> - `SceneNavigator`
+> - `TitleScreenModel` / `GameScreenModel : IGameplayNavigation`
+> - `TitleScreenView` / `GameScreenView`（`MonoBehaviour`）
 
-Presentationの外部package参照はR3とUniTaskである。
+※ VContainer は `MonoBehaviour` への `[Inject]` メソッドや、Scene Scope への開始リクエスト登録に使用すること。
 
-### 3.3 Ccc.Infrastructure
+### 1.4 Ccc.Bootstrap
+プロジェクト内の全アセンブリおよび VContainer を参照するコンポジションルート（Composition Root）とする。
 
-`Ccc.Core`と`Ccc.Presentation`を参照し、Presentation／`Ccc.Core.UseCases`のポートをUnityで実装する。UnityEngine、Input System、DOTween、UniTask、R3、VContainerを利用できる。
+> **主要な型**
+> - `GameplayLifetimeScope : LifetimeScope`
+> - `GameplayEntryPoint`
 
-主な型：
+※ Bootstrapの責務は、アプリ全体の依存関係の登録（DI）と起動ライフサイクルの管理に限定すること。
 
-- `GameplayView : MonoBehaviour, IGameplayView`
-- `PointerDownInputView : MonoBehaviour, IPointerDownHandler`
-- `ExpressionView`、`MissionView`、`TimerView`、`LifeView`
-- `DotweenFeedbackView`
-- `UniTaskSectionTimer : ISectionTimer`
-- `UnityRandomSource : IRandomSource`
-- `GameplayConfigAsset : ScriptableObject`
-- `MissionPresetAsset : ScriptableObject`
-- `MissionTextAsset : ScriptableObject`
-- `SceneNavigator`
-- `TitleScreenModel`、`GameScreenModel : IGameplayNavigation`
-- `TitleScreenView : MonoBehaviour`、`GameScreenView : MonoBehaviour`
+---
 
-Infrastructureの外部package参照はR3、UniTask、Input System、DOTween、VContainer、Unity modulesである。VContainerはMonoBehaviourの`[Inject]`メソッドとScene Scopeへの開始Request登録に使用する。
+## 2. アセンブリ参照構造一覧
 
-### 3.4 Ccc.Bootstrap
+### 2.1 asmdef参照サマリー
 
-全assemblyとVContainerを参照するComposition Rootである。
-
-主な型：
-
-- `GameplayLifetimeScope : LifetimeScope`
-- `GameplayEntryPoint`
-
-Bootstrapの責務は依存登録と起動処理である。
-
-### 3.5 asmdef参照表
-
-| asmdef | プロジェクト内参照 | 外部package参照 |
+| asmdef | プロジェクト内参照 | 外部パッケージ参照 |
 | --- | --- | --- |
-| `Ccc.Core` | なし | R3 |
+| `Ccc.Core` | （なし） | R3 |
 | `Ccc.Presentation` | `Ccc.Core` | R3、UniTask |
 | `Ccc.Infrastructure` | `Ccc.Core`、`Ccc.Presentation` | R3、UniTask、Input System、DOTween、VContainer、Unity modules |
 | `Ccc.Bootstrap` | `Ccc.Core`、`Ccc.Presentation`、`Ccc.Infrastructure` | VContainer、必要なUnity modules |
 
-`Ccc.Infrastructure`から`Ccc.Core`への参照用途は、Assetから純C# Modelへの変換とTimer／Randomポート実装である。`Ccc.Bootstrap`は依存グラフの最外層に置く。
+- `Ccc.Infrastructure` が `Ccc.Core` を参照する主な目的は、アセットから純粋C# Modelへの変換処理、および Timer / Random などのポート実装とする。
+- `Ccc.Bootstrap` は依存関係グラフの最外層に配置すること。
 
-EditModeテストは単一の`Ccc.Editor.Tests`へ配置する。`includePlatforms`を`Editor`とし、`Ccc.Core`、`Ccc.Presentation`、`Ccc.Infrastructure`、Test Assembliesを参照する。テストの分類には`Ccc.Editor.Tests.Core`、`Ccc.Editor.Tests.Presentation`、`Ccc.Editor.Tests.Infrastructure`のnamespaceとフォルダを使用する。
+### 2.2 テスト用アセンブリの構成
+- **EditModeテスト**: 単一のアセンブリ `Ccc.Editor.Tests` に配置すること。`includePlatforms` を `Editor` に設定し、`Ccc.Core`、`Ccc.Presentation`、`Ccc.Infrastructure` および Test Assemblies を参照すること。内部フォルダ/名前空間は `Ccc.Editor.Tests.Core`、`Ccc.Editor.Tests.Presentation`、`Ccc.Editor.Tests.Infrastructure` に分けて整理すること。
+- **PlayModeテスト**: 必要に応じて `Ccc.PlayMode.Tests` を作成し、テスト対象の製品アセンブリおよび Test Assemblies を参照すること。
 
-PlayModeテストは`Ccc.PlayMode.Tests`へ配置し、対象となる製品assemblyとTest Assembliesを参照する。テスト用asmdefは製品コード4 asmdefの数に含めない。
+---
 
-### 3.6 配置とasmdef共通設定
+## 3. アセンブリの設定・入力規約
+
+### 3.1 ディレクトリ配置と基本パラメータ
 
 ```text
 Assets/CCC/Scripts/
@@ -94,58 +93,62 @@ Assets/CCC/Scripts/
 ├── Infrastructure/
 │   └── Ccc.Infrastructure.asmdef
 └── Bootstrap/
-   └── Ccc.Bootstrap.asmdef
+    └── Ccc.Bootstrap.asmdef
 ```
 
-各asmdefの`name`と`rootNamespace`はファイル名と同じにする。共通値：
+各 asmdef ファイルの `name` および `rootNamespace` は、ファイル名と完全に一致させること。
 
-- `autoReferenced: true`
-- `overrideReferences: false`
-- `allowUnsafeCode: false`
-- `includePlatforms: []`
-- `excludePlatforms: []`
-- `defineConstraints: []`
-- `precompiledReferences: []`
+> **共通設定値**
+> - `autoReferenced`: `true`
+> - `overrideReferences`: `false`
+> - `allowUnsafeCode`: `false`
+> - `includePlatforms`: `[]` / `excludePlatforms`: `[]`
+> - `defineConstraints`: `[]` / `precompiledReferences`: `[]`
 
-CoreとPresentationは`noEngineReferences: true`、InfrastructureとBootstrapはfalse。Core／PresentationへUnityEngine型を書いた時点でcompile errorにして依存違反を検出する。
+> **Engine参照フラグ（`noEngineReferences`）**
+> - `Ccc.Core` および `Ccc.Presentation`: **`true`**（`UnityEngine` 型の誤参照をコンパイルエラーとして即座に検知するため）
+> - `Ccc.Infrastructure` および `Ccc.Bootstrap`: **`false`**
 
-asmdefのGUID直書きはUnity Editorが生成した値を使う。別projectのmeta GUIDを文書やAI出力からコピーしない。
+※ asmdef の GUID は Unity Editor が自動生成した値をそのまま使用すること。
 
-### 3.7 参照の入力手順
+### 3.2 Inspectorでの参照入力手順
 
-Unity InspectorのAssembly Definition Referencesへ、次の順で登録する。
+Unity Inspector の **Assembly Definition References** には以下の順で登録を行うこと。
 
-| asmdef | 製品assembly参照 | package assembly参照 |
+| asmdef | 製品アセンブリ参照 | パッケージアセンブリ参照 |
 | --- | --- | --- |
-| `Ccc.Core` | なし | 導入済みR3のCore assembly |
+| `Ccc.Core` | （なし） | 導入済み R3 の Core アセンブリ |
 | `Ccc.Presentation` | `Ccc.Core` | R3、UniTask |
-| `Ccc.Infrastructure` | `Ccc.Core`、`Ccc.Presentation` | R3、UniTask、Unity.InputSystem、DOTween、VContainerのUnity連携assembly |
-| `Ccc.Bootstrap` | `Ccc.Core`、`Ccc.Presentation`、`Ccc.Infrastructure` | VContainerのCore／Unity連携assembly |
+| `Ccc.Infrastructure` | `Ccc.Core`、`Ccc.Presentation` | R3、UniTask、Unity.InputSystem、DOTween、VContainerのUnity連携アセンブリ |
+| `Ccc.Bootstrap` | `Ccc.Core`、`Ccc.Presentation`、`Ccc.Infrastructure` | VContainerのCore / Unity連携アセンブリ |
 
-package assemblyのraw nameは、Package Managerで実際に導入された版のasmdefをInspectorのObject Pickerから選ぶ。package名から文字列を推測してJSONへ手入力しない。特にDOTween、UniTask、VContainerは導入方法でassembly分割が異なり得るため、導入済みpackageのasmdefを正本とする。
+※ パッケージアセンブリ参照は、Object Picker を使用して実際にプロジェクトへ導入されたアセンブリを選択すること。手入力は避けること。  
+※ Infrastructure で DOTween の async/await 拡張をコンパイルする場合は、Infrastructure アセンブリのみに `UNITASK_DOTWEEN_SUPPORT` などの Define を設定すること。Core / Presentation / Bootstrap へ追加しないこと。
 
-InfrastructureでDOTweenのawait拡張がcompileされない場合は、導入版が要求するVersion Definesまたは`UNITASK_DOTWEEN_SUPPORT`をInfrastructureだけへ設定する。Core／Presentation／BootstrapへDOTween用defineを追加しない。
+---
 
-### 3.8 Assemblyごとの禁止参照
+## 4. 参照制約とクラス分類基準
 
-| assembly | 禁止 |
+### 4.1 アセンブリごとの禁止参照ルール
+
+| アセンブリ | 参照禁止対象 |
 | --- | --- |
-| `Ccc.Core` | UnityEngine、UniTask、DOTween、Input System、VContainer、`Ccc.Presentation`、`Ccc.Infrastructure`、`Ccc.Bootstrap` |
-| `Ccc.Presentation` | UnityEngine、DOTween、Input System、VContainer、Infrastructure、Bootstrap |
-| `Ccc.Infrastructure` | Bootstrap |
-| `Ccc.Bootstrap` | ゲームルールの実装、表示ロジックの実装 |
+| `Ccc.Core` | `UnityEngine`、UniTask、DOTween、Input System、VContainer、`Ccc.Presentation`、`Ccc.Infrastructure`、`Ccc.Bootstrap` |
+| `Ccc.Presentation` | `UnityEngine`、DOTween、Input System、VContainer、`Ccc.Infrastructure`、`Ccc.Bootstrap` |
+| `Ccc.Infrastructure` | `Ccc.Bootstrap` |
+| `Ccc.Bootstrap` | ゲームルールの直接実装、画面表示ロジックの直接実装 |
 
-同じ`Ccc.Core`内のModel／Logic／UseCases方向はcompilerでは強制できないため、namespaceとfolderを一致させる。ModelからLogic／UseCases、LogicからUseCasesを参照しない。
+※ `Ccc.Core` 内部での `Model` / `Logic` / `UseCases` 間の参照規則（ModelからLogic/UseCasesの参照禁止、LogicからUseCasesの参照禁止）は名前空間およびフォルダ分離によって厳密に維持すること。
 
-### 3.9 新規ファイルの振り分け
+### 4.2 新規ファイルの配置判断フロー
 
-判断順：
+新しいクラスを作成する際は、以下の順序で配置先アセンブリを判断すること。
 
-- 1. Unity型なしの不変データ／値ObjectならCore.Model。
-- 2. 同期・決定的な計算ならCore.Logic。
-- 3. 状態保持、R3配信、Timer／Random portならCore.UseCases。
-- 4. DTO、Formatter、View／Navigation／Audio portならPresentation。
-- 5. MonoBehaviour、ScriptableObject、Unity port実装ならInfrastructure。
-- 6. DI登録とEntryPointだけならBootstrap。
+1. **Unity非依存の不変データ / 値オブジェクト** → `Ccc.Core.Model`
+2. **同期・決定的な計算ロジック** → `Ccc.Core.Logic`
+3. **状態保持、R3イベント配信、タイマー/乱数ポート** → `Ccc.Core.UseCases`
+4. **DTO、Formatter、View / Navigation / Audio のポート定義** → `Ccc.Presentation`
+5. **MonoBehaviour、ScriptableObject、Unityポートの具象実装** → `Ccc.Infrastructure`
+6. **DI登録およびEntryPoint設定のみ** → `Ccc.Bootstrap`
 
-迷った場合、利用するpackageではなく責務と依存先で決める。例えばR3を使うControllerはCore.UseCases、AudioClipを使うCatalogはInfrastructure、AudioKeyとIAudioPlayerはPresentation。
+迷った場合は「**そのクラスが担う責務と依存先**」で判断すること。
