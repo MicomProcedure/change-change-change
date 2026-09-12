@@ -22,7 +22,7 @@ namespace Ccc.Bootstrap
     /// </summary>
     public sealed class GameplayLifetimeScope : LifetimeScope
     {
-        [SerializeField] private GameplayConfigCatalogAsset configCatalogAsset;
+        [SerializeField] private GameplayConfigCatalogAsset _configCatalogAsset;
 
         /// <summary>
         /// Gameplay Scopeの依存関係を登録します。
@@ -32,7 +32,7 @@ namespace Ccc.Bootstrap
         {
             ValidateAssetReferences();
 
-            builder.RegisterInstance(configCatalogAsset);
+            builder.RegisterInstance(_configCatalogAsset);
             builder.Register<GameplayStartContext>(
                 resolver => CreateStartContext(resolver),
                 Lifetime.Scoped);
@@ -96,7 +96,7 @@ namespace Ccc.Bootstrap
 
         private void ValidateAssetReferences()
         {
-            if (configCatalogAsset == null)
+            if (_configCatalogAsset == null)
             {
                 throw new InvalidOperationException(
                     "GameplayLifetimeScope requires a GameplayConfigCatalogAsset reference.");
@@ -105,7 +105,7 @@ namespace Ccc.Bootstrap
 
         private GameplayStartContext CreateStartContext(IObjectResolver resolver)
         {
-            IReadOnlyList<string> catalogErrors = configCatalogAsset.Validate();
+            IReadOnlyList<string> catalogErrors = _configCatalogAsset.Validate();
             if (catalogErrors.Count > 0)
             {
                 throw new InvalidOperationException(
@@ -116,13 +116,13 @@ namespace Ccc.Bootstrap
             GameplayNavigationRequest request;
             if (!resolver.TryResolve(out request))
             {
-                request = configCatalogAsset.CreateDefaultRequest();
+                request = _configCatalogAsset.CreateDefaultRequest();
                 Debug.LogWarning(
                     "GameplayNavigationRequest was not provided. " +
                     "Using the default GameplayConfigCatalog entry for direct Scene Play.");
             }
 
-            if (!configCatalogAsset.TryGetEntry(request, out GameplayConfigEntry entry))
+            if (!_configCatalogAsset.TryGetEntry(request, out GameplayConfigEntry entry))
             {
                 throw new InvalidOperationException(
                     $"No GameplayConfigCatalog entry matches " +
