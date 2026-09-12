@@ -16,6 +16,7 @@ namespace Ccc.Bootstrap
     {
         [SerializeField] private UnityAudioPlayer audioPlayer;
         [SerializeField] private bool isDebugMode;
+        [SerializeField] private TitleScreenState startingTitleScreenState = TitleScreenState.MainMenu;
 
         /// <summary>
         /// Application lifetimeのAudio出力を登録します。
@@ -38,7 +39,7 @@ namespace Ccc.Bootstrap
             }
 
             builder.Register<ISceneNavigator, SceneNavigator>(Lifetime.Singleton);
-            builder.RegisterInstance(new TitleStartRequest(TitleScreenState.MainMenu));
+            builder.RegisterInstance(new TitleStartRequest(startingTitleScreenState));
         }
     }
 }
