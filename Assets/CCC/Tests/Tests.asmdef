@@ -4,7 +4,8 @@
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "Ccc.Core"
+        "Ccc.Core",
+        "GUID:77221876cc6b8244180b96e320b1bcd4"
     ],
     "includePlatforms": [
         "Editor"

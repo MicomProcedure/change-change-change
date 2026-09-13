@@ -50,12 +50,12 @@ flowchart LR
 
 ---
 
-## 5. プロトスプリントリーグ版の実装スコープ
+## 5. Mission抽選の実装スコープ
 
-- **プロダクション設定**: 本番動作時は `SimpleMissionDrawStrategy` を使用すること。
+- **プロダクション設定**: 本番動作時は `FullMissionDrawStrategy` を使用すること。
 - **開発確認用設定**: `FixedMissionDrawStrategy` は開発・デバッグ時の動作検証用として使用すること。
-- **必須対応範囲**: Normalモード、LifeEndlessモード、Tier 1〜2、および簡易版 Mission 抽選ロジックを完成範囲とすること。
-- **将来の拡張点**: Tier 3〜4、本実装版抽選ロジック、`NegatedMission`、および複合 Mission は、将来の拡張ポイントとして設計を確保すること。
+- **必須対応範囲**: Normalモード、LifeEndlessモード、Tier 1〜2、および本実装版 Mission 抽選ロジックを完成範囲とすること。
+- **将来の拡張点**: Tier 3〜4、Mission候補の自動生成、`NegatedMission`候補のカタログ供給、および複合 Mission は、将来の拡張ポイントとして設計を確保すること。
 
 ---
 

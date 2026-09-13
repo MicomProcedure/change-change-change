@@ -71,7 +71,7 @@ namespace Ccc.Bootstrap
                     .CreateRuntimeConfig(),
                 Lifetime.Scoped);
             builder.Register<IRandomSource, UnityRandomSource>(Lifetime.Scoped);
-            builder.Register<IMissionDrawStrategy, SimpleMissionDrawStrategy>(Lifetime.Scoped);
+            builder.Register<IMissionDrawStrategy, FullMissionDrawStrategy>(Lifetime.Scoped);
             builder.Register<ISectionTimer, UniTaskSectionTimer>(Lifetime.Scoped);
             builder.Register<ExpressionInput>(Lifetime.Scoped);
             builder.Register<IGameplayFlow, GameplayController>(Lifetime.Scoped);

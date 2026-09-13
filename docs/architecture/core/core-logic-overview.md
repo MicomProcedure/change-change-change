@@ -396,7 +396,9 @@ class IMissionDrawStrategy {
   +Draw(MissionDrawContext) MissionDrawResult
 }
 class SimpleMissionDrawStrategy
+class FullMissionDrawStrategy
 class FixedMissionDrawStrategy
+class MissionDrawSelectionModule
 class IRandomSource {
   <<interface>>
   +NextFloat01() float
@@ -413,16 +415,22 @@ class UniformIndexSelector {
 class MissionDrawContext {
   +GameplaySessionContext SessionContext
   +int Section
+  +bool IsInitialDraw
+  +Expression? CurrentExpression
+  +Mission? PreviousMission
 }
 class MissionCandidate
 
 GameplayController --> IMissionDrawStrategy : calls
 SimpleMissionDrawStrategy ..|> IMissionDrawStrategy
+FullMissionDrawStrategy ..|> IMissionDrawStrategy
 FixedMissionDrawStrategy ..|> IMissionDrawStrategy
-SimpleMissionDrawStrategy o-- IRandomSource : injected
-SimpleMissionDrawStrategy --> TierResolver
-SimpleMissionDrawStrategy --> WeightedIndexSelector
-SimpleMissionDrawStrategy --> UniformIndexSelector
+SimpleMissionDrawStrategy --> MissionDrawSelectionModule
+FullMissionDrawStrategy --> MissionDrawSelectionModule
+MissionDrawSelectionModule o-- IRandomSource : injected
+MissionDrawSelectionModule --> TierResolver
+MissionDrawSelectionModule --> WeightedIndexSelector
+MissionDrawSelectionModule --> UniformIndexSelector
 IMissionDrawStrategy --> MissionDrawContext : input
 IMissionDrawStrategy ..> MissionCandidate : result
 ```

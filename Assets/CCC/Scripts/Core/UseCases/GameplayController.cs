@@ -160,7 +160,8 @@ namespace Ccc.Core.UseCases
             MissionDrawResult drawResult;
             try
             {
-                drawResult = _missionDrawStrategy.Draw(new MissionDrawContext(sessionContext, 1));
+                drawResult = _missionDrawStrategy.Draw(
+                    MissionDrawContext.CreateForInitialMission(sessionContext, 1));
             }
             catch (Exception exception)
             {
@@ -280,7 +281,11 @@ namespace Ccc.Core.UseCases
             try
             {
                 drawResult = _missionDrawStrategy.Draw(
-                    new MissionDrawContext(_sessionContext, _currentState.Section));
+                    MissionDrawContext.CreateForNextMission(
+                        _sessionContext,
+                        _currentState.Section,
+                        _expressionInput.Current,
+                        _currentState.CurrentMission));
             }
             catch (Exception exception)
             {

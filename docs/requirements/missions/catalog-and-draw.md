@@ -43,10 +43,10 @@ Gameplay 開始時の初期処理は `MissionCatalog` の確定まで行い、Se
 
 ## 実装段階（簡易版 / 本実装版）の差分
 
-| 項目 | 簡易版（初期実装） | 本実装版（拡張時） |
+| 項目 | 簡易版 | 本実装版 |
 | --- | --- | --- |
 | **パラメータ候補** | 定義済みプリセット（[候補プリセット](./candidate-presets.md)）を使用 | 到達可能な計算結果から自動生成可能 |
-| **CurrentExpressionの考慮** | 考慮しない | 現在の式（`CurrentExpression`）で未達成の候補に限定 |
+| **CurrentExpressionの考慮** | 考慮しない | 初回は考慮せず、2問目以降は現在の式（`CurrentExpression`）で未達成の候補を優先 |
 | **Tier抽選重み** | 現在Tier `0.60` / 解放済み下位Tier `0.40` | 現在Tier `0.60` / 解放済み下位Tier `0.40` |
 | **Kind抽選** | 候補が存在する Kind 間で等確率抽選 | 候補の条件評価状況に応じた選定 |
 | **パラメータ抽選** | 該当 Kind 内で等確率抽選 | 目標式適合割合（`TargetExpressionMatchRatio`）に最も近いものを優先 |
@@ -79,7 +79,8 @@ Gameplay 開始時、選択されたゲームモードと `GameDifficulty` か�
 | --- | --- |
 | `MinExpressionMatchRatio` | `0.10` |
 | `MaxExpressionMatchRatio` | `0.50` |
-| `TargetExpressionMatchRatio` | `0.25` |
+| `TargetExpressionMatchRatio` | `0.20` |
+| `MissionParameterSelectionPoolSize` | `3` |
 | `CurrentTierSelectionWeight` | `0.60` |
 | `LowerTierSelectionWeight` | `0.40` |
 | `NegatedMissionSelectionWeight` | `0.60` |
@@ -117,13 +118,13 @@ Gameplay 開始時、選択されたゲームモードと `GameDifficulty` か�
 
 ## 本実装版: Session中の抽選アルゴリズム
 
-1. `MissionCatalog` のうち、プレイヤーの現在の式 `CurrentExpression` では**未達成**の `MissionCandidate` のみを抽出し抽選対象とすること。
+1. Session初回は`CurrentExpression`による絞り込みを行わないこと。2問目以降は、現在Tier以下の解放済み候補のうちプレイヤーの現在の式 `CurrentExpression` では**未達成**の `MissionCandidate` のみを抽出し抽選対象とすること。解放済みの未達成候補が0件の場合に限り、この条件を緩和して元の解放済み候補群へ戻すこと。
 2. 現在 Tier と下位 Tier を重み `0.60` / `0.40` で決定すること。
-3. 肯定 Mission（基準重み `1.00`）と `NegatedMission`（相対重み `NegatedMissionSelectionWeight` 例: `0.60`）のいずれかを選択すること。
+3. 肯定 Mission（基準重み `1.00`）と `NegatedMission`（相対重み `NegatedMissionSelectionWeight` 例: `0.60`）のいずれかを選択すること。`NegatedMissionSelectionWeight == 0`の場合はNegated候補を抽選対象から完全に除外すること。
 4. 直前の出題と同一の Kind かつ同一パラメータの候補を除外すること（代替候補が存在する場合）。
 5. 残った Kind の中から一様抽選すること。
-6. 選択された Kind の候補を `TargetExpressionMatchRatio` との差分が小さい順に並べ替え、上位候補群の中からランダム抽選すること。
-7. 途中の条件絞り込みで候補が 0件 になった場合は、加えた制約を逆順に緩和すること（`CurrentExpression` 未達成条件まで緩和しても候補が 0件 の場合は設定エラー）。
+6. 選択された Kind の候補を `TargetExpressionMatchRatio` との差分が小さい順に並べ替え、ConfigのMissionパラメータ抽選プール数までを上位候補群としてランダム抽選すること。
+7. 直前Missionの除外は代替候補が存在する場合にのみ適用すること。手順1の緩和後も利用可能候補が0件の場合は設定エラーとすること。
 
 ## NegatedMission（判定反転ミッション）
 
