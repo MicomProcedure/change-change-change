@@ -127,6 +127,7 @@ namespace Ccc.Core.UseCases
             out IReadOnlyList<MissionCandidate> selectedCandidates,
             out string failureMessage)
         {
+            selectedCandidates = Array.Empty<MissionCandidate>();
             failureMessage = null;
             int currentTier = TierResolver.ResolveCurrentTier(
                 context.Section,
