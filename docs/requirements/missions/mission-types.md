@@ -82,7 +82,7 @@ Gameplay 開始時、すべての正常な `ExpressionCandidate` に対して `M
 7. 解答失敗時に表示できる正解模範例（`AnswerExample`）が 1件 以上存在すること
 8. Kind 固有のパラメータ制約を満たすこと
 
-※ `TargetExpressionMatchRatio`（`0.25`）は本実装版の Session 中抽選においてのみ参照され、カタログ登録の合否基準には使用しないこと。
+※ `TargetExpressionMatchRatio`（`0.20`）は本実装版の Session 中抽選においてのみ参照され、カタログ登録の合否基準には使用しないこと。
 
 ## 簡易版: 用意済み候補の評価
 

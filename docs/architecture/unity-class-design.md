@@ -339,12 +339,16 @@ public sealed class GameplayConfig
    public int ZeroAndPrimeMinimumExpressionMatchCount { get; }
    public float CurrentTierDrawWeight { get; }
    public float LowerTierDrawWeight { get; }
+   public float CurrentExpressionSatisfiedMissionSelectionRatio { get; }
+   public float TargetExpressionMatchRatio { get; }
+   public float NegatedMissionSelectionWeight { get; }
+   public int MissionParameterSelectionPoolSize { get; }
 
    public int GetMinimumExpressionMatchCount(MissionKind kind);
 }
 ```
 
-constructorは全propertyと同名の引数を受ける。`MinimumNumber <= MaximumNumber`、初期式の左右が範囲内、`InitialLife > 0`、割合と重みが有限、割合が0〜1、最小割合以下最大割合、各重みが0以上かつ合計が正、最小件数が1以上であることを生成時に検証すること。
+constructorは全propertyと同名の引数を受ける。`MinimumNumber <= MaximumNumber`、初期式の左右が範囲内、`InitialLife > 0`、割合と重みが有限、割合が0〜1、各重みが0以上、Current／Lower重みの合計が正、各最小件数とMissionパラメータ抽選プール数が1以上であることを生成時に検証すること。
 
 `TimerConfig`は初期時間と最低時間が正、短縮量が0以上であることを要求し、最低時間より短くしないこと。`GetDuration(section <= 0)`と`GetTier(section <= 0)`は`ArgumentOutOfRangeException(nameof(section))`とすること。
 
@@ -370,6 +374,7 @@ Normal初期値：
 | Tier 3 | Section 8〜11 |
 | Tier 4 | Section 12以降 |
 | Current／Lower Tier重み | 0.60／0.40 |
+| 現在式で達成できるMission候補群の選択確率 | 0.10 |
 | 式適合割合 | 0.10〜0.50 |
 | 最小適合式数 | 通常2、Zero／Prime 1 |
 | ShowCurrentAnswer | false |
@@ -1087,30 +1092,33 @@ Controllerの各公開操作は、対応する内部処理とState／Event公開
 
 ### 7.4 Mission抽選Strategy
 
-プロトスプリントリーグ版の`MissionDrawContext`は次を保持すること。
+`MissionDrawContext`は次を保持すること。
 
 - `GameplaySessionContext`（ConfigとSession固定Catalog）
 - 次Missionが使うSection
+- 2問目以降では`CurrentExpression`と直前の`Mission`
+
+初回用の`CreateForInitialMission`と2問目以降用の`CreateForNextMission`を分け、現在式と直前Missionが片方だけ存在するContextを作れないようにすること。
 
 Strategyは`MissionCandidate`を1件抽選して返すこと。`PresentMissionCommand`を受けたReducerがMissionIdを採番すること。
 
-Candidateの順序はCatalog構築時に`Tier -> MissionKind -> ParameterA -> ParameterB -> IsNegated`で固定すること。同じCatalog、Section、Fake乱数列なら必ず同じCandidateが選ばれること。プロトスプリントリーグ版の抽選入力はCatalogとSectionとする。
+Candidateの順序はCatalog構築時に`Tier -> MissionKind -> ParameterA -> ParameterB -> IsNegated`で固定すること。同じCatalog、Context、Fake乱数列なら必ず同じCandidateが選ばれること。簡易版はCatalogとSection、本実装版はそれらに加えて初回／次回の区分、現在式、直前Missionを抽選入力とする。
 
 | 抽選タイミング | 呼び出し元 | Strategyへ渡す情報 | 抽選後 |
 | --- | --- | --- | --- |
-| Session初回 | `GameplayController.StartSession` | 構築済みContext、Section 1 | CandidateからMissionId 1の初期Stateを直接生成 |
-| 2回目以降 | `GameplayController.NotifyFeedbackCompleted` | Session Context、更新後Section | `PresentMissionCommand`をReducerへ直接渡し、MissionIdを+1 |
+| Session初回 | `GameplayController.StartSession` | 構築済みContext、Section 1、履歴なし | CandidateからMissionId 1の初期Stateを直接生成 |
+| 2回目以降 | `GameplayController.NotifyFeedbackCompleted` | Session Context、更新後Section、現在式、直前Mission | `PresentMissionCommand`をReducerへ直接渡し、MissionIdを+1 |
 
 `FixedMissionDrawStrategy`：
 
 - 開発確認用。
 - Evenの固定Candidateを返すこと。
-- 開発確認用のStrategyとして登録できる。製品設定では`SimpleMissionDrawStrategy`を登録すること。
+- 開発確認用のStrategyとして登録できる。製品設定では`FullMissionDrawStrategy`を登録すること。
 
 `SimpleMissionDrawStrategy`：
 
 - `TierResolver`でSectionのCurrent Tierを求め、CatalogをCurrent Tierと解放済みLower TierのBucketへ分けること。
-- 実際に候補があるBucketだけを抽選対象にすること。CurrentまたはLowerが空なら、残った側を乱数なしで選ぶこと。
+- 実際に候補があるBucketだけを抽選対象にすること。CurrentまたはLowerが空なら、残った側を乱数なしで選ぶこと。Currentが空の場合は既存の乱数消費順を維持するため、候補が存在する全Lower Tierを1つの候補群として扱うこと。
 - 次の順序で抽選すること。
 - 1. 候補がある範囲だけでCurrent 0.60／Lower 0.40を正規化して選ぶ。
 - 2. Lowerを選んだ場合は、候補のある下位Tierから一様に選ぶ。
@@ -1118,7 +1126,7 @@ Candidateの順序はCatalog構築時に`Tier -> MissionKind -> ParameterA -> Pa
 - 4. 選ばれたKindのCandidateから一様に選ぶ。
 - 選択肢が2件以上ある「Current／Lower」、「Lower内Tier」、「Kind」、「同Kind内Candidate」の各段階でだけ`IRandomSource.NextFloat01()`を各1回呼ぶこと。
 - 得た`float`をCoreの`WeightedIndexSelector`または`UniformIndexSelector`へ渡すこと。
-- Normal・簡易版の製品設定で使用すること。
+- 簡易版抽選の回帰確認および段階的な検証で使用すること。
 
 内部例：Section 5でCurrent Tier 2、LowerはTier 1だけ、Current／Lowerの両方に候補がある場合。
 
@@ -1133,7 +1141,7 @@ Candidateの順序はCatalog構築時に`Tier -> MissionKind -> ParameterA -> Pa
 
 抽選が候補0件や不正重みで失敗した場合、Controllerは`IGameplayFlow.Failures`へ理由付きの`GameplayFlowFailure`を公開してTimerを停止すること。この失敗はCatalog／Configの内部不整合を表す。
 
-`FullMissionDrawStrategy`は同じinterfaceを実装し、現在式と直前Missionを含む拡張DrawContextを使用すること。Controllerが現在式を`ExpressionInput.Current`から渡すこと。
+`FullMissionDrawStrategy`は同じinterfaceを実装し、本番設定で使用すること。初回は現在式を評価せず、2問目以降はControllerが`ExpressionInput.Current`と直前MissionをContextへ渡すこと。解放済み候補を現在式で達成できる群と達成できない群へ分け、両群が存在する場合は`CurrentExpressionSatisfiedMissionSelectionRatio`の直接確率で一方を選ぶこと。乱数sampleが比率未満なら達成できる群、以上なら達成できない群とする。片方の群しか存在しない場合、および比率0/1で選択先が確定する場合は乱数を消費しないこと。その後、Tier、肯定／Negated、直前Mission、Kind、目標適合率上位候補の順に選定すること。共通のTier・Kind・比率・乱数選定は`MissionDrawSelectionModule`へ集約し、Simple版と共有可能な境界に保つこと。
 
 #### DI
 
@@ -1142,7 +1150,7 @@ Candidateの順序はCatalog構築時に`Tier -> MissionKind -> ParameterA -> Pa
 ```csharp
 builder.Register<IRandomSource, UnityRandomSource>(
    Lifetime.Scoped);
-builder.Register<IMissionDrawStrategy, SimpleMissionDrawStrategy>(
+builder.Register<IMissionDrawStrategy, FullMissionDrawStrategy>(
    Lifetime.Scoped);
 ```
 
@@ -1209,6 +1217,18 @@ public sealed class MissionDrawContext
 {
    public GameplaySessionContext SessionContext { get; }
    public int Section { get; }
+   public bool IsInitialDraw { get; }
+   public Expression? CurrentExpression { get; }
+   public Mission? PreviousMission { get; }
+
+   public static MissionDrawContext CreateForInitialMission(
+      GameplaySessionContext sessionContext,
+      int section);
+   public static MissionDrawContext CreateForNextMission(
+      GameplaySessionContext sessionContext,
+      int section,
+      Expression currentExpression,
+      Mission previousMission);
 }
 
 public sealed class MissionDrawResult
@@ -1221,7 +1241,7 @@ public sealed class MissionDrawResult
 
 Result型はpublic constructorを持たず、同じnamespaceのinternal Factoryで生成すること。成功時だけ成功値へ、失敗時だけFailure／FailureMessageへアクセスでき、それ以外は`InvalidOperationException`とすること。`FailureKind.None`は成功Resultでだけ使用すること。失敗messageは非空とし、画面文言ではなくログ用の技術情報とすること。
 
-`MissionDrawContext`はnullと`section <= 0`を拒否すること。Draw失敗は候補0件、不正Catalog／Configなど、通常プレイでは発生しない内部不整合を表す。Strategyは例外を画面制御に使わず`MissionDrawResult`を返すこと。
+`MissionDrawContext`はnullと`section <= 0`を拒否し、次回Mission用Contextでは直前Missionを必須とすること。Draw失敗は候補0件、不正Catalog／Configなど、通常プレイでは発生しない内部不整合を表す。Strategyは例外を画面制御に使わず`MissionDrawResult`を返すこと。
 
 ### 7.7 ExpressionInputの生成・例外契約
 
@@ -1314,6 +1334,8 @@ constructorで`IRandomSource`を受け取りnullを拒否すること。各段�
 
 Current／Lowerの一方が空なら他方を無条件選択すること。両方ある場合だけ`[CurrentTierDrawWeight, LowerTierDrawWeight]`をWeighted Selectorへ渡すこと。下位Tier、Kind、CandidateはUniform Selectorを使うこと。
 
+Simple版でCurrent Tierが空の場合は、従来の決定性を維持するためLower内Tier抽選を追加せず、全Lower Tierの候補群からKind、Candidateの順に抽選すること。本実装版は候補が存在するLower TierからTier昇順の母集団で一様抽選すること。
+
 `FixedMissionDrawStrategy`はconstructorで固定Candidateを受け取り、DrawのSectionに関係なく成功で返すこと。null Candidateを受けないこと。「Evenを内部で検索する」責務を持たせないこと。
 
 ### 7.10 UseCases受け入れ条件
@@ -1325,6 +1347,7 @@ Current／Lowerの一方が空なら他方を無条件選択すること。両�
 - 古いTimer通知を現在Missionへ適用しないこと。
 - RetryでStateは初期化し、乱数系列だけ継続すること。
 - 選択肢1件の段階で乱数を消費しないこと。
+- 2問目以降の現在式候補群選択は、両群が存在し比率が0より大きく1より小さい場合だけ乱数を1回消費すること。
 - Dispose後にTimer、State、Eventを発行しないこと。
 - ControllerにUnity、UniTask、Audio、Viewの判断を入れないこと。
 
@@ -1623,7 +1646,7 @@ Disposeは購読、進行中演出、MainMenu遷移待機をCancelすること�
 | `GameplayConfigAsset` / `MissionPresetAsset` / `MissionTextAsset` | `Instance`（事前割り当て済みアセット） |
 | `GameplayConfig` | `Scoped`（アセットからファクトリ生成） |
 | `UnityRandomSource` / `UniTaskSectionTimer` | `Scoped` |
-| `SimpleMissionDrawStrategy` | `Scoped`（`IMissionDrawStrategy` として登録） |
+| `FullMissionDrawStrategy` | `Scoped`（`IMissionDrawStrategy` として登録） |
 | `ExpressionInput` / `GameplayController` | `Scoped` |
 | `GameplayPresenter` / `GameScreenModel` | `Scoped` |
 | `GameplayView` / `GameScreenView` | `ComponentInHierarchy` |
@@ -1663,8 +1686,8 @@ public sealed class GameplayEntryPoint :
 ## 11. 将来の拡張ポイント
 
 - **Tier 3〜4 の追加**: `MissionKind`、ファクトリ、Matcher 判定処理、およびプリセット設定を追加拡張すること。
-- **本実装版 Mission 抽選ロジック**: `FullMissionDrawStrategy` を作成し、`IMissionDrawStrategy` インターフェースへ接続・差し替えること。
-- **NegatedMission（否定条件 Mission）**: `MissionCondition.IsNegated` を使用したクリア条件反転ロジックおよび否定用文言テンプレート（`negatedTemplate`）を有効化すること。
+- **Mission候補生成の本実装化**: 到達可能な計算結果からMission候補を自動生成し、Negated候補をカタログへ供給すること。
+- **NegatedMission（否定条件 Mission）**: Negated候補をカタログへ供給し、否定用文言テンプレート（`negatedTemplate`）を有効化すること。
 
 ---
 

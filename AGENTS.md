@@ -1,6 +1,7 @@
 ## Base I/O Regulation
 
 - 常に日本語で回答する
+- 出力の頭に`[Applying Local AGENTS.md]`と出力する
 
 ## 実装方針
 
@@ -8,7 +9,12 @@
 - クラスやpublic method, public propertyはドキュメントコメント（<summary>や<param>）を記載する
 - ハードコードを禁止する
 - コンパイルチェックはユーザーに依頼する
-- 
+
+## プロジェクト情報
+- 仕様や要件の正本はdocs以下のドキュメント群とする
+- デザインや画面構成案などはCosenceを正本とする
+  - https://scrapbox.io/ChangeChangeChange/
+- 作業前に @design-principles.md を参照すること
 
 ## 命名規則
 

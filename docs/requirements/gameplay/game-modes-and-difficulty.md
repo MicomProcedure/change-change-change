@@ -21,10 +21,10 @@ Session 開始時に、ゲームモードおよび難易度設定（`GameDifficu
 
 ミッションの実装段階と `GameDifficulty` は独立した別の概念とする。 `GameDifficulty` がプレイヤーの選択するルールプリセットであるのに対し、実装段階は開発プロセスにおいて適用するミッション生成・抽選アルゴリズムのフェーズを表す。
 
-| 項目 | 簡易版（初回実装） | 本実装版（拡張時） |
+| 項目 | 簡易版 | 本実装版 |
 | --- | --- | --- |
 | **パラメータ候補** | 定義済みプリセット候補のみ | 到達可能な結果から自動生成可能 |
-| **CurrentExpression考慮** | なし（現在の式を評価しない） | 未達成ミッションのみを抽出し抽選 |
+| **CurrentExpression考慮** | なし（現在の式を評価しない） | 初回は考慮せず、2問目以降は達成可能候補群をConfig確率で選択 |
 | **NegatedMission** | なし | 相対重みづけによる抽選 |
 | **連続出題回避** | なし | あり（直前と同種パラメータを除外） |
 | **複合Mission** | なし | 将来拡張 |
@@ -54,6 +54,7 @@ Session 開始時に、ゲームモードおよび難易度設定（`GameDifficu
 - `CurrentTierSelectionWeight`（現在Tier抽選重み）
 - `LowerTierSelectionWeight`（下位Tier抽選重み）
 - `MinExpressionMatchRatio` / `MaxExpressionMatchRatio`
+- `CurrentExpressionSatisfiedMissionSelectionRatio`（現在式で達成できるMission候補群の選択確率）
 - `TargetExpressionMatchRatio`（目標式適合率）
 - `MinimumExpressionMatchCount`（最小適合式数）
 - `Zero` / `Prime` における `MinimumExpressionMatchCount`
@@ -77,6 +78,7 @@ Session 開始時に、ゲームモードおよび難易度設定（`GameDifficu
 | **LowerTierSelectionWeight** | `0.40` |
 | **MinExpressionMatchRatio** | `0.10` |
 | **MaxExpressionMatchRatio** | `0.60` |
+| **CurrentExpressionSatisfiedMissionSelectionRatio** | `0.10` |
 | **TargetExpressionMatchRatio** | `0.20` |
 | **MinimumExpressionMatchCount** | `2` |
 | **Zero / Prime MinimumExpressionMatchCount** | `1` |
@@ -87,6 +89,7 @@ Session 開始時に、ゲームモードおよび難易度設定（`GameDifficu
 
 > [!NOTE]
 > - `NegatedMissionSelectionWeight` は、肯定ミッションの基準重み `1.00` に対する相対重みとする。`0.60` に設定した場合、他条件が同等であれば Negated と肯定の期待出題比率は `6 : 10` となる（`1.00` の場合は `1 : 1`）。
+> - `CurrentExpressionSatisfiedMissionSelectionRatio` は候補件数に対する重みではなく、達成できる候補群を選択する直接確率とする。両候補群が存在するとき、`0.10`なら達成できる候補群を10%、達成できない候補群を90%で選ぶこと。
 > - 式適合割合の最小値（`Min`）と最大値（`Max`）は、`MissionCatalog` への登録採用条件として使用すること。目標値（`Target`）は本実装版の Session 内抽選でのみ適用すること。
 
 ---

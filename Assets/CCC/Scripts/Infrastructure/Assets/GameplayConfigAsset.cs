@@ -24,6 +24,10 @@ namespace Ccc.Infrastructure.Assets
         private const float DefaultMaximumExpressionMatchRatio = 0.60f;
         private const float DefaultCurrentTierDrawWeight = 0.60f;
         private const float DefaultLowerTierDrawWeight = 0.40f;
+        private const float DefaultCurrentExpressionSatisfiedMissionSelectionRatio = 0.10f;
+        private const float DefaultTargetExpressionMatchRatio = 0.20f;
+        private const float DefaultNegatedMissionSelectionWeight = 0.60f;
+        private const int DefaultMissionParameterSelectionPoolSize = 3;
 
         [SerializeField]
         private int minimumNumber = DefaultMinimumNumber;
@@ -75,6 +79,19 @@ namespace Ccc.Infrastructure.Assets
 
         [SerializeField]
         private float lowerTierDrawWeight = DefaultLowerTierDrawWeight;
+
+        [SerializeField]
+        private float currentExpressionSatisfiedMissionSelectionRatio =
+            DefaultCurrentExpressionSatisfiedMissionSelectionRatio;
+
+        [SerializeField]
+        private float targetExpressionMatchRatio = DefaultTargetExpressionMatchRatio;
+
+        [SerializeField]
+        private float negatedMissionSelectionWeight = DefaultNegatedMissionSelectionWeight;
+
+        [SerializeField]
+        private int missionParameterSelectionPoolSize = DefaultMissionParameterSelectionPoolSize;
 
         /// <summary>
         /// Inspector設定を検証し、検出されたエラー一覧を返します。
@@ -138,6 +155,20 @@ namespace Ccc.Infrastructure.Assets
                 errors.Add("Current and lower tier draw weights cannot both be zero.");
             }
 
+            ValidateRatio(
+                errors,
+                currentExpressionSatisfiedMissionSelectionRatio,
+                "Current expression satisfied mission selection ratio");
+            ValidateRatio(errors, targetExpressionMatchRatio, "Target expression match ratio");
+            ValidateWeight(
+                errors,
+                negatedMissionSelectionWeight,
+                "Negated mission selection weight");
+            if (missionParameterSelectionPoolSize <= 0)
+            {
+                errors.Add("Mission parameter selection pool size must be greater than zero.");
+            }
+
             return errors.Distinct().ToArray();
         }
 
@@ -171,7 +202,11 @@ namespace Ccc.Infrastructure.Assets
                 minimumExpressionMatchCount,
                 zeroAndPrimeMinimumExpressionMatchCount,
                 currentTierDrawWeight,
-                lowerTierDrawWeight);
+                lowerTierDrawWeight,
+                currentExpressionSatisfiedMissionSelectionRatio,
+                targetExpressionMatchRatio,
+                negatedMissionSelectionWeight,
+                missionParameterSelectionPoolSize);
         }
 
         private void OnValidate()

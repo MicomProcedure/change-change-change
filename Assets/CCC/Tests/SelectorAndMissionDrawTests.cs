@@ -65,6 +65,29 @@ namespace Ccc.Tests
         }
 
         /// <summary>
+        /// 現在Tierに候補がない場合も、Simple版が従来どおり全下位Tierを同一候補群として扱うことを検証します。
+        /// </summary>
+        [Test]
+        public void Draw_WhenCurrentTierHasNoCandidate_ShouldKeepExistingLowerTierPoolBehavior()
+        {
+            var randomSource = new SequenceRandomSource(0.99d);
+            var candidates = new[]
+            {
+                CreateCandidate(MissionKind.Even, 1, 1),
+                CreateCandidate(MissionKind.Exact, 1, 1),
+                CreateCandidate(MissionKind.Odd, 2, 1)
+            };
+
+            MissionDrawResult result = new SimpleMissionDrawStrategy(randomSource)
+                .Draw(CreateContext(candidates, section: 8));
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Candidate.Condition.Kind, Is.EqualTo(MissionKind.Exact));
+            Assert.That(result.Candidate.Tier, Is.EqualTo(1));
+            Assert.That(randomSource.ConsumedSamples, Is.EqualTo(new[] { 0.99d }));
+        }
+
+        /// <summary>
         /// 同一のsample列が同一のMission抽選結果を再現することを検証します。
         /// </summary>
         [Test]
@@ -92,7 +115,7 @@ namespace Ccc.Tests
         {
             var config = GameplayConfigDefaults.CreateNormal();
             var catalog = new MissionCatalog(candidates);
-            return new MissionDrawContext(
+            return MissionDrawContext.CreateForInitialMission(
                 new GameplaySessionContext(config, catalog),
                 section);
         }

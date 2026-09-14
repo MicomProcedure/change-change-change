@@ -19,6 +19,7 @@ namespace Ccc.Presentation.Navigation
         /// <param name="initialScreen">開始時の画面状態です。</param>
         public TitleStartRequest(TitleScreenState initialScreen)
         {
+            // 開始時のScreenStateがMainMenuかTitleScreen以外は許容しない
             if (initialScreen is not
                 (TitleScreenState.TitleScreen or TitleScreenState.MainMenu))
             {
