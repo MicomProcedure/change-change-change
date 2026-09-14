@@ -14,6 +14,7 @@
 - 仕様や要件の正本はdocs以下のドキュメント群とする
 - デザインや画面構成案などはCosenceを正本とする
   - https://scrapbox.io/ChangeChangeChange/
+- 作業前に @design-principles.md を参照すること
 
 ## 命名規則
 
