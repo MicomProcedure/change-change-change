@@ -47,6 +47,5 @@ MonoBehaviour:
   parentReference:
     TypeName: Ccc.Bootstrap.ApplicationLifetimeScope
   autoRun: 1
-  autoInjectGameObjects:
-  - {fileID: 0}
-  configCatalogAsset: {fileID: 11400000, guid: f863cd1c9be2f49548ffe7465c807a31, type: 2}
+  autoInjectGameObjects: []
+  _configCatalogAsset: {fileID: 11400000, guid: f863cd1c9be2f49548ffe7465c807a31, type: 2}

@@ -32,7 +32,7 @@ namespace Ccc.Bootstrap
         {
             ValidateAssetReferences();
 
-            builder.RegisterInstance(_configCatalogAsset);
+            builder.RegisterInstance(_configCatalogAsset);  // inspectorからGameplayConfigCatalogAssetを登録
             builder.Register<GameplayStartContext>(
                 resolver => CreateStartContext(resolver),
                 Lifetime.Scoped);
@@ -114,6 +114,7 @@ namespace Ccc.Bootstrap
             }
 
             GameplayNavigationRequest request;
+            
             if (!resolver.TryResolve(out request))
             {
                 request = _configCatalogAsset.CreateDefaultRequest();
