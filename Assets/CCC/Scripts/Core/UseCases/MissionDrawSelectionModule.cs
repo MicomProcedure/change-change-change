@@ -26,6 +26,69 @@ namespace Ccc.Core.UseCases
         }
 
         /// <summary>
+        /// 2つの候補群を第1候補群の選択確率で選びます。
+        /// </summary>
+        internal bool TrySelectCandidateGroupByRatio(
+            IReadOnlyList<MissionCandidate> firstCandidates,
+            IReadOnlyList<MissionCandidate> secondCandidates,
+            float firstSelectionRatio,
+            string stageName,
+            out IReadOnlyList<MissionCandidate> selectedCandidates,
+            out string failureMessage)
+        {
+            selectedCandidates = null;
+            failureMessage = null;
+            if (!IsValidSelectionRatio(firstSelectionRatio))
+            {
+                failureMessage =
+                    $"Mission draw ratio for stage '{stageName}' must be finite and between zero and one.";
+                return false;
+            }
+
+            bool hasFirstCandidates = firstCandidates != null && firstCandidates.Count > 0;
+            bool hasSecondCandidates = secondCandidates != null && secondCandidates.Count > 0;
+            if (!hasFirstCandidates && !hasSecondCandidates)
+            {
+                failureMessage = $"Mission draw stage '{stageName}' contains no candidates.";
+                return false;
+            }
+
+            if (!hasFirstCandidates)
+            {
+                selectedCandidates = secondCandidates;
+                return true;
+            }
+
+            if (!hasSecondCandidates)
+            {
+                selectedCandidates = firstCandidates;
+                return true;
+            }
+
+            if (firstSelectionRatio <= 0f)
+            {
+                selectedCandidates = secondCandidates;
+                return true;
+            }
+
+            if (firstSelectionRatio >= 1f)
+            {
+                selectedCandidates = firstCandidates;
+                return true;
+            }
+
+            if (!TryGetRandomValue(out float randomValue, out failureMessage))
+            {
+                return false;
+            }
+
+            selectedCandidates = randomValue < firstSelectionRatio
+                ? firstCandidates
+                : secondCandidates;
+            return true;
+        }
+
+        /// <summary>
         /// SectionとConfigに基づいて抽選対象Tierの候補群を選びます。
         /// </summary>
         internal bool TrySelectTierCandidates(
@@ -313,6 +376,11 @@ namespace Ccc.Core.UseCases
         private static bool IsValidRandomWeight(float weight)
         {
             return IsFinite(weight) && weight >= 0f;
+        }
+
+        private static bool IsValidSelectionRatio(float selectionRatio)
+        {
+            return IsFinite(selectionRatio) && selectionRatio >= 0f && selectionRatio <= 1f;
         }
 
         private static bool IsFinite(float value)

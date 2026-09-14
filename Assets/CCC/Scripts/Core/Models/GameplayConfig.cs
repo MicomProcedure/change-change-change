@@ -47,6 +47,11 @@ namespace Ccc.Core.Model
         public float LowerTierDrawWeight { get; }
 
         /// <summary>
+        /// 2問目以降に現在式で達成できるMission候補群を選択する確率を取得します。
+        /// </summary>
+        public float CurrentExpressionSatisfiedMissionSelectionRatio { get; }
+
+        /// <summary>
         /// 本実装版Mission抽選で優先する式適合割合を取得します。
         /// </summary>
         public float TargetExpressionMatchRatio { get; }
@@ -77,6 +82,7 @@ namespace Ccc.Core.Model
         /// <param name="zeroAndPrimeMinimumExpressionMatchCount">ZeroおよびPrimeの最小適合件数。</param>
         /// <param name="currentTierDrawWeight">現在Tierの相対抽選重み。</param>
         /// <param name="lowerTierDrawWeight">下位Tierの相対抽選重み。</param>
+        /// <param name="currentExpressionSatisfiedMissionSelectionRatio">現在式で達成できるMission候補群の選択確率。</param>
         /// <param name="targetExpressionMatchRatio">本実装版抽選で優先する式適合割合。</param>
         /// <param name="negatedMissionSelectionWeight">NegatedMissionの相対抽選重み。</param>
         /// <param name="missionParameterSelectionPoolSize">最終抽選プールへ含める候補数。</param>
@@ -96,6 +102,7 @@ namespace Ccc.Core.Model
             int zeroAndPrimeMinimumExpressionMatchCount,
             float currentTierDrawWeight,
             float lowerTierDrawWeight,
+            float currentExpressionSatisfiedMissionSelectionRatio,
             float targetExpressionMatchRatio,
             float negatedMissionSelectionWeight,
             int missionParameterSelectionPoolSize)
@@ -109,6 +116,7 @@ namespace Ccc.Core.Model
             ValidateExpressionMatchCounts(minimumExpressionMatchCount, zeroAndPrimeMinimumExpressionMatchCount);
             ValidateDrawWeights(currentTierDrawWeight, lowerTierDrawWeight);
             ValidateFullMissionDrawSettings(
+                currentExpressionSatisfiedMissionSelectionRatio,
                 targetExpressionMatchRatio,
                 negatedMissionSelectionWeight,
                 missionParameterSelectionPoolSize);
@@ -126,6 +134,8 @@ namespace Ccc.Core.Model
             ZeroAndPrimeMinimumExpressionMatchCount = zeroAndPrimeMinimumExpressionMatchCount;
             CurrentTierDrawWeight = currentTierDrawWeight;
             LowerTierDrawWeight = lowerTierDrawWeight;
+            CurrentExpressionSatisfiedMissionSelectionRatio =
+                currentExpressionSatisfiedMissionSelectionRatio;
             TargetExpressionMatchRatio = targetExpressionMatchRatio;
             NegatedMissionSelectionWeight = negatedMissionSelectionWeight;
             MissionParameterSelectionPoolSize = missionParameterSelectionPoolSize;
@@ -223,20 +233,19 @@ namespace Ccc.Core.Model
         }
 
         private static void ValidateFullMissionDrawSettings(
+            float currentExpressionSatisfiedMissionSelectionRatio,
             float targetExpressionMatchRatio,
             float negatedMissionSelectionWeight,
             int missionParameterSelectionPoolSize)
         {
-            if (float.IsNaN(targetExpressionMatchRatio) ||
-                float.IsInfinity(targetExpressionMatchRatio) ||
-                targetExpressionMatchRatio < 0f ||
-                targetExpressionMatchRatio > 1f)
-            {
-                throw new ArgumentOutOfRangeException(
-                    nameof(targetExpressionMatchRatio),
-                    targetExpressionMatchRatio,
-                    "Target expression match ratio must be finite and between zero and one.");
-            }
+            ValidateSelectionRatio(
+                currentExpressionSatisfiedMissionSelectionRatio,
+                nameof(currentExpressionSatisfiedMissionSelectionRatio),
+                "Current expression satisfied mission selection ratio");
+            ValidateSelectionRatio(
+                targetExpressionMatchRatio,
+                nameof(targetExpressionMatchRatio),
+                "Target expression match ratio");
 
             if (float.IsNaN(negatedMissionSelectionWeight) ||
                 float.IsInfinity(negatedMissionSelectionWeight) ||
@@ -254,6 +263,23 @@ namespace Ccc.Core.Model
                     nameof(missionParameterSelectionPoolSize),
                     missionParameterSelectionPoolSize,
                     "Mission parameter selection pool size must be greater than zero.");
+            }
+        }
+
+        private static void ValidateSelectionRatio(
+            float selectionRatio,
+            string parameterName,
+            string settingName)
+        {
+            if (float.IsNaN(selectionRatio) ||
+                float.IsInfinity(selectionRatio) ||
+                selectionRatio < 0f ||
+                selectionRatio > 1f)
+            {
+                throw new ArgumentOutOfRangeException(
+                    parameterName,
+                    selectionRatio,
+                    $"{settingName} must be finite and between zero and one.");
             }
         }
 
@@ -306,6 +332,7 @@ namespace Ccc.Core.Model
                 zeroAndPrimeMinimumExpressionMatchCount: 1,
                 currentTierDrawWeight: 0.60f,
                 lowerTierDrawWeight: 0.40f,
+                currentExpressionSatisfiedMissionSelectionRatio: 0.10f,
                 targetExpressionMatchRatio: 0.20f,
                 negatedMissionSelectionWeight: 0.60f,
                 missionParameterSelectionPoolSize: 3);

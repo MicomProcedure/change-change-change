@@ -29,6 +29,7 @@ MonoBehaviour:
   zeroAndPrimeMinimumExpressionMatchCount: 1
   currentTierDrawWeight: 0.6
   lowerTierDrawWeight: 0.4
+  currentExpressionSatisfiedMissionSelectionRatio: 0.1
   targetExpressionMatchRatio: 0.2
   negatedMissionSelectionWeight: 0.6
   missionParameterSelectionPoolSize: 3

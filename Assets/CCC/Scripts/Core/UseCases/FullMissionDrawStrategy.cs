@@ -8,7 +8,7 @@ using Ccc.Core.Model;
 namespace Ccc.Core.UseCases
 {
     /// <summary>
-    /// 現在式、Tier、極性、直前Mission、Kind、適合率を順に考慮する本実装版Mission抽選Strategyです。
+    /// 現在式による候補群の確率選択、Tier、極性、直前Mission、Kind、適合率を順に考慮する本実装版Mission抽選Strategyです。
     /// </summary>
     public sealed class FullMissionDrawStrategy : IMissionDrawStrategy
     {
@@ -58,8 +58,15 @@ namespace Ccc.Core.UseCases
                         "Negated mission selection is disabled and no positive candidates are available.");
                 }
 
-                IReadOnlyList<MissionCandidate> currentExpressionCandidates =
-                    SelectCurrentExpressionCandidates(context, enabledCandidates);
+                if (!TrySelectCurrentExpressionCandidates(
+                        context,
+                        enabledCandidates,
+                        out IReadOnlyList<MissionCandidate> currentExpressionCandidates,
+                        out string currentExpressionFailure))
+                {
+                    return MissionDrawResult.Failure(currentExpressionFailure);
+                }
+
                 if (!_selectionModule.TrySelectTierCandidates(
                         currentExpressionCandidates,
                         context.Section,
@@ -114,10 +121,13 @@ namespace Ccc.Core.UseCases
             }
         }
 
-        private static IReadOnlyList<MissionCandidate> SelectCurrentExpressionCandidates(
+        private bool TrySelectCurrentExpressionCandidates(
             MissionDrawContext context,
-            IReadOnlyList<MissionCandidate> enabledCandidates)
+            IReadOnlyList<MissionCandidate> enabledCandidates,
+            out IReadOnlyList<MissionCandidate> selectedCandidates,
+            out string failureMessage)
         {
+            failureMessage = null;
             int currentTier = TierResolver.ResolveCurrentTier(
                 context.Section,
                 context.SessionContext.Config);
@@ -126,21 +136,36 @@ namespace Ccc.Core.UseCases
                 .ToArray();
             if (context.IsInitialDraw)
             {
-                return unlockedCandidates;
+                selectedCandidates = unlockedCandidates;
+                return true;
             }
 
             Expression currentExpression = context.CurrentExpression
                 ?? throw new InvalidOperationException(
                     "A next-mission draw context must contain the current expression.");
             CalculationResult currentResult = ExpressionCalculator.Evaluate(currentExpression);
-            MissionCandidate[] unmatchedCandidates = unlockedCandidates
-                .Where(candidate =>
-                    !MissionConditionMatcher.IsMatch(candidate.Condition, currentResult))
-                .ToArray();
+            var satisfiedCandidates = new List<MissionCandidate>();
+            var unmatchedCandidates = new List<MissionCandidate>();
+            for (int index = 0; index < unlockedCandidates.Length; index++)
+            {
+                MissionCandidate candidate = unlockedCandidates[index];
+                if (MissionConditionMatcher.IsMatch(candidate.Condition, currentResult))
+                {
+                    satisfiedCandidates.Add(candidate);
+                }
+                else
+                {
+                    unmatchedCandidates.Add(candidate);
+                }
+            }
 
-            return unmatchedCandidates.Length > 0
-                ? unmatchedCandidates
-                : unlockedCandidates;
+            return _selectionModule.TrySelectCandidateGroupByRatio(
+                satisfiedCandidates,
+                unmatchedCandidates,
+                context.SessionContext.Config.CurrentExpressionSatisfiedMissionSelectionRatio,
+                "current expression satisfaction",
+                out selectedCandidates,
+                out failureMessage);
         }
 
         private static IReadOnlyList<MissionCandidate> ExcludePreviousConditionWhenAlternativeExists(

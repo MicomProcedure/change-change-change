@@ -20,6 +20,7 @@ Gameplay 開始時の Mission 候補カタログ準備処理と、Session 進行
 | `MinExpressionMatchRatio` | `MissionCandidate` として採択・登録するための最小式適合割合 |
 | `MaxExpressionMatchRatio` | `MissionCandidate` として採択・登録するための最大式適合割合 |
 | `TargetExpressionMatchRatio` | 本実装版の抽出処理において優先目標とするターゲット式適合割合 |
+| `CurrentExpressionSatisfiedMissionSelectionRatio` | 2問目以降に現在式で達成できるMission候補群を選択する確率 |
 | `NegatedMissionSelectionWeight` | 肯定 Mission に対する反転 Mission（`Negated`）の相対抽選重み |
 
 ## 処理フロー
@@ -46,7 +47,7 @@ Gameplay 開始時の初期処理は `MissionCatalog` の確定まで行い、Se
 | 項目 | 簡易版 | 本実装版 |
 | --- | --- | --- |
 | **パラメータ候補** | 定義済みプリセット（[候補プリセット](./candidate-presets.md)）を使用 | 到達可能な計算結果から自動生成可能 |
-| **CurrentExpressionの考慮** | 考慮しない | 初回は考慮せず、2問目以降は現在の式（`CurrentExpression`）で未達成の候補を優先 |
+| **CurrentExpressionの考慮** | 考慮しない | 初回は考慮せず、2問目以降は現在式で達成できる候補群をConfig確率で選択 |
 | **Tier抽選重み** | 現在Tier `0.60` / 解放済み下位Tier `0.40` | 現在Tier `0.60` / 解放済み下位Tier `0.40` |
 | **Kind抽選** | 候補が存在する Kind 間で等確率抽選 | 候補の条件評価状況に応じた選定 |
 | **パラメータ抽選** | 該当 Kind 内で等確率抽選 | 目標式適合割合（`TargetExpressionMatchRatio`）に最も近いものを優先 |
@@ -79,6 +80,7 @@ Gameplay 開始時、選択されたゲームモードと `GameDifficulty` か�
 | --- | --- |
 | `MinExpressionMatchRatio` | `0.10` |
 | `MaxExpressionMatchRatio` | `0.50` |
+| `CurrentExpressionSatisfiedMissionSelectionRatio` | `0.10` |
 | `TargetExpressionMatchRatio` | `0.20` |
 | `MissionParameterSelectionPoolSize` | `3` |
 | `CurrentTierSelectionWeight` | `0.60` |
@@ -86,7 +88,7 @@ Gameplay 開始時、選択されたゲームモードと `GameDifficulty` か�
 | `NegatedMissionSelectionWeight` | `0.60` |
 | `CompoundMissionSelectionWeight` | `0` |
 
-※上記パラメーターは難易度ごとに Config 設定可能とする。`TargetExpressionMatchRatio` は本実装版での抽選処理のみで参照され、簡易版のランダム抽選には影響しないこと。
+※上記パラメーターは難易度ごとに Config 設定可能とする。`CurrentExpressionSatisfiedMissionSelectionRatio` と `TargetExpressionMatchRatio` は本実装版での抽選処理のみで参照され、簡易版のランダム抽選には影響しないこと。
 
 ## 簡易版: Session中の抽選アルゴリズム
 
@@ -118,13 +120,13 @@ Gameplay 開始時、選択されたゲームモードと `GameDifficulty` か�
 
 ## 本実装版: Session中の抽選アルゴリズム
 
-1. Session初回は`CurrentExpression`による絞り込みを行わないこと。2問目以降は、現在Tier以下の解放済み候補のうちプレイヤーの現在の式 `CurrentExpression` では**未達成**の `MissionCandidate` のみを抽出し抽選対象とすること。解放済みの未達成候補が0件の場合に限り、この条件を緩和して元の解放済み候補群へ戻すこと。
+1. `NegatedMissionSelectionWeight == 0`の場合はNegated候補を抽選対象から完全に除外すること。続いて現在Tier以下の解放済み候補を確定すること。Session初回は`CurrentExpression`を評価せず、そのまま手順2へ進むこと。2問目以降は解放済み候補を、現在式で達成できる候補群と達成できない候補群に分けること。両群に候補がある場合は`[0, 1)`の乱数sampleが`CurrentExpressionSatisfiedMissionSelectionRatio`未満なら達成できる候補群を、以上なら達成できない候補群を選ぶこと。片方の群だけに候補がある場合は、その群を乱数消費なしで選ぶこと。比率`0`は両群がある限り達成できない候補群、比率`1`は達成できる候補群を乱数消費なしで選ぶこと。
 2. 現在 Tier と下位 Tier を重み `0.60` / `0.40` で決定すること。
-3. 肯定 Mission（基準重み `1.00`）と `NegatedMission`（相対重み `NegatedMissionSelectionWeight` 例: `0.60`）のいずれかを選択すること。`NegatedMissionSelectionWeight == 0`の場合はNegated候補を抽選対象から完全に除外すること。
+3. 肯定 Mission（基準重み `1.00`）と `NegatedMission`（相対重み `NegatedMissionSelectionWeight` 例: `0.60`）のいずれかを選択すること。
 4. 直前の出題と同一の Kind かつ同一パラメータの候補を除外すること（代替候補が存在する場合）。
 5. 残った Kind の中から一様抽選すること。
 6. 選択された Kind の候補を `TargetExpressionMatchRatio` との差分が小さい順に並べ替え、ConfigのMissionパラメータ抽選プール数までを上位候補群としてランダム抽選すること。
-7. 直前Missionの除外は代替候補が存在する場合にのみ適用すること。手順1の緩和後も利用可能候補が0件の場合は設定エラーとすること。
+7. 直前Missionの除外は代替候補が存在する場合にのみ適用すること。手順1で解放済みの利用可能候補が0件の場合は設定エラーとすること。
 
 ## NegatedMission（判定反転ミッション）
 

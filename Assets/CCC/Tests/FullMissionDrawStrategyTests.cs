@@ -102,12 +102,12 @@ namespace Ccc.Tests
         }
 
         /// <summary>
-        /// 次回抽選では引き継いだ回答式で達成済みのMissionを除外することを検証します。
+        /// 次回抽選で設定割合以上のsampleなら現在式で未達成のMissionを選択することを検証します。
         /// </summary>
         [Test]
-        public void DrawNextMission_ShouldExcludeCandidateSatisfiedByCurrentExpression()
+        public void DrawNextMission_ShouldSelectUnmatchedCandidateOutsideConfiguredRatio()
         {
-            var randomSource = new SequenceRandomSource();
+            var randomSource = new SequenceRandomSource(0.10d);
             var strategy = new FullMissionDrawStrategy(randomSource);
             var candidates = new[]
             {
@@ -122,14 +122,124 @@ namespace Ccc.Tests
 
             Assert.That(result.IsSuccess, Is.True);
             Assert.That(result.Candidate.Condition.Kind, Is.EqualTo(MissionKind.Odd));
+            Assert.That(randomSource.ConsumedSamples, Is.EqualTo(new[] { 0.10d }));
+        }
+
+        /// <summary>
+        /// 次回抽選で設定割合内のsampleなら現在式で達成済みのMissionを選択することを検証します。
+        /// </summary>
+        [Test]
+        public void DrawNextMission_ShouldSelectSatisfiedCandidateWithinConfiguredRatio()
+        {
+            var randomSource = new SequenceRandomSource(0.09d);
+            var strategy = new FullMissionDrawStrategy(randomSource);
+            var satisfiedCandidate = CreateCandidate(
+                MissionCondition.Create(MissionKind.Even));
+            var candidates = new[]
+            {
+                satisfiedCandidate,
+                CreateCandidate(MissionCondition.Create(MissionKind.Odd))
+            };
+
+            MissionDrawResult result = strategy.Draw(CreateNextContext(
+                candidates,
+                new Expression(1, OperatorType.Add, 1),
+                CreateMission(MissionCondition.Create(MissionKind.Exact, 9))));
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Candidate, Is.SameAs(satisfiedCandidate));
+            Assert.That(randomSource.ConsumedSamples, Is.EqualTo(new[] { 0.09d }));
+        }
+
+        /// <summary>
+        /// 設定した割合が現在式で達成済みのMission候補群を選ぶ境界として使われることを検証します。
+        /// </summary>
+        [Test]
+        public void DrawNextMission_ShouldUseConfiguredSatisfiedMissionSelectionRatio()
+        {
+            var randomSource = new SequenceRandomSource(0.24d);
+            var strategy = new FullMissionDrawStrategy(randomSource);
+            var satisfiedCandidate = CreateCandidate(
+                MissionCondition.Create(MissionKind.Even));
+            GameplayConfig config = CreateConfig(
+                currentExpressionSatisfiedMissionSelectionRatio: 0.25f);
+
+            MissionDrawResult result = strategy.Draw(CreateNextContext(
+                new[]
+                {
+                    satisfiedCandidate,
+                    CreateCandidate(MissionCondition.Create(MissionKind.Odd))
+                },
+                new Expression(1, OperatorType.Add, 1),
+                CreateMission(MissionCondition.Create(MissionKind.Exact, 9)),
+                config));
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Candidate, Is.SameAs(satisfiedCandidate));
+            Assert.That(randomSource.ConsumedSamples, Is.EqualTo(new[] { 0.24d }));
+        }
+
+        /// <summary>
+        /// 現在式で達成済みのMission選択割合が0なら未達成候補を乱数消費なしで選ぶことを検証します。
+        /// </summary>
+        [Test]
+        public void DrawNextMission_WhenSatisfiedSelectionRatioIsZero_ShouldSelectUnmatchedWithoutRandom()
+        {
+            var randomSource = new SequenceRandomSource();
+            var strategy = new FullMissionDrawStrategy(randomSource);
+            var unmatchedCandidate = CreateCandidate(
+                MissionCondition.Create(MissionKind.Odd));
+            GameplayConfig config = CreateConfig(
+                currentExpressionSatisfiedMissionSelectionRatio: 0f);
+
+            MissionDrawResult result = strategy.Draw(CreateNextContext(
+                new[]
+                {
+                    CreateCandidate(MissionCondition.Create(MissionKind.Even)),
+                    unmatchedCandidate
+                },
+                new Expression(1, OperatorType.Add, 1),
+                CreateMission(MissionCondition.Create(MissionKind.Exact, 9)),
+                config));
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Candidate, Is.SameAs(unmatchedCandidate));
             Assert.That(randomSource.ConsumedSamples, Is.Empty);
         }
 
         /// <summary>
-        /// 全候補が現在式で達成済みの場合だけ未達成条件を緩和することを検証します。
+        /// 現在式で達成済みのMission選択割合が1なら達成済み候補を乱数消費なしで選ぶことを検証します。
         /// </summary>
         [Test]
-        public void DrawNextMission_ShouldRelaxCurrentExpressionConstraintWhenNoCandidateRemains()
+        public void DrawNextMission_WhenSatisfiedSelectionRatioIsOne_ShouldSelectSatisfiedWithoutRandom()
+        {
+            var randomSource = new SequenceRandomSource();
+            var strategy = new FullMissionDrawStrategy(randomSource);
+            var satisfiedCandidate = CreateCandidate(
+                MissionCondition.Create(MissionKind.Even));
+            GameplayConfig config = CreateConfig(
+                currentExpressionSatisfiedMissionSelectionRatio: 1f);
+
+            MissionDrawResult result = strategy.Draw(CreateNextContext(
+                new[]
+                {
+                    satisfiedCandidate,
+                    CreateCandidate(MissionCondition.Create(MissionKind.Odd))
+                },
+                new Expression(1, OperatorType.Add, 1),
+                CreateMission(MissionCondition.Create(MissionKind.Exact, 9)),
+                config));
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Candidate, Is.SameAs(satisfiedCandidate));
+            Assert.That(randomSource.ConsumedSamples, Is.Empty);
+        }
+
+        /// <summary>
+        /// 解放済み候補が現在式で達成できるMissionだけなら乱数消費なしで選択することを検証します。
+        /// </summary>
+        [Test]
+        public void DrawNextMission_WhenOnlySatisfiedCandidateExists_ShouldSelectItWithoutRandom()
         {
             var strategy = new FullMissionDrawStrategy(new SequenceRandomSource());
             var candidate = CreateCandidate(MissionCondition.Create(MissionKind.Even));
@@ -144,10 +254,10 @@ namespace Ccc.Tests
         }
 
         /// <summary>
-        /// 未解放Tierだけに未達成候補があっても、解放済み候補へ未達成条件を緩和することを検証します。
+        /// 未解放Tierの未達成候補を候補群の有無の判定に含めないことを検証します。
         /// </summary>
         [Test]
-        public void DrawNextMission_ShouldIgnoreLockedTierWhenDecidingCurrentExpressionFallback()
+        public void DrawNextMission_ShouldIgnoreLockedTierWhenPartitioningByCurrentExpression()
         {
             var strategy = new FullMissionDrawStrategy(new SequenceRandomSource());
             var unlockedSatisfiedCandidate = CreateCandidate(
@@ -490,7 +600,7 @@ namespace Ccc.Tests
         public void GameplayController_ShouldUseInitialAndNextMissionDrawContexts()
         {
             GameplayConfig config = CreateConfig();
-            var randomSource = new SequenceRandomSource(0d);
+            var randomSource = new SequenceRandomSource(0d, 0.10d);
             using var timer = new FakeSectionTimer();
             var states = new List<GameplayState>();
             using var controller = new GameplayController(
@@ -571,6 +681,41 @@ namespace Ccc.Tests
         }
 
         /// <summary>
+        /// 現在式で達成済みのMission選択割合が有効範囲外の場合にConfig生成を拒否することを検証します。
+        /// </summary>
+        [Test]
+        public void GameplayConfig_ShouldRejectInvalidCurrentExpressionSatisfiedMissionSelectionRatio()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => CreateConfig(
+                currentExpressionSatisfiedMissionSelectionRatio: -0.01f));
+            Assert.Throws<ArgumentOutOfRangeException>(() => CreateConfig(
+                currentExpressionSatisfiedMissionSelectionRatio: 1.01f));
+        }
+
+        /// <summary>
+        /// 現在式で達成済みのMission選択割合が非有限値の場合にConfig生成を拒否することを検証します。
+        /// </summary>
+        [Test]
+        public void GameplayConfig_ShouldRejectNonFiniteCurrentExpressionSatisfiedMissionSelectionRatio()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => CreateConfig(
+                currentExpressionSatisfiedMissionSelectionRatio: float.NaN));
+            Assert.Throws<ArgumentOutOfRangeException>(() => CreateConfig(
+                currentExpressionSatisfiedMissionSelectionRatio: float.PositiveInfinity));
+        }
+
+        /// <summary>
+        /// Normal設定の現在式で達成済みのMission選択割合が0.10であることを検証します。
+        /// </summary>
+        [Test]
+        public void GameplayConfigDefaults_ShouldUseTenPercentSatisfiedMissionSelectionRatio()
+        {
+            GameplayConfig config = GameplayConfigDefaults.CreateNormal();
+
+            Assert.That(config.CurrentExpressionSatisfiedMissionSelectionRatio, Is.EqualTo(0.10f));
+        }
+
+        /// <summary>
         /// Negated抽選重みが負の場合にConfig生成を拒否することを検証します。
         /// </summary>
         [Test]
@@ -630,6 +775,7 @@ namespace Ccc.Tests
         }
 
         private static GameplayConfig CreateConfig(
+            float currentExpressionSatisfiedMissionSelectionRatio = 0.10f,
             float targetExpressionMatchRatio = 0.20f,
             float negatedMissionSelectionWeight = 0.60f,
             int missionParameterSelectionPoolSize = 3)
@@ -651,6 +797,8 @@ namespace Ccc.Tests
                 zeroAndPrimeMinimumExpressionMatchCount: 1,
                 currentTierDrawWeight: 0.60f,
                 lowerTierDrawWeight: 0.40f,
+                currentExpressionSatisfiedMissionSelectionRatio:
+                    currentExpressionSatisfiedMissionSelectionRatio,
                 targetExpressionMatchRatio: targetExpressionMatchRatio,
                 negatedMissionSelectionWeight: negatedMissionSelectionWeight,
                 missionParameterSelectionPoolSize: missionParameterSelectionPoolSize);

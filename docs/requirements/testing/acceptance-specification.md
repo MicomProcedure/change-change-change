@@ -116,8 +116,10 @@
 ## 本実装版：Session中の抽選に関する検証要件
 
 - Session初回は初期式によるMission候補の除外を行わないこと。
-- 2問目以降は、抽選時点の `CurrentExpression` では未達成のMissionを優先すること。
-- 解放済みTierの未達成Missionが0件の場合に限り、`CurrentExpression`による除外条件を緩和すること。未解放Tierの候補はこの判定に含めないこと。
+- 2問目以降は、解放済み候補を抽選時点の`CurrentExpression`で達成できる候補群と達成できない候補群へ分け、`CurrentExpressionSatisfiedMissionSelectionRatio`の確率で達成できる候補群を選ぶこと。未解放Tierの候補はこの判定に含めないこと。
+- 両候補群が存在するとき、乱数sampleが設定割合未満なら達成できる候補群、設定割合以上なら達成できない候補群を選ぶこと。
+- 片方の候補群しか存在しない場合、および設定割合が`0`または`1`で選択先が確定する場合は、この段階で乱数を消費しないこと。
+- `CurrentExpressionSatisfiedMissionSelectionRatio`は有限な`0`以上`1`以下だけを受け付け、Normalの初期値が`0.10`であること。
 - 肯定 Mission と `NegatedMission` の相対重みが `1.00` 対 Config設定値 となること。
 - `NegatedMissionSelectionWeight == 0.60` の場合、他条件が同等であれば期待出題比率が `6 : 10` となること。
 - `NegatedMissionSelectionWeight == 1.00` の場合でも、`NegatedMission` のみに偏らないこと。

@@ -24,6 +24,7 @@ namespace Ccc.Infrastructure.Assets
         private const float DefaultMaximumExpressionMatchRatio = 0.60f;
         private const float DefaultCurrentTierDrawWeight = 0.60f;
         private const float DefaultLowerTierDrawWeight = 0.40f;
+        private const float DefaultCurrentExpressionSatisfiedMissionSelectionRatio = 0.10f;
         private const float DefaultTargetExpressionMatchRatio = 0.20f;
         private const float DefaultNegatedMissionSelectionWeight = 0.60f;
         private const int DefaultMissionParameterSelectionPoolSize = 3;
@@ -78,6 +79,10 @@ namespace Ccc.Infrastructure.Assets
 
         [SerializeField]
         private float lowerTierDrawWeight = DefaultLowerTierDrawWeight;
+
+        [SerializeField]
+        private float currentExpressionSatisfiedMissionSelectionRatio =
+            DefaultCurrentExpressionSatisfiedMissionSelectionRatio;
 
         [SerializeField]
         private float targetExpressionMatchRatio = DefaultTargetExpressionMatchRatio;
@@ -150,6 +155,10 @@ namespace Ccc.Infrastructure.Assets
                 errors.Add("Current and lower tier draw weights cannot both be zero.");
             }
 
+            ValidateRatio(
+                errors,
+                currentExpressionSatisfiedMissionSelectionRatio,
+                "Current expression satisfied mission selection ratio");
             ValidateRatio(errors, targetExpressionMatchRatio, "Target expression match ratio");
             ValidateWeight(
                 errors,
@@ -194,6 +203,7 @@ namespace Ccc.Infrastructure.Assets
                 zeroAndPrimeMinimumExpressionMatchCount,
                 currentTierDrawWeight,
                 lowerTierDrawWeight,
+                currentExpressionSatisfiedMissionSelectionRatio,
                 targetExpressionMatchRatio,
                 negatedMissionSelectionWeight,
                 missionParameterSelectionPoolSize);

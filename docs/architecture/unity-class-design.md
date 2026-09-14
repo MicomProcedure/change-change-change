@@ -339,6 +339,7 @@ public sealed class GameplayConfig
    public int ZeroAndPrimeMinimumExpressionMatchCount { get; }
    public float CurrentTierDrawWeight { get; }
    public float LowerTierDrawWeight { get; }
+   public float CurrentExpressionSatisfiedMissionSelectionRatio { get; }
    public float TargetExpressionMatchRatio { get; }
    public float NegatedMissionSelectionWeight { get; }
    public int MissionParameterSelectionPoolSize { get; }
@@ -373,6 +374,7 @@ Normal初期値：
 | Tier 3 | Section 8〜11 |
 | Tier 4 | Section 12以降 |
 | Current／Lower Tier重み | 0.60／0.40 |
+| 現在式で達成できるMission候補群の選択確率 | 0.10 |
 | 式適合割合 | 0.10〜0.50 |
 | 最小適合式数 | 通常2、Zero／Prime 1 |
 | ShowCurrentAnswer | false |
@@ -1139,7 +1141,7 @@ Candidateの順序はCatalog構築時に`Tier -> MissionKind -> ParameterA -> Pa
 
 抽選が候補0件や不正重みで失敗した場合、Controllerは`IGameplayFlow.Failures`へ理由付きの`GameplayFlowFailure`を公開してTimerを停止すること。この失敗はCatalog／Configの内部不整合を表す。
 
-`FullMissionDrawStrategy`は同じinterfaceを実装し、本番設定で使用すること。初回は現在式による除外を行わず、2問目以降はControllerが`ExpressionInput.Current`と直前MissionをContextへ渡すこと。現在式で未達成の候補を優先し、0件の場合だけ未達成条件を緩和する。その後、Tier、肯定／Negated、直前Mission、Kind、目標適合率上位候補の順に選定すること。共通のTier・Kind・乱数選定は`MissionDrawSelectionModule`へ集約し、Simple版と共有すること。
+`FullMissionDrawStrategy`は同じinterfaceを実装し、本番設定で使用すること。初回は現在式を評価せず、2問目以降はControllerが`ExpressionInput.Current`と直前MissionをContextへ渡すこと。解放済み候補を現在式で達成できる群と達成できない群へ分け、両群が存在する場合は`CurrentExpressionSatisfiedMissionSelectionRatio`の直接確率で一方を選ぶこと。乱数sampleが比率未満なら達成できる群、以上なら達成できない群とする。片方の群しか存在しない場合、および比率0/1で選択先が確定する場合は乱数を消費しないこと。その後、Tier、肯定／Negated、直前Mission、Kind、目標適合率上位候補の順に選定すること。共通のTier・Kind・比率・乱数選定は`MissionDrawSelectionModule`へ集約し、Simple版と共有可能な境界に保つこと。
 
 #### DI
 
@@ -1345,6 +1347,7 @@ Simple版でCurrent Tierが空の場合は、従来の決定性を維持する�
 - 古いTimer通知を現在Missionへ適用しないこと。
 - RetryでStateは初期化し、乱数系列だけ継続すること。
 - 選択肢1件の段階で乱数を消費しないこと。
+- 2問目以降の現在式候補群選択は、両群が存在し比率が0より大きく1より小さい場合だけ乱数を1回消費すること。
 - Dispose後にTimer、State、Eventを発行しないこと。
 - ControllerにUnity、UniTask、Audio、Viewの判断を入れないこと。
 

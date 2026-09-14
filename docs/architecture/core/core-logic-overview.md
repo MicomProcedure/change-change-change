@@ -435,6 +435,8 @@ IMissionDrawStrategy --> MissionDrawContext : input
 IMissionDrawStrategy ..> MissionCandidate : result
 ```
 
+本実装版は、2問目以降に解放済み候補を現在式で達成できる群と達成できない群へ分割し、`GameplayConfig.CurrentExpressionSatisfiedMissionSelectionRatio`の直接確率で先に候補群を選ぶ。両群が存在するときだけ乱数を1回消費し、sampleが比率未満なら達成できる群、以上なら達成できない群を選ぶ。片方の群しかない場合、および比率0/1で選択先が確定する場合は乱数を消費しない。その後にTier、極性、直前Mission、Kind、目標適合率上位候補の順で選定する。
+
 ```mermaid
 flowchart TD
     Start[CatalogとSection]
