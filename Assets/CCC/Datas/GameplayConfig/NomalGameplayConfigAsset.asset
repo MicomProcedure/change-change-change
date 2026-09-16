@@ -19,8 +19,8 @@ MonoBehaviour:
   initialRight: 1
   initialLife: 3
   initialDurationSeconds: 10
-  reductionPerSectionSeconds: 0.5
-  minimumDurationSeconds: 3
+  reductionPerSectionSeconds: 0.3
+  minimumDurationSeconds: 4
   tierStartSections: 0100000004000000080000000c000000
   showCurrentAnswer: 0
   minimumExpressionMatchRatio: 0.1

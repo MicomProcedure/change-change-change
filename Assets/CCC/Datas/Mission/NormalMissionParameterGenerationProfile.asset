@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c5de44556ac4cf9944efe99578b9fc0, type: 3}
   m_Name: NormalMissionParameterGenerationProfile
   m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.Assets.MissionParameterGenerationProfileAsset
-  maximumTotalCandidateCount: 832
+  maximumTotalCandidateCount: 1000
   betweenTierTwoThreshold: 0.25
   kindRules:
   - kind: 0
@@ -23,14 +23,14 @@ MonoBehaviour:
     parameterA:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
     parameterB:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
@@ -42,14 +42,14 @@ MonoBehaviour:
     parameterA:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
     parameterB:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
@@ -61,14 +61,14 @@ MonoBehaviour:
     parameterA:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
     parameterB:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
@@ -80,14 +80,14 @@ MonoBehaviour:
     parameterA:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
     parameterB:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
@@ -99,14 +99,14 @@ MonoBehaviour:
     parameterA:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
     parameterB:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
@@ -118,14 +118,14 @@ MonoBehaviour:
     parameterA:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
     parameterB:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
@@ -137,14 +137,14 @@ MonoBehaviour:
     parameterA:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
     parameterB:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
@@ -156,14 +156,14 @@ MonoBehaviour:
     parameterA:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
     parameterB:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
@@ -175,14 +175,14 @@ MonoBehaviour:
     parameterA:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
     parameterB:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
@@ -194,14 +194,14 @@ MonoBehaviour:
     parameterA:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
     parameterB:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
@@ -212,35 +212,15 @@ MonoBehaviour:
     maximumCandidateCount: 40
     parameterA:
       isConfigured: 1
-      mode: 0
-      explicitValues:
-      - -4
-      - -3
-      - -2
-      - -1
-      - 0
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      - 7
-      - 8
-      - 9
-      - 10
-      - 12
-      - 15
-      - 16
-      - 20
-      - 25
-      minimum: 0
-      maximum: 0
+      mode: 1
+      explicitValues: fcfffffffdfffffffeffffffffffffff000000000100000002000000030000000400000005000000060000000700000008000000090000000a0000000c0000000f000000100000001400000019000000
+      minimum: -4
+      maximum: 25
       step: 1
     parameterB:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
@@ -251,35 +231,15 @@ MonoBehaviour:
     maximumCandidateCount: 40
     parameterA:
       isConfigured: 1
-      mode: 0
-      explicitValues:
-      - -4
-      - -3
-      - -2
-      - -1
-      - 0
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      - 7
-      - 8
-      - 9
-      - 10
-      - 12
-      - 15
-      - 16
-      - 20
-      - 25
-      minimum: 0
-      maximum: 0
+      mode: 1
+      explicitValues: fcfffffffdfffffffeffffffffffffff000000000100000002000000030000000400000005000000060000000700000008000000090000000a0000000c0000000f000000100000001400000019000000
+      minimum: -4
+      maximum: 25
       step: 1
     parameterB:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
@@ -290,35 +250,15 @@ MonoBehaviour:
     maximumCandidateCount: 20
     parameterA:
       isConfigured: 1
-      mode: 0
-      explicitValues:
-      - -4
-      - -3
-      - -2
-      - -1
-      - 0
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      - 7
-      - 8
-      - 9
-      - 10
-      - 12
-      - 15
-      - 16
-      - 20
-      - 25
-      minimum: 0
-      maximum: 0
+      mode: 1
+      explicitValues: fcfffffffdfffffffeffffffffffffff000000000100000002000000030000000400000005000000060000000700000008000000090000000a0000000c0000000f000000100000001400000019000000
+      minimum: -4
+      maximum: 25
       step: 1
     parameterB:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
@@ -330,28 +270,14 @@ MonoBehaviour:
     parameterA:
       isConfigured: 1
       mode: 0
-      explicitValues:
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      - 7
-      - 8
-      - 9
-      - 10
-      - 12
-      - 15
-      - 16
-      - 20
-      - 25
+      explicitValues: 02000000030000000400000005000000060000000700000008000000090000000a0000000c0000000f000000100000001400000019000000
       minimum: 0
       maximum: 0
       step: 1
     parameterB:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
@@ -362,30 +288,15 @@ MonoBehaviour:
     maximumCandidateCount: 15
     parameterA:
       isConfigured: 1
-      mode: 0
-      explicitValues:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      - 7
-      - 8
-      - 9
-      - 10
-      - 12
-      - 15
-      - 16
-      - 20
-      - 25
-      minimum: 0
-      maximum: 0
+      mode: 1
+      explicitValues: 0100000002000000030000000400000005000000060000000700000008000000090000000a0000000c0000000f000000100000001400000019000000
+      minimum: 1
+      maximum: 25
       step: 1
     parameterB:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
@@ -397,14 +308,14 @@ MonoBehaviour:
     parameterA:
       isConfigured: 1
       mode: 1
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 9
       step: 1
     parameterB:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
@@ -416,14 +327,14 @@ MonoBehaviour:
     parameterA:
       isConfigured: 1
       mode: 1
-      explicitValues: []
+      explicitValues: 
       minimum: 2
       maximum: 8
       step: 1
     parameterB:
       isConfigured: 0
       mode: 0
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 0
       step: 1
@@ -435,34 +346,14 @@ MonoBehaviour:
     parameterA:
       isConfigured: 1
       mode: 0
-      explicitValues:
-      - -4
-      - -3
-      - -2
-      - -1
-      - 0
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      - 7
-      - 8
-      - 9
-      - 10
-      - 12
-      - 15
-      - 16
-      - 20
-      - 25
+      explicitValues: fcfffffffdfffffffeffffffffffffff000000000100000002000000030000000400000005000000060000000700000008000000090000000a0000000c0000000f000000100000001400000019000000
       minimum: 0
       maximum: 0
       step: 1
     parameterB:
       isConfigured: 1
       mode: 1
-      explicitValues: []
+      explicitValues: 
       minimum: 1
       maximum: 29
       step: 1
@@ -474,14 +365,14 @@ MonoBehaviour:
     parameterA:
       isConfigured: 1
       mode: 1
-      explicitValues: []
+      explicitValues: 
       minimum: 2
       maximum: 25
       step: 1
     parameterB:
       isConfigured: 1
       mode: 1
-      explicitValues: []
+      explicitValues: 
       minimum: 0
       maximum: 24
       step: 1
