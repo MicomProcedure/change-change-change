@@ -54,8 +54,9 @@ flowchart LR
 
 - **プロダクション設定**: 本番動作時は `FullMissionDrawStrategy` を使用すること。
 - **開発確認用設定**: `FixedMissionDrawStrategy` は開発・デバッグ時の動作検証用として使用すること。
-- **必須対応範囲**: Normalモード、LifeEndlessモード、Tier 1〜2、および本実装版 Mission 抽選ロジックを完成範囲とすること。
-- **将来の拡張点**: Tier 3〜4、Mission候補の自動生成、`NegatedMission`候補のカタログ供給、および複合 Mission は、将来の拡張ポイントとして設計を確保すること。
+- **必須対応範囲**: Normalモード、LifeEndlessモード、Tier 1〜4、Mission候補の自動生成、許可された`NegatedMission`候補、および本実装版Mission抽選ロジックを完成範囲とすること。
+- **候補供給**: 製品経路は`Automatic`とし、`PresetDebug`はDebugModeでの限定確認にのみ使用すること。
+- **将来の拡張点**: 複合Missionは将来の拡張ポイントとして設計を確保すること。
 
 ---
 

@@ -17,20 +17,11 @@ Session 開始時に、ゲームモードおよび難易度設定（`GameDifficu
 
 ※デフォルトの完成ターゲットは **Normal** とする。
 
-## Mission実装段階の区分
+## MissionパラメータSource
 
-ミッションの実装段階と `GameDifficulty` は独立した別の概念とする。 `GameDifficulty` がプレイヤーの選択するルールプリセットであるのに対し、実装段階は開発プロセスにおいて適用するミッション生成・抽選アルゴリズムのフェーズを表す。
+MissionパラメータSourceと`GameDifficulty`は独立した概念とする。製品の`Normal`は`Automatic`を使用し、到達可能結果と`MissionParameterGenerationProfileAsset`から全19 Kindを生成対象とする。`PresetDebug`は新Mode・新Missionの限定確認専用で、DebugMode以外では設定エラーとする。
 
-| 項目 | 簡易版 | 本実装版 |
-| --- | --- | --- |
-| **パラメータ候補** | 定義済みプリセット候補のみ | 到達可能な結果から自動生成可能 |
-| **CurrentExpression考慮** | なし（現在の式を評価しない） | 初回は考慮せず、2問目以降は達成可能候補群をConfig確率で選択 |
-| **NegatedMission** | なし | 相対重みづけによる抽選 |
-| **連続出題回避** | なし | あり（直前と同種パラメータを除外） |
-| **複合Mission** | なし | 将来拡張 |
-| **Tier抽選重み** | 現在Tier `0.60` / 下位Tier `0.40` | 現在Tier `0.60` / 下位Tier `0.40` |
-
-※開発の最初のターゲットは「簡易版」とし、本実装版への置き換え条件および挙動の差分については [Missionカタログ・抽選内部仕様](../missions/catalog-and-draw.md) にて定義すること。
+Session中の抽選はSourceによらず、確定済み`MissionCatalog`、Section、現在式、直前Missionを入力とする同一アルゴリズムを使用する。
 
 ## ライフ制エンドレスモード
 
@@ -60,10 +51,12 @@ Session 開始時に、ゲームモードおよび難易度設定（`GameDifficu
 - `Zero` / `Prime` における `MinimumExpressionMatchCount`
 - `NegatedMissionSelectionWeight`（反転ミッション抽選重み）
 - `CompoundMissionSelectionWeight`（複合ミッション抽選重み）
-- 本実装版における目標式適合率に対する抽選プールサイズ
-- 本実装版における `Between` の実効 Tier 判定閾値
+- 目標式適合率に対する抽選プールサイズ
+- `Between` の実効Tier判定閾値
+- Kind別有効フラグ、適合率範囲適用フラグ、Negated生成フラグ
+- Kind別ParameterA/Bドメイン、Kind別候補上限、全体候補上限
 
-※`TargetExpressionMatchRatio` は難易度ごとに設定可能とする。簡易版では候補を一律ランダム抽選するため使用されず、本実装版において同一 Kind 内の候補を優位順にソート・フィルタリングする際に利用すること。
+※`TargetExpressionMatchRatio`は難易度ごとに設定し、同一Kind内の候補を優位順にソート・フィルタリングする際に利用すること。
 
 ## Normalモード用プリセット設定値
 
@@ -84,8 +77,10 @@ Session 開始時に、ゲームモードおよび難易度設定（`GameDifficu
 | **Zero / Prime MinimumExpressionMatchCount** | `1` |
 | **NegatedMissionSelectionWeight** | `0.60` |
 | **CompoundMissionSelectionWeight** | `0` |
-| **本実装版 Between実効Tier判定閾値** | `0.25` |
-| **本実装版 Missionパラメータ抽選プール数** | `3` |
+| **Between実効Tier判定閾値** | `0.25` |
+| **Missionパラメータ抽選プール数** | `3` |
+| **MissionパラメータSource** | `Automatic` |
+| **Kind別ドメイン・候補上限** | Profile Assetへ入力後に確定 |
 
 > [!NOTE]
 > - `NegatedMissionSelectionWeight` は、肯定ミッションの基準重み `1.00` に対する相対重みとする。`0.60` に設定した場合、他条件が同等であれば Negated と肯定の期待出題比率は `6 : 10` となる（`1.00` の場合は `1 : 1`）。

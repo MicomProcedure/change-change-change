@@ -2,7 +2,7 @@
 
 > [ドキュメント一覧](../README.md) / 区分: クラス設計
 
-> **対象環境・スコープ**: Unity 6 / Normal モード / LifeEndless モード / 簡易版 Mission / Tier 1〜2 優先実装
+> **対象環境・スコープ**: Unity 6 / Normalモード / LifeEndlessモード / Missionパラメータ自動生成 / Tier 1〜4 / 本実装版抽選
 
 - [CCC Unity クラス設計](#ccc-unity-クラス設計)
   - [1. 目的](#1-目的)
@@ -575,17 +575,29 @@ KindごとのswitchをMatcherへ集約し、ReducerとCatalogBuilderに同じ判
 
 ### 5.4 Catalog構築
 
-ファイル：`MissionParameterCandidate.cs`、`MissionCatalogBuildResult.cs`、`MissionCatalogBuilder.cs`
+ファイル：`MissionKindDefinitionCatalog.cs`、`MissionParameterGenerationSettings.cs`、`MissionParameterCandidateGenerator.cs`、`MissionCatalogBuildResult.cs`、`MissionCatalogBuilder.cs`
 
 ```csharp
 public readonly struct MissionParameterCandidate
 {
    public MissionCondition Condition { get; }
-   public int Tier { get; }
 
-   public MissionParameterCandidate(
-       MissionCondition condition,
-       int tier);
+   public MissionParameterCandidate(MissionCondition condition);
+}
+
+public sealed class MissionCatalogPreparationSettings
+{
+   public MissionParameterSourceMode SourceMode { get; }
+   public MissionParameterGenerationSettings GenerationSettings { get; }
+   public MissionCatalogEvaluationPolicy EvaluationPolicy { get; }
+   public IReadOnlyList<MissionParameterCandidate> PresetCandidates { get; }
+}
+
+public static class MissionParameterCandidateGenerator
+{
+   public static MissionParameterGenerationResult Generate(
+       IReadOnlyList<ExpressionCandidate> expressions,
+       MissionParameterGenerationSettings settings);
 }
 
 public enum MissionCatalogBuildFailureKind
@@ -609,11 +621,12 @@ public static class MissionCatalogBuilder
    public static MissionCatalogBuildResult Build(
        IReadOnlyList<ExpressionCandidate> expressions,
        IReadOnlyList<MissionParameterCandidate> parameters,
-       GameplayConfig config);
+       MissionCatalogEvaluationPolicy evaluationPolicy,
+       Rational betweenTierTwoThreshold);
 }
 ```
 
-null引数は`ArgumentNullException`。Collection内の不正要素や同じCondition・Tierの重複は`ArgumentException`を該当Collectionの引数名で送出すること。0件は例外にせず、対応するFailureKindを返すこと。
+null引数は`ArgumentNullException`。候補0件は例外にせず、対応するFailureKindを返すこと。同一Conditionの重複は入力順の最初の1件へ正規化すること。
 
 Result契約：
 
@@ -627,12 +640,12 @@ Builderは入力順に各Parameterを処理し、全Defined ExpressionCandidate�
 
 - 正常な適合式が1件以上。
 - 正常な非適合式が1件以上。
-- 適合割合がConfigの最小以上、最大以下。
-- `config.GetMinimumExpressionMatchCount(condition.Kind)`以上の適合式。
+- Profileで適用対象のKindは、適合割合がPolicyの最小以上、最大以下。
+- `evaluationPolicy.GetMinimumMatchCount(condition.Kind)`以上の適合式。
 - 正常なAnswerExampleが1件以上。
 - Kind固有パラメータ制約を満たす。
 
-AnswerExampleは列挙順で最初に一致したCandidateとすること。Catalog順は`Tier -> MissionKind -> ParameterA -> ParameterB -> IsNegated`の昇順へ固定し、抽選結果の再現性を保つこと。候補分析と選出判定はprivate static methodとし、public APIを増やさないこと。
+AnswerExampleは列挙順で最初に一致したCandidateとすること。同じ分析済み`Rational`適合率を採用判定と`MissionCandidateTierResolver`へ渡し、Betweenの重複分析を禁止すること。Catalog順は`Tier -> MissionKind -> ParameterA -> ParameterB -> IsNegated`の昇順へ固定すること。
 
 ### 5.4.1 具体例
 
@@ -1629,10 +1642,11 @@ Disposeは購読、進行中演出、MainMenu遷移待機をCancelすること�
 
 ### 9.5 ScriptableObject によるアセット境界
 
-`GameplayConfigAsset`、`MissionPresetAsset`、`MissionTextAsset` は Unity Editor 上で編集を行う設定データであり、それぞれ純粋 C# 型への変換インターフェースを実装すること。
+`GameplayConfigAsset`、`MissionParameterGenerationProfileAsset`、`MissionPresetAsset`、`MissionTextAsset`はUnity Editor上で編集を行う設定データであり、それぞれ純粋C#型への変換境界を持つこと。
 
 - `GameplayConfigAsset.CreateRuntimeConfig()` は、検証済みの純粋 C# `GameplayConfig` インスタンスを生成すること。
-- `MissionPresetAsset.CreateCandidates()` は、検証済みの純粋 C# `MissionParameterCandidate` リストを生成すること。
+- `MissionParameterGenerationProfileAsset`は、検証済みの`MissionParameterGenerationSettings`と`MissionCatalogEvaluationPolicy`を生成すること。
+- `MissionPresetAsset.CreateCandidates()`は、Tierを持たない`MissionParameterCandidate`リストを生成すること。
 - `MissionTextAsset` は Presentation層の `IMissionTextSource` インターフェースを具象実装し、表示テキストテンプレートを提供すること。
 
 ---
@@ -1643,7 +1657,7 @@ Disposeは購読、進行中演出、MainMenu遷移待機をCancelすること�
 
 | 登録対象の型 | 登録ライフタイム (Lifetime) |
 | --- | --- |
-| `GameplayConfigAsset` / `MissionPresetAsset` / `MissionTextAsset` | `Instance`（事前割り当て済みアセット） |
+| `GameplayConfigEntry` / 設定Asset群 | `Instance`またはEntry経由の参照 |
 | `GameplayConfig` | `Scoped`（アセットからファクトリ生成） |
 | `UnityRandomSource` / `UniTaskSectionTimer` | `Scoped` |
 | `FullMissionDrawStrategy` | `Scoped`（`IMissionDrawStrategy` として登録） |
@@ -1651,6 +1665,8 @@ Disposeは購読、進行中演出、MainMenu遷移待機をCancelすること�
 | `GameplayPresenter` / `GameScreenModel` | `Scoped` |
 | `GameplayView` / `GameScreenView` | `ComponentInHierarchy` |
 | `GameplayEntryPoint` | `EntryPoint` (`IStartable`, `IDisposable`) |
+
+`MissionPresetAsset`を直接DI登録しないこと。Profile、候補Generator、Catalog Builder、Mission候補Tier Resolverは状態を持たないためDI登録しないこと。
 
 ---
 
@@ -1662,14 +1678,14 @@ public sealed class GameplayEntryPoint :
     IDisposable
 {
     public GameplayEntryPoint(
-        GameplayStartRequest request,
-        GameplayConfigAsset configAsset,
-        MissionPresetAsset missionPresetAsset,
-        MissionTextAsset missionTextAsset,
+        GameplayStartContext startContext,
+        GameplayConfig config,
         IGameplayFlow flow,
         GameplayPresenter presenter,
         IGameplayView view,
-        IAudioPlayer audio);
+        IGameplayCountdownView countdownView,
+        IAudioPlayer audio,
+        IRuntimeMode runtimeMode);
 
     public void Start();
     public void Dispose();
@@ -1677,7 +1693,7 @@ public sealed class GameplayEntryPoint :
 ```
 
 - VContainer のライフサイクルインターフェース（`IStartable`）を実装すること。
-- `Start` 実行時、設定アセット群の最終バリデーションを行い、エラーが検出された場合はエラー内容を画面に表示してゲーム進行を安全に停止させること。
+- `Start`実行時、選択Sourceに必要なAssetだけを検証し、純C#の`MissionCatalogPreparationSettings`へ変換すること。非DebugのPresetDebugは設定エラーとすること。
 - 検証が成功した場合は Presenter を初期化し、`IGameplayFlow.StartSession` を呼び出して Gameplay セッションを開始し、BGM（`AudioKey.BgmGameplay`）の再生を開始すること。
 - `Dispose` 実行時は、Presenter、Controller、タイマー処理の順で安全に破棄（Dispose）を行うこと。
 
@@ -1685,9 +1701,8 @@ public sealed class GameplayEntryPoint :
 
 ## 11. 将来の拡張ポイント
 
-- **Tier 3〜4 の追加**: `MissionKind`、ファクトリ、Matcher 判定処理、およびプリセット設定を追加拡張すること。
-- **Mission候補生成の本実装化**: 到達可能な計算結果からMission候補を自動生成し、Negated候補をカタログへ供給すること。
-- **NegatedMission（否定条件 Mission）**: Negated候補をカタログへ供給し、否定用文言テンプレート（`negatedTemplate`）を有効化すること。
+- **新MissionKind**: `MissionKindDefinitionCatalog`、Matcher、Profile設定、表示文言を同時に拡張すること。
+- **複合Mission**: 単一Missionの自動生成・Catalog契約を変更せず、独立した候補・抽選境界として追加すること。
 
 ---
 

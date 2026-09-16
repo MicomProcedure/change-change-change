@@ -3,7 +3,7 @@
 > [ドキュメント一覧](../../README.md) / 区分: 要件
 
 [CCC要件書](../overview.md)から分離した、ミッション（Mission）の種類、成否判定基準、およびカタログ候補への採用成立条件の仕様について定義する。
-※本ドキュメントでは具体的な C# クラス設計や実装構造は扱わないこと。簡易版と本実装版では候補の生成・取得方法および Session 内での抽選アルゴリズムが異なるが、成否判定ロジック（`MissionCondition`）自体は共通とする。
+※本ドキュメントでは具体的な C# クラス設計や実装構造は扱わないこと。製品経路は候補の自動生成を使用し、`PresetDebug`は限定確認専用とする。成否判定ロジック（`MissionCondition`）は両経路で共通とする。
 
 ## 通常Mission（肯定条件）一覧
 
@@ -32,12 +32,11 @@
 
 - 小数桁を指定するミッションは「小数第1位」のみとし、第2位・第3位の指定ミッションは出題しないこと。
 - `Between` の表示上の上限値 `M` は、内部パラメータの下限 `N` と範囲幅 `W` から `N + W` として動的計算すること（`W >= 1`）。
-- 簡易版では許可する `N` と `W` の組み対を [候補プリセット](./candidate-presets.md) にて明示指定し、プリセットで定められた `IntendedTier` を使用すること。
-- 本実装版では、`ExpressionMatchRatio` が `BetweenWideRatioThreshold`（`Normal` では `0.25`）以上であれば「幅広（Tier2）」、未満であれば「幅狭（Tier3）」として割り当てること。
+- `ExpressionMatchRatio` がProfileの`BetweenTierTwoThreshold`以上であれば「幅広（Tier2）」、未満であれば「幅狭（Tier3）」として割り当てること。閾値一致はTier2とする。
 
-## NegatedMission（判定反転ミッション / 本実装版のみ）
+## NegatedMission（判定反転ミッション）
 
-簡易版では生成・抽選しないこと。本実装版においてのみ、以下の規則に基づいて判定を反転したミッションを適用すること。
+自動生成および`PresetDebug`では、以下の固定可否とProfileの有効化設定の両方を満たす場合に、判定を反転したミッションを適用すること。
 
 | 元のMission | 生成可否 | 判定反転表示テキスト (`NegatedMission`) | デフォルト実効Tier | 採用・非採用の理由 |
 | --- | --- | --- | --- | --- |
@@ -75,22 +74,22 @@ Gameplay 開始時、すべての正常な `ExpressionCandidate` に対して `M
 
 1. 正常な適合式が 1件 以上存在すること
 2. 正常な非適合式が 1件 以上存在すること
-3. `ExpressionMatchRatio` が `MinExpressionMatchRatio`（`Normal` では `0.10`）以上であること
-4. `ExpressionMatchRatio` が `MaxExpressionMatchRatio`（`Normal` では `0.50`）以下であること
+3. Profileで適合率範囲を適用するKindでは、`ExpressionMatchRatio` が `MinExpressionMatchRatio`（`Normal` では `0.10`）以上であること
+4. Profileで適合率範囲を適用するKindでは、`ExpressionMatchRatio` が `MaxExpressionMatchRatio`（`Normal` では `0.60`）以下であること
 5. `Zero` および `Prime` 以外は `ExpressionMatchCount >= 2` であること
 6. `Zero` および `Prime` は `ExpressionMatchCount >= 1` であること
 7. 解答失敗時に表示できる正解模範例（`AnswerExample`）が 1件 以上存在すること
 8. Kind 固有のパラメータ制約を満たすこと
 
-※ `TargetExpressionMatchRatio`（`0.20`）は本実装版の Session 中抽選においてのみ参照され、カタログ登録の合否基準には使用しないこと。
+適合率範囲を免除したKindでも適合率の分析自体は必ず実行し、適合式1件以上、非適合式1件以上、Kind別最小適合件数、`AnswerExample`1件の条件を免除しないこと。
 
-## 簡易版: 用意済み候補の評価
+※ `TargetExpressionMatchRatio`（`0.20`）はSession中抽選においてのみ参照され、カタログ登録の合否基準には使用しないこと。
 
-簡易版ではパラメータの動的自動生成を行わないこと。[候補プリセット](./candidate-presets.md) に定義された有限個の候補を読み込み、上記の評価フィルタリングを適用して通過した候補のみを `MissionCatalog` に追加すること。
+## 候補の自動生成
 
-## 本実装版: 候補の自動生成
+製品経路では、正常な `ExpressionCandidate` から計算到達可能な整数値集合を自動抽出し、Profileの整数ドメインとの積集合から全19 Kindの候補を生成すること。`Between`と`Modulo`はParameterAとParameterBの直積をKind固有制約で絞り込むこと。生成後にCondition単位で重複を最初の1件へ正規化し、上記の評価フィルタリングを適用すること。
 
-本実装版では、正常な `ExpressionCandidate` から計算到達可能な整数値集合 `IntegerResults`（およびその境界値 `IntegerBoundaryResults`）を自動抽出し、それらをベースに `AtLeast`・`AtMost`・`Exact`・`Multiple`・`Absolute`・`OnesDigit`・`Modulo`・`Between` 等のパラメータ候補を動的生成すること。生成後の評価・絞り込みは簡易版と共通のルールに従うこと。
+`MissionParameterCandidate`はTierを保持しないこと。固定Tier、Betweenの分析済み適合率、Negated既定TierからCatalog採用時にTierを確定し、`MissionCandidate`だけが確定Tierを保持すること。
 
 ---
 - カタログ・抽選仕様: [Missionカタログ・抽選内部仕様](./catalog-and-draw.md)

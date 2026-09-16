@@ -26,8 +26,8 @@
 | [画面・UI仕様](./presentation/screens-and-ui.md) | 各画面の表示要素、画面遷移、スマートフォン向けUIレイアウト |
 | [フィードバック・演出](./presentation/feedback-and-presentation.md) | 操作入力、成功・失敗、回答例提示の演出仕様 |
 | [CCC内部仕様](./internals/game-invariants.md) | 内部状態管理、計算規則、ゲーム進行上の不変条件（Invariants） |
-| [Missionカタログ・抽選内部仕様](./missions/catalog-and-draw.md) | カタログ構築、簡易版および本実装版の出題抽選規則 |
-| [Missionパラメータ候補プリセット](./missions/candidate-presets.md) | 簡易版で評価・選出する候補データの仕様 |
+| [Missionカタログ・抽選内部仕様](./missions/catalog-and-draw.md) | 自動生成、カタログ構築、本実装版の出題抽選規則 |
+| [Missionパラメータ候補PresetDebug](./missions/candidate-presets.md) | DebugMode限定候補データの仕様 |
 | [CCCテスト仕様](./testing/acceptance-specification.md) | 仕様項目の検証用 TDD チェックリスト |
 
 ---

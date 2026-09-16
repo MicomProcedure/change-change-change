@@ -35,17 +35,17 @@ flowchart TD
 
 1. ゲームモードおよび `GameDifficulty` から Session 設定を確定すること。
 2. 数字範囲内の正常な式候補（`ExpressionCandidate`）をすべて列挙すること。
-3. 実装段階に対応するミッションパラメータ候補を取得すること。
+3. 選択Sourceに従ってミッションパラメータ候補を取得すること。
 4. 各候補をすべての正常な `ExpressionCandidate` で評価すること。
 5. 式適合割合（`MatchRatio`）および最小適合式数の条件をクリアした候補のみを `MissionCatalog` に登録すること。
 6. Tier と Kind ごとに抽選可能な状態へ分類・整理すること。
 
 > [!NOTE]
-> 簡易版では [Missionパラメータ候補プリセット](../missions/candidate-presets.md) に定義された候補のみを評価し、自動生成は行わないこと。本実装版では到達可能な結果からパラメータ候補を動的生成可能とする。共通の成立条件については [Missionカタログ・抽選内部仕様](../missions/catalog-and-draw.md) を参照すること。
+> 製品経路ではProfileと到達可能結果からMissionパラメータ候補を自動生成する。PresetはDebugModeでの限定確認にのみ使用する。共通の成立条件については [Missionカタログ・抽選内部仕様](../missions/catalog-and-draw.md) を参照すること。
 
-## 簡易版：Session中のMission抽選
+## SimpleMissionDrawStrategy：開発確認用抽選
 
-初回実装フェーズでは、以下の手順で抽選を行うこと。
+Simple Strategyでは、以下の手順で抽選を行うこと。
 
 1. 現在の Section から、該当する Tier（現在Tier）および解放済みの下位 Tier を求めること。
 2. 現在 Tier の相対重みを `0.60`、解放済み下位 Tier 全体の相対重みを `0.40` として対象 Tier を抽選すること。
@@ -53,7 +53,7 @@ flowchart TD
 4. 選ばれた Kind 内のパラメータ候補を等確率で1つ決定すること。
 5. 決定されたミッションに対して新しい `MissionId` を採番すること。
 
-※簡易版のミッション抽選では、`CurrentExpression` や直前の出題履歴・ミッションを参照しないこと。また、`NegatedMission` や複合ミッションの生成・抽選も行わないこと。
+※Simple Strategyは製品経路では使用しない。`CurrentExpression`や直前Missionを参照せず、`NegatedMission`や複合Missionも抽選しないこと。
 ※候補が0件の Tier や Kind は抽選対象から除外すること。利用可能なミッション候補が全体で0件の場合は設定エラーとし、Gameplay を開始しないこと。
 
 ## 本実装版：Session中のMission抽選
@@ -109,7 +109,7 @@ Gameplay 開始時またはリトライ（再挑戦）時に新しい Session �
   - 複数の下位 Tier に候補が存在する場合: 候補が存在する下位 Tier 間で等確率抽出すること。
   - 解放済みのいずれの Tier にも候補がない場合: 設定エラーを検出すること。
 
-※重み設定 `0.60` / `0.40` は簡易版・本実装版の両方で共通して使用すること。値は `GameDifficulty` ごとに Config で変更可能とする。
+※重み設定`0.60` / `0.40`はSimple Strategyと本実装版の両方で共通して使用すること。値は`GameDifficulty`ごとにConfigで変更可能とする。
 
 ## タイマー
 
@@ -157,7 +157,7 @@ Gameplay 開始時またはリトライ（再挑戦）時に新しい Session �
 - Life が 0 になった場合も、模範回答例を表示した後にリザルト（結果）画面へ進むこと。
 
 > [!NOTE]
-> 本実装版では、成功後・失敗後に新しく抽選するミッションについて、引き継いだ `CurrentExpression` のままクリアできる候補群をConfig設定確率で選ぶこと。Normalの初期値は`0.10`とする。達成できる候補群または達成できない候補群の一方しか存在しない場合は、存在する候補群を使用すること（簡易版では本制約は適用されない）。
+> 本実装版では、成功後・失敗後に新しく抽選するミッションについて、引き継いだ`CurrentExpression`のままクリアできる候補群をConfig設定確率で選ぶこと。Normalの初期値は`0.10`とする。片方の候補群しか存在しない場合は存在する候補群を使用すること（Simple Strategyには本制約を適用しない）。
 
 ## ゲームオーバー
 

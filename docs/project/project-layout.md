@@ -71,7 +71,8 @@ Assets/
    │
    ├─ Data/
    │  ├─ GameplayConfig/
-   │  ├─ MissionPreset/
+   │  ├─ MissionParameterGenerationProfile/
+   │  ├─ MissionPreset/          # PresetDebug限定
    │  ├─ MissionText/
    │  └─ Feedback/
    │
@@ -220,14 +221,16 @@ GameScene
 | 配置パス例 | 用途 | 生成される実行時データ |
 | --- | --- | --- |
 | Data/GameplayConfig/NormalGameplayConfig.asset | Normal、LifeEndlessモードの設定 | `GameplayConfig` |
-| Data/MissionPreset/NormalMissionPreset.asset | 簡易版Mission候補データ | `MissionParameterCandidate` 配列 |
+| Data/MissionParameterGenerationProfile/Normal.asset | 自動生成ドメイン・上限・Kind別規則 | `MissionParameterGenerationSettings` / `MissionCatalogEvaluationPolicy` |
+| Data/MissionPreset/NormalMissionPreset.asset | PresetDebug用Tier未確定候補 | `MissionParameterCandidate` 配列 |
 | Data/MissionText/JapaneseMissionText.asset | Mission表示用テキスト | `IMissionTextSource` として参照 |
 | Data/Feedback/DefaultFeedbackSettings.asset | 成功・失敗演出の再生時間設定 | 任意（Viewへ直接設定する場合は作成不要） |
 
 > **運用上の注意**
 > - ScriptableObject アセットを `Core` 層に直接渡さないこと。Gameplay開始時に検証を行った上で、純粋なC#型へ変換して渡すこと。
 > - バリデーションエラー検出時は一覧として画面/ログに表示し、Gameplayの開始を中断すること。
-> - `MissionPreset` における「未決定」項目は、実行用アセットに入力しないこと。
+> - 製品用Entryは`Automatic`を選択し、`MissionPreset`を候補供給元にしないこと。
+> - Normal Profileの具体的なドメインと候補上限は、入力後に生成件数とCatalog成立を確認すること。
 
 ### 5.2 Input設定
 Input System の設定アセットを独自に作成・カスタマイズする場合は `Settings/Input` 配下に配置すること。

@@ -5,7 +5,7 @@
 ## ドキュメントの目的
 
 各機能要件および仕様を実行可能な自動・手動テストとして検証できるように、原則1項目につき1つのシステム挙動（Behavior）として整理・定義する。
-※特定の C# テストクラス名、テストフレームワーク（NUnit / EditMode / PlayMode）、モック構成には依存しない。簡易版と本実装版の検証項目をパスさせ、未実装の将来機能は機能切り替え時に段階的に有効化すること。
+※特定の C# テストクラス名、テストフレームワーク（NUnit / EditMode / PlayMode）、モック構成には依存しない。製品経路はMissionパラメータ自動生成と本実装版抽選を使用すること。
 
 ## 正確な数値計算に関する検証要件
 
@@ -42,10 +42,10 @@
 - **DecimalFirstDigit**: 非整数計算結果の符号を除いた小数第1位が指定値 N と等しい場合にのみ `true` を返すこと。
 - 0除算等で正常な計算結果を持たない式は、いかなる `MissionCondition` も成立しない（`false` となる）こと。
 
-## 簡易版：パラメータ候補に関する検証要件
+## PresetDebug：パラメータ候補に関する検証要件
 
-- 簡易版では、[候補プリセット](../missions/candidate-presets.md) に定義された候補のみを評価すること。
-- 簡易版では、プリセットに存在しないパラメータを自動生成しないこと。
+- PresetDebugでは、[候補プリセット](../missions/candidate-presets.md) に定義された候補のみを評価すること。
+- Preset候補からTierを入力せず、共通Tier規則で確定すること。
 - パラメータを必要としない Kind は、空パラメータとして正しく評価すること。
 - `Between` の上限値は、下限 N と幅 W の和（`N + W`）として算出すること。
 - `Between` の幅 W が `1未満` の候補は採用しないこと。
@@ -53,8 +53,8 @@
 - `Modulo` の剰余 M が `0未満` の候補は採用しないこと。
 - `Modulo` の剰余 M が 法 N 以上（`M >= N`）の候補は採用しないこと。
 - 同一 Kind かつ同一パラメータを持つ重複候補は、1件に一元正規化すること。
-- 簡易版では `NegatedMission` 候補を生成しないこと。
-- 簡易版では複合ミッション（`CompoundMission`）候補を生成しないこと。
+- Profileで許可されないNegated候補を設定エラーとすること。
+- 非Debug環境ではPresetDebugを拒否し、Automaticへフォールバックしないこと。
 
 ## 共通：MissionCatalog生成に関する検証要件
 
@@ -63,6 +63,7 @@
 - 各パラメータ候補は、正常なすべての `ExpressionCandidate` に対して評価すること。
 - `ExpressionMatchCount` が、条件を満たす正常な `ExpressionCandidate` の正確な件数となること。
 - `ExpressionMatchRatio` が、`ExpressionMatchCount / (正常なExpressionCandidate総数)` と一致すること。
+- 適合率範囲を免除したKindでも適合率を計算し、適合式、非適合式、最小件数、AnswerExampleを要求すること。
 - `MinExpressionMatchRatio` 未満の候補は採用しないこと。
 - `MaxExpressionMatchRatio` を超える候補は採用しないこと。
 - `Zero` は `ExpressionMatchCount == 1` で件数要件をパスすること。
@@ -72,7 +73,7 @@
 - 正常な `ExpressionCandidate` が 0件 の場合、Gameplay を開始せず設定エラーとすること。
 - 有効な `MissionCatalog` が 0件 の場合、Gameplay を開始せず設定エラーとすること。
 
-## 簡易版：Session中の抽選に関する検証要件
+## SimpleMissionDrawStrategyに関する検証要件
 
 - 解放済みの下位 Tier が存在する場合、現在 Tier が相対重み `0.60` で抽出されること。
 - 解放済みの下位 Tier が存在する場合、下位 Tier 全体が相対重み `0.40` で抽出されること。
@@ -81,10 +82,8 @@
 - 候補が存在する Kind のみが抽選の母集団となること。
 - 選択された Tier 内の Kind は、等確率でランダム選定すること。
 - 選択された Kind 内のパラメータ候補は、等確率でランダム選定すること。
-- 簡易版の抽選結果は、`CurrentExpression` の達成・未達成状態に依存しないこと。
-- 簡易版の抽選結果は、直前の出題履歴・ミッションに依存しないこと。
-- 簡易版の抽選結果に `NegatedMission` が含まれないこと。
-- 簡易版の抽選結果に複合ミッションが含まれないこと。
+- Simple Strategyの抽選結果は、`CurrentExpression` の達成・未達成状態に依存しないこと。
+- Simple Strategyの抽選結果は、直前の出題履歴・ミッションに依存しないこと。
 - 新しく出題される Mission には、直前より `1` 加算された `MissionId` が割り当てられること。
 
 ## Session進行に関する検証要件
@@ -129,9 +128,15 @@
 - `TargetExpressionMatchRatio` が難易度 Config から正しく取得・適用されること。
 - 直前と同一条件しか存在しない場合、連続出題回避条件を適用しないこと。
 
-## Mission候補自動生成：将来有効化する検証チェックリスト
+## Mission候補自動生成に関する検証要件
 
-- 自動生成する境界値が、到達可能な整数結果集合を生成元とすること。
+- 全19 `MissionKind`の数値識別子と固定定義が1対1で対応すること。
+- 明示値および包含範囲ドメインが重複除去後の昇順へ正規化されること。
+- Single Kind、Between、Moduloが到達可能性とKind固有制約を満たす候補だけを生成すること。
+- Negated候補が固定定義とProfileの両方で許可された場合だけ肯定候補の直後に生成されること。
+- Kind別・全体候補上限はNegated展開後かつ適合率評価前に判定され、超過時に切り捨てないこと。
+- 有効Kindの候補0件、件数オーバーフロー、上限超過を`InvalidConfiguration`としてSession開始前に失敗させること。
+- AutomaticではPreset参照を不要とし、PresetDebugではProfileとPresetを必須とすること。
 
 ## 複合Mission：将来有効化する検証チェックリスト
 

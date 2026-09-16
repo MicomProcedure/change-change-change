@@ -7,7 +7,7 @@
 ゲーム内部で保持・管理する状態、数値計算規則、および進行上の不変条件（Invariants）を、特定のアセンブリ構成や実装フレームワークに依存しない形で定義する。
 
 - Mission カタログ構築および抽選ロジック: [Missionカタログ・抽選内部仕様](../missions/catalog-and-draw.md)
-- 初期実装で使用する候補データ: [Missionパラメータ候補プリセット](../missions/candidate-presets.md)
+- デバッグ確認用候補データ: [Missionパラメータ候補PresetDebug](../missions/candidate-presets.md)
 - テスト検証要件: [CCCテスト仕様](../testing/acceptance-specification.md)
 
 ## 全体フロー
@@ -66,6 +66,15 @@ flowchart TD
 - 0除算など正常な計算結果を持たない式は、いかなるミッション条件（`NegatedMission` を含む）も達成しないこと。
 
 ※ミッション選定アルゴリズムの詳細は [Missionカタログ・抽選内部仕様](../missions/catalog-and-draw.md) を参照すること。
+
+## MissionCatalog準備の不変条件
+
+- `MissionCatalog`はGameplay Session開始時に1回だけ構築し、同一Session中に再生成しないこと。
+- `MissionParameterCandidate`はTierを保持せず、全式分析後の`MissionCandidate`だけが確定Tierと`AnswerExample`を保持すること。
+- 各Conditionは正常な全Expressionに対して一度だけ分析し、正確な`Rational`適合率を採用判定とBetween Tier判定で共有すること。
+- 適合率範囲を免除したKindでも、適合式、非適合式、Kind別最小件数、`AnswerExample`の要件を維持すること。
+- 同一Conditionは入力順の最初の1件へ正規化し、最終CatalogはTier、Kind、ParameterA、ParameterB、IsNegatedの順へ固定すること。
+- 候補生成またはCatalog構築が失敗した場合、Session Context、State、Timerを開始しないこと。
 
 ## Tier進行規則
 

@@ -54,13 +54,17 @@ flowchart LR
 flowchart TB
     subgraph Setup["① Session準備（開始時に1回）"]
         Config[GameplayConfig]
-        Params[MissionParameterCandidate列]
-        Generator[ExpressionCandidateGenerator]
+        Preparation[MissionCatalogPreparationSettings]
+        ExpressionGenerator[ExpressionCandidateGenerator]
+        ParameterGenerator[MissionParameterCandidateGenerator]
         Builder[MissionCatalogBuilder]
         Context[GameplaySessionContext]
-        Config --> Builder
-        Params --> Builder
-        Generator -->|ExpressionCandidate列| Builder
+        Config --> ExpressionGenerator
+        Preparation --> ParameterGenerator
+        ExpressionGenerator -->|ExpressionCandidate列| ParameterGenerator
+        ExpressionGenerator -->|ExpressionCandidate列| Builder
+        ParameterGenerator -->|MissionParameterCandidate列| Builder
+        Preparation --> Builder
         Builder -->|MissionCatalog| Context
         Config --> Context
     end
@@ -212,9 +216,9 @@ SessionResult *-- SubmissionResolution : last
 
 ```mermaid
 flowchart LR
-    Config[GameplayConfig]
-    Params[MissionParameterCandidate列]
+    Preparation[MissionCatalogPreparationSettings]
     Gen[ExpressionCandidateGenerator]
+    ParameterGen[MissionParameterCandidateGenerator]
     Calc[ExpressionCalculator]
     Expressions[ExpressionCandidate列]
     Builder[MissionCatalogBuilder]
@@ -223,27 +227,31 @@ flowchart LR
 
     Gen --> Calc
     Gen --> Expressions
+    Expressions --> ParameterGen
+    Preparation --> ParameterGen
     Expressions --> Builder
-    Params --> Builder
-    Config --> Builder
+    ParameterGen --> Builder
+    Preparation --> Builder
     Builder --> Matcher
     Builder -->|Build成功| Catalog
 ```
 
-※ `MissionCatalogBuilder` 内の候補分析や選出判定処理は `private static` メソッドとして実装されており、独立した別クラスではない。
+`MissionKindDefinitionCatalog`はパラメータ構造、固定肯定Tier、Negated可否・Tierを一元管理する。`MissionParameterCandidateGenerator`と`MissionCatalogBuilder`は状態を持たないためDI登録しない。
 
 ```mermaid
 flowchart TD
+    Normalize["Condition重複を最初の1件へ正規化"]
     Pair["MissionParameterCandidate × ExpressionCandidate"]
     Match["Matcherで各式を一致判定"]
     Analyze["Analyze\n適合数・非適合数・割合・回答例"]
     Include{ShouldInclude}
-    Normalize["重複を除去し固定順に並べる"]
+    ResolveTier["同じ適合率からTier解決"]
+    Sort["Tier→Kind→A→B→Negated順"]
     Catalog[MissionCatalog]
     Exclude[除外]
 
-    Pair --> Match --> Analyze --> Include
-    Include -->|条件を満たす| Normalize --> Catalog
+    Normalize --> Pair --> Match --> Analyze --> Include
+    Include -->|条件を満たす| ResolveTier --> Sort --> Catalog
     Include -->|条件外| Exclude
 ```
 
@@ -253,9 +261,9 @@ flowchart TD
 | --- | --- | --- |
 | Mission条件と計算結果の一致確認 | `MissionConditionMatcher` | `MissionCondition`、`CalculationResult` |
 | 適合数・非適合数・適合割合の計算 | `MissionCatalogBuilder.Analyze` | 正常な `ExpressionCandidate` 配列 |
-| 適合割合が許容範囲内かの検証 | `MissionCatalogBuilder.ShouldInclude` | `GameplayConfig` |
-| 最小適合式数の取得 | `GameplayConfig.GetMinimumExpressionMatchCount` | `MissionKind` |
-| Zero / Prime は1件以上、その他は2件以上 | `GameplayConfig` の設定値を Builder が適用 | `ZeroAndPrimeMinimumExpressionMatchCount` / `MinimumExpressionMatchCount` |
+| 適合割合が許容範囲内かの検証 | `MissionCatalogBuilder.ShouldInclude` | `MissionCatalogEvaluationPolicy` |
+| 最小適合式数の取得 | `MissionCatalogEvaluationPolicy.GetMinimumMatchCount` | `MissionKind` |
+| Tier解決 | `MissionCandidateTierResolver` | `MissionKindDefinitionCatalog`、分析済み`Rational`適合率 |
 | 重複排除と規定順へのソート | `MissionCatalogBuilder` | Tier、Kind、ParameterA、ParameterB、IsNegated |
 
 ---
@@ -505,6 +513,7 @@ sequenceDiagram
 | --- | --- | --- | --- |
 | `GameplaySessionContext` | `GameplayController` | セッション開始時に Controller が生成 | Gameplay Scope |
 | `GameplayConfig` | `GameplaySessionContext` | `GameplayConfigAsset.CreateRuntimeConfig` | セッション期間中不変 |
+| `MissionCatalogPreparationSettings` | `GameplayStartRequest` | `GameplayEntryPoint`がProfile/Presetから変換 | Session開始要求中不変 |
 | `MissionCatalog` | `GameplaySessionContext` | `MissionCatalogBuilder.Build` | セッション期間中不変 |
 | 現在の `GameplayState` | `GameplayController` | 初期値は Controller、更新値は Reducer | 不変インスタンスを Controller が差し替え |
 | 編集中の `Expression` | `ExpressionInput` | `ChangeNumber` / `ChangeOperator` / `Reset` | Scoped / Disposable |
@@ -543,7 +552,7 @@ flowchart TB
 
 - インスタンスの生成および破棄の管理は、すべて `GameplayLifetimeScope` が所有すること。
 - `GameplayController` は注入された `ExpressionInput`、Strategy、Timer を進行上の協調オブジェクトとして参照すること。（Controller が直接 `new` しないこと）
-- `GameplayReducer`、`ExpressionCalculator`、Matcher、Builder、Selector は状態を持たない `static` クラスであり、DI 登録の対象外とする。
+- `GameplayReducer`、`ExpressionCalculator`、Matcher、候補Generator、Builder、Tier Resolver、Selectorは状態を持たない`static`クラスであり、DI登録の対象外とする。
 - Presenter は公開ストリームの購読者であり、`GameplayState` やタイマー内部状態の所有者ではない。
 
 ### 8.3 状態の変更権限マトリクス
@@ -575,6 +584,7 @@ flowchart TB
 | `ExpressionCalculator` | 数式評価ロジック | [クラス設計 §5.1](../unity-class-design.md) |
 | `ExpressionCandidateGenerator` | 正常な候補式の網羅的生成 | [クラス設計 §5.2](../unity-class-design.md) |
 | `MissionConditionMatcher` | Mission条件への一致判定 | [クラス設計 §5.3](../unity-class-design.md) |
+| `MissionParameterCandidateGenerator` | Profileと到達可能結果から候補生成 | [クラス設計 §5.4](../unity-class-design.md) |
 | `MissionCatalogBuilder` | 候補分析・選出・Catalog構築 | [クラス設計 §5.4](../unity-class-design.md) |
 | `WeightedIndexSelector` / `UniformIndexSelector` | サンプル値からのインデックス決定 | [クラス設計 §5.5](../unity-class-design.md) |
 | `GameplayReducer` | 4つのセッション状態遷移 | [クラス設計 §6](../unity-class-design.md) |
