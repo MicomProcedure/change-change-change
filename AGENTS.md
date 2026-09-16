@@ -16,6 +16,7 @@
 - デザインや画面構成案などはCosenceを正本とする
   - https://scrapbox.io/ChangeChangeChange/
 - 作業前に @design-principles.md を参照すること
+- mainに直接pushしない
 
 ## 命名規則
 
