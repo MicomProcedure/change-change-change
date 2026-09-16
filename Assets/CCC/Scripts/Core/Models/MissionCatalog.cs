@@ -25,7 +25,7 @@ namespace Ccc.Core.Model
             }
 
             var list = new MissionCandidate[candidates.Count];
-            var duplicateChecker = new HashSet<(MissionCondition, int)>();
+            var duplicateChecker = new HashSet<MissionCondition>();
 
             for (int i = 0; i < candidates.Count; i++)
             {
@@ -35,10 +35,11 @@ namespace Ccc.Core.Model
                     throw new ArgumentException("Candidates cannot contain null elements.", nameof(candidates));
                 }
 
-                var key = (candidate.Condition, candidate.Tier);
-                if (!duplicateChecker.Add(key))
+                if (!duplicateChecker.Add(candidate.Condition))
                 {
-                    throw new ArgumentException($"Duplicate condition '{candidate.Condition.Kind}' with tier {candidate.Tier}.", nameof(candidates));
+                    throw new ArgumentException(
+                        $"Duplicate condition '{candidate.Condition.Kind}'.",
+                        nameof(candidates));
                 }
 
                 list[i] = candidate;

@@ -46,14 +46,19 @@ namespace Ccc.Tests
         {
             var parameters = new List<MissionParameterCandidate>
             {
-                new MissionParameterCandidate(MissionCondition.Create(MissionKind.Even), 1),
-                new MissionParameterCandidate(MissionCondition.Create(MissionKind.Odd), 1),
-                new MissionParameterCandidate(MissionCondition.Create(MissionKind.Decimal), 1),
-                new MissionParameterCandidate(MissionCondition.Create(MissionKind.Zero), 2)
+                new MissionParameterCandidate(MissionCondition.Create(MissionKind.Even)),
+                new MissionParameterCandidate(MissionCondition.Create(MissionKind.Odd)),
+                new MissionParameterCandidate(MissionCondition.Create(MissionKind.Decimal)),
+                new MissionParameterCandidate(MissionCondition.Create(MissionKind.Zero))
             };
 
+            GameplayConfig config = GameplayConfigDefaults.CreateNormal();
             MissionCatalogBuildResult buildResult =
-                MissionCatalogBuilder.Build(FixedExpressionCandidates, parameters, GameplayConfigDefaults.CreateNormal());
+                MissionCatalogBuilder.Build(
+                    FixedExpressionCandidates,
+                    parameters,
+                    MissionTestSettings.CreateEvaluationPolicy(config),
+                    Rational.FromSingle(0.25f));
 
             Assert.That(buildResult.IsSuccess, Is.True);
             Assert.That(buildResult.Catalog.Candidates.Count, Is.EqualTo(4));
@@ -77,21 +82,27 @@ namespace Ccc.Tests
         }
 
         /// <summary>
-        /// 同一Kind・同一パラメータ・同一Tierの重複候補が拒否されることを検証します。
+        /// 同一条件の重複候補が最初の1件へ正規化されることを検証します。
         /// </summary>
         [Test]
-        public void Build_ShouldRejectDuplicateMissionParameterCandidates()
+        public void Build_ShouldNormalizeDuplicateMissionParameterCandidates()
         {
             var duplicateCondition = MissionCondition.Create(MissionKind.Even);
             var parameters = new List<MissionParameterCandidate>
             {
-                new MissionParameterCandidate(duplicateCondition, 1),
-                new MissionParameterCandidate(duplicateCondition, 1)
+                new MissionParameterCandidate(duplicateCondition),
+                new MissionParameterCandidate(duplicateCondition)
             };
 
-            Assert.That(
-                () => MissionCatalogBuilder.Build(FixedExpressionCandidates, parameters, GameplayConfigDefaults.CreateNormal()),
-                Throws.ArgumentException);
+            GameplayConfig config = GameplayConfigDefaults.CreateNormal();
+            MissionCatalogBuildResult buildResult = MissionCatalogBuilder.Build(
+                FixedExpressionCandidates,
+                parameters,
+                MissionTestSettings.CreateEvaluationPolicy(config),
+                Rational.FromSingle(0.25f));
+
+            Assert.That(buildResult.IsSuccess, Is.True);
+            Assert.That(buildResult.Catalog.Candidates, Has.Count.EqualTo(1));
         }
 
         /// <summary>
@@ -102,11 +113,16 @@ namespace Ccc.Tests
         {
             var parameters = new List<MissionParameterCandidate>
             {
-                new MissionParameterCandidate(MissionCondition.Create(MissionKind.Positive), 1)
+                new MissionParameterCandidate(MissionCondition.Create(MissionKind.Positive))
             };
 
+            GameplayConfig config = GameplayConfigDefaults.CreateNormal();
             MissionCatalogBuildResult buildResult =
-                MissionCatalogBuilder.Build(FixedExpressionCandidates, parameters, GameplayConfigDefaults.CreateNormal());
+                MissionCatalogBuilder.Build(
+                    FixedExpressionCandidates,
+                    parameters,
+                    MissionTestSettings.CreateEvaluationPolicy(config),
+                    Rational.FromSingle(0.25f));
 
             Assert.That(buildResult.IsSuccess, Is.False);
             Assert.That(buildResult.FailureKind, Is.EqualTo(MissionCatalogBuildFailureKind.EmptyCatalog));

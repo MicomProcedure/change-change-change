@@ -609,11 +609,15 @@ namespace Ccc.Tests
                 timer,
                 new FullMissionDrawStrategy(randomSource));
             using IDisposable subscription = controller.States.Subscribe(states.Add);
-            var request = new GameplayStartRequest(new[]
+            MissionParameterCandidate[] candidates =
             {
-                new MissionParameterCandidate(MissionCondition.Create(MissionKind.Even), 1),
-                new MissionParameterCandidate(MissionCondition.Create(MissionKind.Odd), 1)
-            });
+                new MissionParameterCandidate(MissionCondition.Create(MissionKind.Even)),
+                new MissionParameterCandidate(MissionCondition.Create(MissionKind.Odd))
+            };
+            var request = new GameplayStartRequest(
+                GameMode.LifeEndless,
+                GameDifficulty.Normal,
+                MissionTestSettings.CreatePresetPreparationSettings(candidates, config));
 
             GameplayStartResult startResult = controller.StartSession(request);
             Assert.That(startResult.IsSuccess, Is.True);
@@ -646,10 +650,14 @@ namespace Ccc.Tests
                 expressionInput,
                 timer,
                 recordingStrategy);
-            var request = new GameplayStartRequest(new[]
+            MissionParameterCandidate[] candidates =
             {
-                new MissionParameterCandidate(candidate.Condition, candidate.Tier)
-            });
+                new MissionParameterCandidate(candidate.Condition)
+            };
+            var request = new GameplayStartRequest(
+                GameMode.LifeEndless,
+                GameDifficulty.Normal,
+                MissionTestSettings.CreatePresetPreparationSettings(candidates, config));
             Expression submittedExpression = shouldSatisfyMission
                 ? new Expression(1, OperatorType.Add, 2)
                 : config.InitialExpression;

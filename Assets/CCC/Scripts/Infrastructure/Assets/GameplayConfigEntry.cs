@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Ccc.Presentation.Navigation;
 using UnityEngine;
+using MissionParameterSourceMode = Ccc.Core.Model.MissionParameterSourceMode;
 
 namespace Ccc.Infrastructure.Assets
 {
@@ -22,6 +23,13 @@ namespace Ccc.Infrastructure.Assets
 
         [SerializeField]
         private GameplayConfigAsset gameplayConfigAsset;
+
+        [SerializeField]
+        private MissionParameterSourceMode missionParameterSourceMode =
+            MissionParameterSourceMode.Automatic;
+
+        [SerializeField]
+        private MissionParameterGenerationProfileAsset missionParameterGenerationProfileAsset;
 
         [SerializeField]
         private MissionPresetAsset missionPresetAsset;
@@ -59,6 +67,22 @@ namespace Ccc.Infrastructure.Assets
         public GameplayConfigAsset GameplayConfigAsset
         {
             get { return gameplayConfigAsset; }
+        }
+
+        /// <summary>
+        /// Missionパラメータ候補の取得経路を取得します。
+        /// </summary>
+        public MissionParameterSourceMode MissionParameterSourceMode
+        {
+            get { return missionParameterSourceMode; }
+        }
+
+        /// <summary>
+        /// Missionパラメータ生成・評価Profile Assetを取得します。
+        /// </summary>
+        public MissionParameterGenerationProfileAsset MissionParameterGenerationProfileAsset
+        {
+            get { return missionParameterGenerationProfileAsset; }
         }
 
         /// <summary>
@@ -100,9 +124,23 @@ namespace Ccc.Infrastructure.Assets
                 errors.Add("Gameplay config asset is missing.");
             }
 
-            if (missionPresetAsset == null)
+            if (!Enum.IsDefined(
+                    typeof(MissionParameterSourceMode),
+                    missionParameterSourceMode))
             {
-                errors.Add("Mission preset asset is missing.");
+                errors.Add(
+                    $"Mission parameter source mode is undefined: {missionParameterSourceMode}.");
+            }
+
+            if (missionParameterGenerationProfileAsset == null)
+            {
+                errors.Add("Mission parameter generation profile asset is missing.");
+            }
+
+            if (missionParameterSourceMode == MissionParameterSourceMode.PresetDebug &&
+                missionPresetAsset == null)
+            {
+                errors.Add("PresetDebug requires a Mission preset asset.");
             }
 
             return errors;

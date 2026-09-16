@@ -19,28 +19,32 @@ public class GameplaySetupExample
         var parameterCandidates = new List<MissionParameterCandidate>
         {
             // Tier 1 (パラメータなし)
-            new MissionParameterCandidate(MissionCondition.Create(MissionKind.Even), 1),
-            new MissionParameterCandidate(MissionCondition.Create(MissionKind.Odd), 1),
-            new MissionParameterCandidate(MissionCondition.Create(MissionKind.Integer), 1),
-            new MissionParameterCandidate(MissionCondition.Create(MissionKind.Positive), 1),
+            new MissionParameterCandidate(MissionCondition.Create(MissionKind.Even)),
+            new MissionParameterCandidate(MissionCondition.Create(MissionKind.Odd)),
+            new MissionParameterCandidate(MissionCondition.Create(MissionKind.Integer)),
+            new MissionParameterCandidate(MissionCondition.Create(MissionKind.Positive)),
 
             // Tier 1 (1パラメータ)
-            new MissionParameterCandidate(MissionCondition.Create(MissionKind.AtLeast, 5), 1),
+            new MissionParameterCandidate(MissionCondition.Create(MissionKind.AtLeast, 5)),
 
             // Tier 2 (0, 素数, 平方数)
-            new MissionParameterCandidate(MissionCondition.Create(MissionKind.Zero), 2),
-            new MissionParameterCandidate(MissionCondition.Create(MissionKind.Prime), 2),
-            new MissionParameterCandidate(MissionCondition.Create(MissionKind.Square), 2),
+            new MissionParameterCandidate(MissionCondition.Create(MissionKind.Zero)),
+            new MissionParameterCandidate(MissionCondition.Create(MissionKind.Prime)),
+            new MissionParameterCandidate(MissionCondition.Create(MissionKind.Square)),
 
             // Tier 2 (Between: 3以上 3+5=8以下)
-            new MissionParameterCandidate(MissionCondition.Between(3, 5), 2),
+            new MissionParameterCandidate(MissionCondition.Between(3, 5)),
         };
 
         // ----------------------------------------------------
         // Step 3: カタログをビルド (適合率・件数のフィルタリングとソート)
         // ----------------------------------------------------
         MissionCatalogBuildResult buildResult =
-            MissionCatalogBuilder.Build(expressions, parameterCandidates, config);
+            MissionCatalogBuilder.Build(
+                expressions,
+                parameterCandidates,
+                Ccc.Tests.MissionTestSettings.CreateEvaluationPolicy(config),
+                Rational.FromSingle(0.25f));
 
         // ----------------------------------------------------
         // Step 4: ビルド成否の確認

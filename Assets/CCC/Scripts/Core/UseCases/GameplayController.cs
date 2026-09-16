@@ -133,13 +133,56 @@ namespace Ccc.Core.UseCases
                     $"Expression candidate generation failed: {exception.Message}");
             }
 
+            IReadOnlyList<MissionParameterCandidate> missionParameterCandidates;
+            MissionCatalogPreparationSettings preparationSettings =
+                request.CatalogPreparationSettings;
+            try
+            {
+                switch (preparationSettings.SourceMode)
+                {
+                    case MissionParameterSourceMode.Automatic:
+                        MissionParameterGenerationResult generationResult =
+                            MissionParameterCandidateGenerator.Generate(
+                                expressionCandidates,
+                                preparationSettings.GenerationSettings);
+                        if (!generationResult.IsSuccess)
+                        {
+                            return FailStart(
+                                GameplayFlowFailureKind.InvalidConfiguration,
+                                generationResult.FailureMessage);
+                        }
+
+                        missionParameterCandidates = generationResult.Candidates;
+                        break;
+
+                    case MissionParameterSourceMode.PresetDebug:
+                        missionParameterCandidates = FilterEnabledPresetCandidates(
+                            preparationSettings.PresetCandidates,
+                            preparationSettings.GenerationSettings);
+                        break;
+
+                    default:
+                        return FailStart(
+                            GameplayFlowFailureKind.InvalidConfiguration,
+                            $"Undefined mission parameter source mode: {preparationSettings.SourceMode}.");
+                }
+
+            }
+            catch (Exception exception)
+            {
+                return FailStart(
+                    GameplayFlowFailureKind.InvalidConfiguration,
+                    $"Mission parameter preparation failed: {exception.Message}");
+            }
+
             MissionCatalogBuildResult catalogBuildResult;
             try
             {
                 catalogBuildResult = MissionCatalogBuilder.Build(
                     expressionCandidates,
-                    request.MissionParameterCandidates,
-                    _config);
+                    missionParameterCandidates,
+                    preparationSettings.EvaluationPolicy,
+                    preparationSettings.GenerationSettings.BetweenTierTwoThreshold);
             }
             catch (Exception exception)
             {
@@ -460,6 +503,27 @@ namespace Ccc.Core.UseCases
             return GameplayFlowFailure.Create(
                 kind,
                 string.IsNullOrWhiteSpace(message) ? "Gameplay flow failed." : message);
+        }
+
+        private static IReadOnlyList<MissionParameterCandidate> FilterEnabledPresetCandidates(
+            IReadOnlyList<MissionParameterCandidate> presetCandidates,
+            MissionParameterGenerationSettings generationSettings)
+        {
+            var enabledCandidates = new List<MissionParameterCandidate>();
+            for (int index = 0; index < presetCandidates.Count; index++)
+            {
+                MissionParameterCandidate candidate = presetCandidates[index];
+                    if (generationSettings.TryGetRule(
+                        candidate.Condition.Kind,
+                        out MissionKindGenerationRule rule) &&
+                    rule.IsEnabled &&
+                    (!candidate.Condition.IsNegated || rule.GeneratesNegated))
+                {
+                    enabledCandidates.Add(candidate);
+                }
+            }
+
+            return enabledCandidates.ToArray();
         }
 
         private void ThrowIfDisposed()

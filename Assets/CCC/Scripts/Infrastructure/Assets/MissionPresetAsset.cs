@@ -37,11 +37,6 @@ namespace Ccc.Infrastructure.Assets
                     continue;
                 }
 
-                if (entry.Tier <= 0)
-                {
-                    errors.Add($"Mission preset entry at index {index} has an invalid tier.");
-                }
-
                 if (!TryCreateCondition(entry, out _, out string conditionError))
                 {
                     errors.Add($"Mission preset entry at index {index}: {conditionError}");
@@ -71,7 +66,7 @@ namespace Ccc.Infrastructure.Assets
             for (int index = 0; index < entries.Count; index++)
             {
                 TryCreateCondition(entries[index], out MissionCondition condition, out _);
-                candidates[index] = new MissionParameterCandidate(condition, entries[index].Tier);
+                candidates[index] = new MissionParameterCandidate(condition);
             }
 
             return candidates;
@@ -101,7 +96,16 @@ namespace Ccc.Infrastructure.Assets
 
             try
             {
-                if (MissionCondition.IsNoParameterKind(entry.Kind))
+                MissionKindDefinition definition =
+                    MissionKindDefinitionCatalog.Get(entry.Kind);
+                if (entry.IsNegated && !definition.CanGenerateNegated)
+                {
+                    errorMessage =
+                        $"MissionKind.{entry.Kind} does not allow Negated candidates.";
+                    return false;
+                }
+
+                if (definition.ParameterStructure == MissionParameterStructure.None)
                 {
                     if (entry.ParameterA != 0 || entry.ParameterB != 0)
                     {
@@ -113,7 +117,8 @@ namespace Ccc.Infrastructure.Assets
                     return true;
                 }
 
-                if (entry.Kind == MissionKind.Between)
+                if (definition.ParameterStructure == MissionParameterStructure.Pair &&
+                    entry.Kind == MissionKind.Between)
                 {
                     if (entry.ParameterB < 1)
                     {
@@ -128,7 +133,8 @@ namespace Ccc.Infrastructure.Assets
                     return true;
                 }
 
-                if (entry.Kind == MissionKind.Modulo)
+                if (definition.ParameterStructure == MissionParameterStructure.Pair &&
+                    entry.Kind == MissionKind.Modulo)
                 {
                     condition = MissionCondition.Modulo(
                         entry.ParameterA,
@@ -137,7 +143,7 @@ namespace Ccc.Infrastructure.Assets
                     return true;
                 }
 
-                if (MissionCondition.IsSingleParameterKind(entry.Kind))
+                if (definition.ParameterStructure == MissionParameterStructure.Single)
                 {
                     if (entry.ParameterB != 0)
                     {
@@ -164,7 +170,7 @@ namespace Ccc.Infrastructure.Assets
     }
 
     /// <summary>
-    /// 1件分のMission条件とTierを保持するAssetデータです。
+    /// 1件分のTier未確定Mission条件を保持するAssetデータです。
     /// </summary>
     [Serializable]
     public sealed class MissionPresetEntry
@@ -181,13 +187,9 @@ namespace Ccc.Infrastructure.Assets
         [SerializeField]
         private bool isNegated;
 
-        [SerializeField]
-        private int tier = 1;
-
         internal MissionKind Kind => kind;
         internal int ParameterA => parameterA;
         internal int ParameterB => parameterB;
         internal bool IsNegated => isNegated;
-        internal int Tier => tier;
     }
 }

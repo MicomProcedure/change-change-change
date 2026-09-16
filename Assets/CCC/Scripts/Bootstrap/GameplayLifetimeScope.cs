@@ -39,9 +39,6 @@ namespace Ccc.Bootstrap
             builder.Register<GameplayConfigEntry>(
                 resolver => resolver.Resolve<GameplayStartContext>().ConfigEntry,
                 Lifetime.Scoped);
-            builder.Register<MissionPresetAsset>(
-                resolver => resolver.Resolve<GameplayConfigEntry>().MissionPresetAsset,
-                Lifetime.Scoped);
             builder.Register<IMissionTextSource>(
                 resolver =>
                 {

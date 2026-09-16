@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Ccc.Core.Model;
 using Ccc.Core.UseCases;
 using Ccc.Infrastructure.Assets;
 using Ccc.Presentation;
@@ -23,6 +24,7 @@ namespace Ccc.Bootstrap
         private static readonly TimeSpan CountdownInterval = TimeSpan.FromSeconds(1);
 
         private readonly GameplayStartContext _startContext;
+        private readonly GameplayConfig _config;
         private readonly IGameplayFlow _flow;
         private readonly GameplayPresenter _presenter;
         private readonly IGameplayView _view;
@@ -37,6 +39,7 @@ namespace Ccc.Bootstrap
         /// GameplayEntryPointを生成します。
         /// </summary>
         /// <param name="startContext">Gameplay開始RequestとConfig Entryの組。</param>
+        /// <param name="config">同一Sessionで使用する検証済みGameplay設定。</param>
         /// <param name="flow">Gameplayフロー。</param>
         /// <param name="presenter">Gameplay Presenter。</param>
         /// <param name="view">Gameplay View。</param>
@@ -46,6 +49,7 @@ namespace Ccc.Bootstrap
         /// <exception cref="ArgumentNullException">依存のいずれかがnullの場合。</exception>
         public GameplayEntryPoint(
             GameplayStartContext startContext,
+            GameplayConfig config,
             IGameplayFlow flow,
             GameplayPresenter presenter,
             IGameplayView view,
@@ -54,6 +58,7 @@ namespace Ccc.Bootstrap
             IRuntimeMode runtimeMode)
         {
             _startContext = startContext ?? throw new ArgumentNullException(nameof(startContext));
+            _config = config ?? throw new ArgumentNullException(nameof(config));
             _flow = flow ?? throw new ArgumentNullException(nameof(flow));
             _presenter = presenter ?? throw new ArgumentNullException(nameof(presenter));
             _view = view ?? throw new ArgumentNullException(nameof(view));
@@ -80,22 +85,26 @@ namespace Ccc.Bootstrap
             _countdownView.SetInputEnabled(false);
             var validationErrors = new List<string>();
             GameplayConfigEntry configEntry = _startContext.ConfigEntry;
-            validationErrors.AddRange(configEntry.GameplayConfigAsset.Validate());
-            validationErrors.AddRange(configEntry.MissionPresetAsset.Validate());
+            validationErrors.AddRange(configEntry.Validate());
+            if (configEntry.GameplayConfigAsset != null)
+            {
+                validationErrors.AddRange(configEntry.GameplayConfigAsset.Validate());
+            }
+            AddMissionParameterValidationErrors(configEntry, validationErrors);
             AddMissionTextValidationErrors(configEntry.MissionTextAsset, validationErrors);
             ValidateRequest(_startContext.Request, validationErrors);
 
-            IReadOnlyList<Ccc.Core.Model.MissionParameterCandidate> candidates = null;
+            MissionCatalogPreparationSettings preparationSettings = null;
             if (validationErrors.Count == 0)
             {
                 try
                 {
-                    candidates = configEntry.MissionPresetAsset.CreateCandidates();
+                    preparationSettings = CreateCatalogPreparationSettings(configEntry);
                 }
                 catch (Exception exception)
                 {
                     validationErrors.Add(
-                        $"Mission preset conversion failed: {exception.Message}");
+                        $"Mission parameter settings conversion failed: {exception.Message}");
                 }
             }
 
@@ -112,7 +121,8 @@ namespace Ccc.Bootstrap
             _audio.PlayBgm(AudioKey.BgmGameplayNormal);
             _startupCancellationSource =
                 CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
-            StartGameplayAsync(candidates, _startupCancellationSource.Token).Forget(HandleAsyncFailure);
+            StartGameplayAsync(preparationSettings, _startupCancellationSource.Token)
+                .Forget(HandleAsyncFailure);
         }
 
         /// <summary>
@@ -172,6 +182,75 @@ namespace Ccc.Bootstrap
             }
         }
 
+        private void AddMissionParameterValidationErrors(
+            GameplayConfigEntry configEntry,
+            ICollection<string> validationErrors)
+        {
+            MissionParameterGenerationProfileAsset profile =
+                configEntry.MissionParameterGenerationProfileAsset;
+            if (profile != null)
+            {
+                IReadOnlyList<string> profileErrors = profile.Validate();
+                for (int index = 0; index < profileErrors.Count; index++)
+                {
+                    validationErrors.Add(
+                        $"Mission parameter generation profile: {profileErrors[index]}");
+                }
+            }
+
+            if (configEntry.MissionParameterSourceMode !=
+                MissionParameterSourceMode.PresetDebug)
+            {
+                return;
+            }
+
+            if (!_runtimeMode.IsDebugMode)
+            {
+                validationErrors.Add(
+                    "PresetDebug mission parameter source is available only in DebugMode.");
+            }
+
+            MissionPresetAsset preset = configEntry.MissionPresetAsset;
+            if (preset == null)
+            {
+                return;
+            }
+
+            IReadOnlyList<string> presetErrors = preset.Validate();
+            for (int index = 0; index < presetErrors.Count; index++)
+            {
+                validationErrors.Add($"Mission preset asset: {presetErrors[index]}");
+            }
+        }
+
+        private MissionCatalogPreparationSettings CreateCatalogPreparationSettings(
+            GameplayConfigEntry configEntry)
+        {
+            MissionParameterGenerationSettings generationSettings =
+                configEntry.MissionParameterGenerationProfileAsset
+                    .CreateGenerationSettings();
+            MissionCatalogEvaluationPolicy evaluationPolicy =
+                configEntry.MissionParameterGenerationProfileAsset
+                    .CreateEvaluationPolicy(_config);
+            switch (configEntry.MissionParameterSourceMode)
+            {
+                case MissionParameterSourceMode.Automatic:
+                    return MissionCatalogPreparationSettings.CreateAutomatic(
+                        generationSettings,
+                        evaluationPolicy);
+                case MissionParameterSourceMode.PresetDebug:
+                    return MissionCatalogPreparationSettings.CreatePresetDebug(
+                        generationSettings,
+                        evaluationPolicy,
+                        configEntry.MissionPresetAsset.CreateCandidates());
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(configEntry.MissionParameterSourceMode),
+                        configEntry.MissionParameterSourceMode,
+                        null);
+            }
+        }
+
         private static void ValidateRequest(
             NavigationGameplayStartRequest request,
             ICollection<string> errors)
@@ -200,7 +279,7 @@ namespace Ccc.Bootstrap
         }
 
         private async UniTask StartGameplayAsync(
-            IReadOnlyList<Ccc.Core.Model.MissionParameterCandidate> candidates,
+            MissionCatalogPreparationSettings preparationSettings,
             CancellationToken cancellationToken)
         {
             for (int remainingSeconds = CountdownStartSeconds;
@@ -235,7 +314,7 @@ namespace Ccc.Bootstrap
                 new CoreGameplayStartRequest(
                     ConvertGameMode(_startContext.Request.GameMode),
                     ConvertDifficulty(_startContext.Request.Difficulty),
-                    candidates);
+                    preparationSettings);
             GameplayStartResult startResult = _flow.StartSession(sessionRequest);
             if (!startResult.IsSuccess)
             {

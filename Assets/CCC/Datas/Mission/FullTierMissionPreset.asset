@@ -17,139 +17,111 @@ MonoBehaviour:
     parameterA: 0
     parameterB: 0
     isNegated: 0
-    tier: 1
   - kind: 1
     parameterA: 0
     parameterB: 0
     isNegated: 0
-    tier: 1
   - kind: 2
     parameterA: 0
     parameterB: 0
     isNegated: 0
-    tier: 1
   - kind: 3
     parameterA: 0
     parameterB: 0
     isNegated: 0
-    tier: 1
   - kind: 6
     parameterA: 0
     parameterB: 0
     isNegated: 0
-    tier: 1
   - kind: 4
     parameterA: 0
     parameterB: 0
     isNegated: 0
-    tier: 1
   - kind: 5
     parameterA: 0
     parameterB: 0
     isNegated: 0
-    tier: 1
   - kind: 10
     parameterA: 20
     parameterB: 0
     isNegated: 0
-    tier: 2
   - kind: 11
     parameterA: -18
     parameterB: 0
     isNegated: 0
-    tier: 2
   - kind: 7
     parameterA: 0
     parameterB: 0
     isNegated: 0
-    tier: 2
   - kind: 8
     parameterA: 0
     parameterB: 0
     isNegated: 0
-    tier: 2
   - kind: 12
     parameterA: 4
     parameterB: 0
     isNegated: 0
-    tier: 2
   - kind: 12
     parameterA: 10
     parameterB: 0
     isNegated: 0
-    tier: 2
   - kind: 12
     parameterA: -4
     parameterB: 0
     isNegated: 0
-    tier: 2
   - kind: 12
     parameterA: -9
     parameterB: 0
     isNegated: 0
-    tier: 2
   - kind: 12
     parameterA: -10
     parameterB: 0
     isNegated: 0
-    tier: 2
   - kind: 13
     parameterA: 7
     parameterB: 0
     isNegated: 0
-    tier: 2
   - kind: 14
     parameterA: 3
     parameterB: 0
     isNegated: 0
-    tier: 2
   - kind: 14
     parameterA: 1
     parameterB: 0
     isNegated: 0
-    tier: 2
   - kind: 15
     parameterA: 8
     parameterB: 0
     isNegated: 0
-    tier: 2
   - kind: 15
     parameterA: 2
     parameterB: 0
     isNegated: 0
-    tier: 2
   - kind: 16
     parameterA: 5
     parameterB: 0
     isNegated: 0
-    tier: 3
   - kind: 16
     parameterA: 2
     parameterB: 0
     isNegated: 0
-    tier: 3
   - kind: 17
     parameterA: 12
     parameterB: 15
     isNegated: 0
-    tier: 2
   - kind: 17
     parameterA: 3
     parameterB: 5
     isNegated: 0
-    tier: 1
   - kind: 17
     parameterA: -5
     parameterB: 2
     isNegated: 0
-    tier: 2
   - kind: 18
     parameterA: 3
     parameterB: 1
     isNegated: 0
-    tier: 2
   - kind: 18
     parameterA: 3
     parameterB: 2
     isNegated: 0
-    tier: 2

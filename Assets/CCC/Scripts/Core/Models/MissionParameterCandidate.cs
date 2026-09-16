@@ -4,27 +4,24 @@ using System;
 namespace Ccc.Core.Model
 {
     /// <summary>
-    /// カタログ構築前の事前定義されたミッション条件とTierのペア。
+    /// カタログ構築前のTier未確定なミッション条件です。
     /// </summary>
     public readonly struct MissionParameterCandidate : IEquatable<MissionParameterCandidate>
     {
         public MissionCondition Condition { get; }
-        public int Tier { get; }
 
-        public MissionParameterCandidate(MissionCondition condition, int tier)
+        /// <summary>
+        /// 指定された条件からTier未確定の候補を生成します。
+        /// </summary>
+        /// <param name="condition">候補条件。</param>
+        public MissionParameterCandidate(MissionCondition condition)
         {
-            if (tier <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(tier), "Tier must be greater than zero.");
-            }
-
             Condition = condition;
-            Tier = tier;
         }
 
-        public bool Equals(MissionParameterCandidate other) => Condition.Equals(other.Condition) && Tier == other.Tier;
+        public bool Equals(MissionParameterCandidate other) => Condition.Equals(other.Condition);
         public override bool Equals(object? obj) => obj is MissionParameterCandidate other && Equals(other);
-        public override int GetHashCode() => HashCode.Combine(Condition, Tier);
+        public override int GetHashCode() => Condition.GetHashCode();
         public static bool operator ==(MissionParameterCandidate left, MissionParameterCandidate right) => left.Equals(right);
         public static bool operator !=(MissionParameterCandidate left, MissionParameterCandidate right) => !left.Equals(right);
     }

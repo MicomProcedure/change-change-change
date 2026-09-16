@@ -35,14 +35,12 @@ namespace Ccc.Core.Model
         /// <returns>生成された条件。</returns>
         public static MissionCondition Create(MissionKind kind, bool isNegated)
         {
-            if (!IsNoParameterKind(kind))
+            MissionKindDefinition definition = GetDefinition(kind);
+            if (definition.ParameterStructure != MissionParameterStructure.None)
             {
-                if (Enum.IsDefined(typeof(MissionKind), kind))
-                {
-                    throw new ArgumentException("This MissionKind does not accept a parameterless factory.", nameof(kind));
-                }
-
-                throw new ArgumentOutOfRangeException(nameof(kind));
+                throw new ArgumentException(
+                    "This MissionKind does not accept a parameterless factory.",
+                    nameof(kind));
             }
 
             return new MissionCondition(kind, 0, 0, isNegated);
@@ -62,14 +60,12 @@ namespace Ccc.Core.Model
         /// <returns>生成された条件。</returns>
         public static MissionCondition Create(MissionKind kind, int parameter, bool isNegated)
         {
-            if (!IsSingleParameterKind(kind))
+            MissionKindDefinition definition = GetDefinition(kind);
+            if (definition.ParameterStructure != MissionParameterStructure.Single)
             {
-                if (Enum.IsDefined(typeof(MissionKind), kind))
-                {
-                    throw new ArgumentException("This MissionKind does not accept a single parameter.", nameof(kind));
-                }
-
-                throw new ArgumentOutOfRangeException(nameof(kind));
+                throw new ArgumentException(
+                    "This MissionKind does not accept a single parameter.",
+                    nameof(kind));
             }
 
             switch (kind)
@@ -161,39 +157,29 @@ namespace Ccc.Core.Model
 
         public static bool IsNoParameterKind(MissionKind kind)
         {
-            switch (kind)
+            if (!Enum.IsDefined(typeof(MissionKind), kind))
             {
-                case MissionKind.Even:
-                case MissionKind.Odd:
-                case MissionKind.Integer:
-                case MissionKind.Decimal:
-                case MissionKind.Positive:
-                case MissionKind.Negative:
-                case MissionKind.Prime:
-                case MissionKind.Zero:
-                case MissionKind.Square:
-                case MissionKind.Composite:
-                    return true;
-                default:
-                    return false;
+                return false;
             }
+
+            return MissionKindDefinitionCatalog.Get(kind).ParameterStructure ==
+                   MissionParameterStructure.None;
         }
 
         public static bool IsSingleParameterKind(MissionKind kind)
         {
-            switch (kind)
+            if (!Enum.IsDefined(typeof(MissionKind), kind))
             {
-                case MissionKind.AtLeast:
-                case MissionKind.AtMost:
-                case MissionKind.Exact:
-                case MissionKind.Multiple:
-                case MissionKind.Absolute:
-                case MissionKind.OnesDigit:
-                case MissionKind.DecimalFirstDigit:
-                    return true;
-                default:
-                    return false;
+                return false;
             }
+
+            return MissionKindDefinitionCatalog.Get(kind).ParameterStructure ==
+                   MissionParameterStructure.Single;
+        }
+
+        private static MissionKindDefinition GetDefinition(MissionKind kind)
+        {
+            return MissionKindDefinitionCatalog.Get(kind);
         }
 
         public bool Equals(MissionCondition other)
