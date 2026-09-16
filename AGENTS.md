@@ -9,6 +9,7 @@
 - クラスやpublic method, public propertyはドキュメントコメント（<summary>や<param>）を記載する
 - ハードコードを禁止する
 - コンパイルチェックはユーザーに依頼する
+- EditorScriptはtddを実施せず、静的な検証と手動確認のみ
 
 ## プロジェクト情報
 - 仕様や要件の正本はdocs以下のドキュメント群とする
