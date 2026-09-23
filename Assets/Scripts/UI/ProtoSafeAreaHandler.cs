@@ -106,7 +106,7 @@ namespace Proto.UI
         {
             enableSafeArea = enabled;
             if (enabled) ApplySafeArea();
-            ProtoLogger.LogUI($"Safe area {(enabled ? "enabled" : "disabled")}", this);
+            Debug.Log($"Safe area {(enabled ? "enabled" : "disabled")}");
         }
 
         /// <summary>
@@ -116,7 +116,7 @@ namespace Proto.UI
         {
             useMockSafeArea = enabled;
             ApplySafeArea();
-            ProtoLogger.LogUI($"Mock safe area {(enabled ? "enabled" : "disabled")}", this);
+            Debug.Log($"Mock safe area {(enabled ? "enabled" : "disabled")}");
         }
 
         /// <summary>
@@ -126,7 +126,7 @@ namespace Proto.UI
         {
             enableSafeArea = !enableSafeArea;
             if (enableSafeArea) ApplySafeArea();
-            ProtoLogger.LogUI($"Safe area {(enableSafeArea ? "enabled" : "disabled")}", this);
+            Debug.Log($"Safe area {(enableSafeArea ? "enabled" : "disabled")}");
         }
     }
 }
