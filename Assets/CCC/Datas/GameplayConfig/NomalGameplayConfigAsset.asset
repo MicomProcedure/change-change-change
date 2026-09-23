@@ -21,7 +21,7 @@ MonoBehaviour:
   initialDurationSeconds: 10
   reductionPerSectionSeconds: 0.3
   minimumDurationSeconds: 4
-  tierStartSections: 0100000004000000080000000c000000
+  tierStartSections: 01000000050000000a0000000f000000
   showCurrentAnswer: 0
   minimumExpressionMatchRatio: 0.1
   maximumExpressionMatchRatio: 0.6
