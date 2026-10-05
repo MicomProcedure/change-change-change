@@ -1,4 +1,5 @@
 using System;
+using Ccc.Core.Model;
 using Ccc.Presentation.Navigation;
 using Cysharp.Threading.Tasks;
 using R3;

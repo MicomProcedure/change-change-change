@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
+using Ccc.Core.Model;
 using Ccc.Presentation.Navigation;
 using UnityEngine;
-using MissionParameterSourceMode = Ccc.Core.Model.MissionParameterSourceMode;
 
 namespace Ccc.Infrastructure.Assets
 {

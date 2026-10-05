@@ -256,14 +256,14 @@ namespace Ccc.Bootstrap
             ICollection<string> errors)
         {
             if (request.GameMode !=
-                Ccc.Presentation.Navigation.GameMode.LifeEndless)
+                GameMode.LifeEndless)
             {
                 errors.Add(
                     $"Unsupported gameplay mode: {request.GameMode}.");
             }
 
             if (request.Difficulty !=
-                Ccc.Presentation.Navigation.GameDifficulty.Normal)
+                GameDifficulty.Normal)
             {
                 errors.Add(
                     $"Unsupported gameplay difficulty: {request.Difficulty}.");
@@ -312,8 +312,8 @@ namespace Ccc.Bootstrap
 
             CoreGameplayStartRequest sessionRequest =
                 new CoreGameplayStartRequest(
-                    ConvertGameMode(_startContext.Request.GameMode),
-                    ConvertDifficulty(_startContext.Request.Difficulty),
+                    _startContext.Request.GameMode,
+                    _startContext.Request.Difficulty,
                     preparationSettings);
             GameplayStartResult startResult = _flow.StartSession(sessionRequest);
             if (!startResult.IsSuccess)
@@ -338,37 +338,6 @@ namespace Ccc.Bootstrap
             _countdownView.SetInputEnabled(false);
             _presenter.Dispose();
             _view.ShowFatalError($"Gameplay startup failed: {exception.Message}");
-        }
-
-        private static Ccc.Core.Model.GameMode ConvertGameMode(
-            Ccc.Presentation.Navigation.GameMode gameMode)
-        {
-            switch (gameMode)
-            {
-                case Ccc.Presentation.Navigation.GameMode.LifeEndless:
-                    return Ccc.Core.Model.GameMode.LifeEndless;
-
-                default:
-                    throw new ArgumentOutOfRangeException(
-                        nameof(gameMode),
-                        gameMode,
-                        null);
-            }
-        }
-        private static Ccc.Core.Model.GameDifficulty ConvertDifficulty(
-            Ccc.Presentation.Navigation.GameDifficulty difficulty)
-        {
-            switch (difficulty)
-            {
-                case Ccc.Presentation.Navigation.GameDifficulty.Normal:
-                    return Ccc.Core.Model.GameDifficulty.Normal;
-
-                default:
-                    throw new ArgumentOutOfRangeException(
-                        nameof(difficulty),
-                        difficulty,
-                        null);
-            }
         }
     }
 }
