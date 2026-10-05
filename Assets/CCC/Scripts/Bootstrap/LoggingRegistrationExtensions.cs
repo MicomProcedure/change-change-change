@@ -1,6 +1,4 @@
-using System;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using VContainer;
 
 namespace Ccc.Bootstrap.Log
@@ -11,28 +9,15 @@ namespace Ccc.Bootstrap.Log
     public static class LoggingRegistrationExtensions
     {
         /// <summary>
-        /// 指定型のLoggerを指定された生存期間で登録します。
+        /// 指定型のLoggerを指定された生存期間で登録します。出力するかどうかはLoggerFactoryのLogLevel設定で決まります。
         /// </summary>
         /// <typeparam name="T">ログのカテゴリとして使用する型。</typeparam>
         /// <param name="builder">DI登録を行うBuilder。</param>
         /// <param name="lifetime">Loggerの生存期間。</param>
-        /// <param name="isEnabled">Loggerを有効化する条件。省略時は常に有効。</param>
-        public static void RegisterLogger<T>(
-            this IContainerBuilder builder,
-            Lifetime lifetime,
-            Func<IObjectResolver, bool> isEnabled = null)
+        public static void RegisterLogger<T>(this IContainerBuilder builder, Lifetime lifetime)
         {
             builder.Register<ILogger<T>>(
-                resolver =>
-                {
-                    if (isEnabled != null && !isEnabled(resolver))
-                    {
-                        return NullLogger<T>.Instance;
-                    }
-
-                    ILoggerFactory factory = resolver.Resolve<ILoggerFactory>();
-                    return factory.CreateLogger<T>();
-                },
+                resolver => resolver.Resolve<ILoggerFactory>().CreateLogger<T>(),
                 lifetime);
         }
     }

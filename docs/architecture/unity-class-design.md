@@ -1156,18 +1156,19 @@ Candidateの順序はCatalog構築時に`Tier -> MissionKind -> ParameterA -> Pa
 
 `FullMissionDrawStrategy`は同じinterfaceを実装し、本番設定で使用すること。初回は現在式を評価せず、2問目以降はControllerが`ExpressionInput.Current`と直前MissionをContextへ渡すこと。解放済み候補を現在式で達成できる群と達成できない群へ分け、両群が存在する場合は`CurrentExpressionSatisfiedMissionSelectionRatio`の直接確率で一方を選ぶこと。乱数sampleが比率未満なら達成できる群、以上なら達成できない群とする。片方の群しか存在しない場合、および比率0/1で選択先が確定する場合は乱数を消費しないこと。その後、Tier、肯定／Negated、直前Mission、Kind、目標適合率上位候補の順に選定すること。共通のTier・Kind・比率・乱数選定は`MissionDrawSelectionModule`へ集約し、Simple版と共有可能な境界に保つこと。
 
-`FullMissionDrawStrategy`は`ILogger<FullMissionDrawStrategy>`で抽選時の診断情報をDebugレベルに記録すること。選択したKindの全候補を目標適合率との差で順位付けし、先頭10件の順位、実際のPool範囲、選出候補を記録すること。ログの表示件数は`MissionParameterSelectionPoolSize`による抽選Poolの大きさや乱数消費を変えないこと。BootstrapはDebugModeがオフのとき、このStrategyへNullLoggerを渡すこと。ZLoggerのUnity Console出力はEditor時に構成すること。
+`FullMissionDrawStrategy`は抽選成功時、`IDiagnosticsReporter<MissionDrawTrace>.IsEnabled`がtrueの場合だけ`MissionDrawTrace`を1回報告すること。Traceには各段階（極性設定による有効候補、Tier解放、現在式の達成群／未達成群、Tier、極性、直前Mission除外、Kind）の候補数と選ばれた値、選択したKindの全候補を目標適合率との差で順位付けした一覧、実際のPool範囲、選出候補を含めること。Strategyは診断の整形、出力件数、出力先を扱わないこと。診断の報告有無は抽選結果、Poolの大きさ、乱数消費を変えないこと。出力側の構成は [CCC Log・診断出力クラス設計](./infrastructure/logging.md) を参照すること。
 
 #### DI
 
-`UnityRandomSource`、`ILogger<FullMissionDrawStrategy>`、製品用StrategyはGameplay Scopeの`Scoped`とする。Strategyより先にRandomとLoggerを登録すること。LoggerはApplication Scopeの`ILoggerFactory`から生成すること。
+`UnityRandomSource`、`IDiagnosticsReporter<MissionDrawTrace>`、製品用StrategyはGameplay Scopeの`Scoped`とする。Strategyより先にRandomと診断Reporterを登録すること。診断Reporterの組み立ては`RegisterMissionDrawDiagnostics`へ集約すること。
 
 ```csharp
 builder.Register<IRandomSource, UnityRandomSource>(
    Lifetime.Scoped);
-builder.RegisterLogger<FullMissionDrawStrategy>(
-   Lifetime.Scoped,
-   resolver => resolver.Resolve<IRuntimeMode>().IsDebugMode);
+builder.Register<DiagnosticsSessionDescriptor>(
+   resolver => CreateDiagnosticsSessionDescriptor(resolver),
+   Lifetime.Scoped);
+builder.RegisterMissionDrawDiagnostics();
 builder.Register<IMissionDrawStrategy, FullMissionDrawStrategy>(
    Lifetime.Scoped);
 ```

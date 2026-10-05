@@ -5,6 +5,7 @@ using Ccc.Core.Logic;
 using Ccc.Core.UseCases;
 using Ccc.Bootstrap.Log;
 using Ccc.Infrastructure.Assets;
+using Ccc.Infrastructure.Logging;
 using Ccc.Infrastructure.Random;
 using Ccc.Infrastructure.Time;
 using Ccc.Infrastructure.Navigation;
@@ -69,9 +70,10 @@ namespace Ccc.Bootstrap
                     .CreateRuntimeConfig(),
                 Lifetime.Scoped);
             builder.Register<IRandomSource, UnityRandomSource>(Lifetime.Scoped);
-            builder.RegisterLogger<FullMissionDrawStrategy>(
-                Lifetime.Scoped,
-                resolver => resolver.Resolve<IRuntimeMode>().IsDebugMode);
+            builder.Register<DiagnosticsSessionDescriptor>(
+                resolver => CreateDiagnosticsSessionDescriptor(resolver),
+                Lifetime.Scoped);
+            builder.RegisterMissionDrawDiagnostics();
             builder.Register<IMissionDrawStrategy, FullMissionDrawStrategy>(Lifetime.Scoped);
             builder.Register<ISectionTimer, UniTaskSectionTimer>(Lifetime.Scoped);
             builder.Register<ExpressionInput>(Lifetime.Scoped);
@@ -132,6 +134,17 @@ namespace Ccc.Bootstrap
             }
 
             return new GameplayStartContext(request, entry);
+        }
+
+        private static DiagnosticsSessionDescriptor CreateDiagnosticsSessionDescriptor(IObjectResolver resolver)
+        {
+            GameplayConfigEntry entry = resolver.Resolve<GameplayConfigEntry>();
+            LogDirectoryOptions directoryOptions = resolver.Resolve<LogDirectoryOptions>();
+            return new DiagnosticsSessionDescriptor(
+                directoryOptions.FormatTimestamp(DateTime.Now),
+                entry.DisplayName,
+                entry.GameMode,
+                entry.Difficulty);
         }
     }
 }

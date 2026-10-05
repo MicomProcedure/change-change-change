@@ -407,6 +407,11 @@ class SimpleMissionDrawStrategy
 class FullMissionDrawStrategy
 class FixedMissionDrawStrategy
 class MissionDrawSelectionModule
+class IDiagnosticsReporter~MissionDrawTrace~ {
+  <<interface>>
+  +bool IsEnabled
+  +Report(MissionDrawTrace)
+}
 class IRandomSource {
   <<interface>>
   +NextFloat01() float
@@ -435,6 +440,7 @@ FullMissionDrawStrategy ..|> IMissionDrawStrategy
 FixedMissionDrawStrategy ..|> IMissionDrawStrategy
 SimpleMissionDrawStrategy --> MissionDrawSelectionModule
 FullMissionDrawStrategy --> MissionDrawSelectionModule
+FullMissionDrawStrategy --> IDiagnosticsReporter : reports MissionDrawTrace
 MissionDrawSelectionModule o-- IRandomSource : injected
 MissionDrawSelectionModule --> TierResolver
 MissionDrawSelectionModule --> WeightedIndexSelector

@@ -1,12 +1,9 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Text;
 using Ccc.Core.Logic;
 using Ccc.Core.Model;
-using Microsoft.Extensions.Logging;
 
 namespace Ccc.Core.UseCases
 {
@@ -15,22 +12,23 @@ namespace Ccc.Core.UseCases
     /// </summary>
     public sealed class FullMissionDrawStrategy : IMissionDrawStrategy
     {
-        private const int LoggedCandidateCount = 10;
-
         private readonly MissionDrawSelectionModule _selectionModule;
-        private readonly ILogger<FullMissionDrawStrategy> _logger;
+        private readonly IDiagnosticsReporter<MissionDrawTrace> _diagnosticsReporter;
 
         /// <summary>
-        /// 乱数提供元とLoggerから本実装版Strategyを生成します。
+        /// 乱数提供元と診断Reporterから本実装版Strategyを生成します。
         /// </summary>
         /// <param name="randomSource">0以上1未満の乱数提供元。</param>
-        /// <param name="logger">抽選診断を出力するLogger。</param>
-        /// <exception cref="ArgumentNullException">乱数提供元またはLoggerがnullの場合。</exception>
-        public FullMissionDrawStrategy(IRandomSource randomSource, ILogger<FullMissionDrawStrategy> logger)
+        /// <param name="diagnosticsReporter">抽選成功時のTraceを受け取る診断Reporter。</param>
+        /// <exception cref="ArgumentNullException">乱数提供元または診断Reporterがnullの場合。</exception>
+        public FullMissionDrawStrategy(
+            IRandomSource randomSource,
+            IDiagnosticsReporter<MissionDrawTrace> diagnosticsReporter)
         {
             _selectionModule = new MissionDrawSelectionModule(
                 randomSource ?? throw new ArgumentNullException(nameof(randomSource)));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _diagnosticsReporter = diagnosticsReporter ??
+                throw new ArgumentNullException(nameof(diagnosticsReporter));
         }
 
         /// <summary>
@@ -66,17 +64,19 @@ namespace Ccc.Core.UseCases
                         "Negated mission selection is disabled and no positive candidates are available.");
                 }
 
+                int currentTier = TierResolver.ResolveCurrentTier(context.Section, config);
                 if (!TrySelectCurrentExpressionCandidates(
                         context,
                         enabledCandidates,
-                        out IReadOnlyList<MissionCandidate> currentExpressionCandidates,
+                        currentTier,
+                        out CurrentExpressionSelection expressionSelection,
                         out string currentExpressionFailure))
                 {
                     return MissionDrawResult.Failure(currentExpressionFailure);
                 }
 
                 if (!_selectionModule.TrySelectTierCandidates(
-                        currentExpressionCandidates,
+                        expressionSelection.SelectedCandidates,
                         context.Section,
                         config,
                         shouldSelectSpecificLowerTierWhenCurrentTierIsUnavailable: true,
@@ -123,9 +123,30 @@ namespace Ccc.Core.UseCases
                     return MissionDrawResult.Failure(candidateFailure);
                 }
 
-                MissionDrawResult result = MissionDrawResult.Success(selectedCandidate);
-                LogRankedCandidates(context, rankedCandidates, selectedCandidate);
-                return result;
+                if (_diagnosticsReporter.IsEnabled)
+                {
+                    _diagnosticsReporter.Report(new MissionDrawTrace(
+                        section: context.Section,
+                        isInitialDraw: context.IsInitialDraw,
+                        currentTier: currentTier,
+                        config: config,
+                        enabledCandidateCount: enabledCandidates.Length,
+                        unlockedCandidateCount: expressionSelection.UnlockedCandidateCount,
+                        satisfiedCandidateCount: expressionSelection.SatisfiedCandidateCount,
+                        unmatchedCandidateCount: expressionSelection.UnmatchedCandidateCount,
+                        selectedExpressionGroup: expressionSelection.SelectedGroup,
+                        selectedTier: selectedTierCandidates[0].Tier,
+                        tierStageCandidateCount: selectedTierCandidates.Count,
+                        isNegatedPolaritySelected: selectedPolarityCandidates[0].Condition.IsNegated,
+                        polarityStageCandidateCount: selectedPolarityCandidates.Count,
+                        repeatFilteredCandidateCount: repeatFilteredCandidates.Count,
+                        selectedKind: selectedKindCandidates[0].Condition.Kind,
+                        rankedCandidates: rankedCandidates,
+                        poolSize: closestCandidates.Count,
+                        selectedCandidate: selectedCandidate));
+                }
+
+                return MissionDrawResult.Success(selectedCandidate);
             }
             catch (Exception exception)
             {
@@ -137,20 +158,23 @@ namespace Ccc.Core.UseCases
         private bool TrySelectCurrentExpressionCandidates(
             MissionDrawContext context,
             IReadOnlyList<MissionCandidate> enabledCandidates,
-            out IReadOnlyList<MissionCandidate> selectedCandidates,
+            int currentTier,
+            out CurrentExpressionSelection selection,
             out string failureMessage)
         {
-            selectedCandidates = Array.Empty<MissionCandidate>();
+            selection = default;
             failureMessage = null;
-            int currentTier = TierResolver.ResolveCurrentTier(
-                context.Section,
-                context.SessionContext.Config);
             MissionCandidate[] unlockedCandidates = enabledCandidates
                 .Where(candidate => candidate.Tier <= currentTier)
                 .ToArray();
             if (context.IsInitialDraw)
             {
-                selectedCandidates = unlockedCandidates;
+                selection = new CurrentExpressionSelection(
+                    unlockedCandidates,
+                    unlockedCandidates.Length,
+                    satisfiedCandidateCount: 0,
+                    unmatchedCandidateCount: 0,
+                    CurrentExpressionCandidateGroup.AllUnlocked);
                 return true;
             }
 
@@ -173,13 +197,26 @@ namespace Ccc.Core.UseCases
                 }
             }
 
-            return _selectionModule.TrySelectCandidateGroupByRatio(
-                satisfiedCandidates,
-                unmatchedCandidates,
-                context.SessionContext.Config.CurrentExpressionSatisfiedMissionSelectionRatio,
-                "current expression satisfaction",
-                out selectedCandidates,
-                out failureMessage);
+            if (!_selectionModule.TrySelectCandidateGroupByRatio(
+                    satisfiedCandidates,
+                    unmatchedCandidates,
+                    context.SessionContext.Config.CurrentExpressionSatisfiedMissionSelectionRatio,
+                    "current expression satisfaction",
+                    out IReadOnlyList<MissionCandidate> selectedCandidates,
+                    out failureMessage))
+            {
+                return false;
+            }
+
+            selection = new CurrentExpressionSelection(
+                selectedCandidates,
+                unlockedCandidates.Length,
+                satisfiedCandidates.Count,
+                unmatchedCandidates.Count,
+                ReferenceEquals(selectedCandidates, satisfiedCandidates)
+                    ? CurrentExpressionCandidateGroup.Satisfied
+                    : CurrentExpressionCandidateGroup.Unmatched);
+            return true;
         }
 
         private static IReadOnlyList<MissionCandidate> ExcludePreviousConditionWhenAlternativeExists(
@@ -218,79 +255,31 @@ namespace Ccc.Core.UseCases
                 .ToArray();
         }
 
-        private void LogRankedCandidates(
-            MissionDrawContext context,
-            IReadOnlyList<MissionCandidate> rankedCandidates,
-            MissionCandidate selectedCandidate)
+        private readonly struct CurrentExpressionSelection
         {
-            try
+            public CurrentExpressionSelection(
+                IReadOnlyList<MissionCandidate> selectedCandidates,
+                int unlockedCandidateCount,
+                int satisfiedCandidateCount,
+                int unmatchedCandidateCount,
+                CurrentExpressionCandidateGroup selectedGroup)
             {
-                if (!_logger.IsEnabled(LogLevel.Debug))
-                {
-                    return;
-                }
-
-                GameplayConfig config = context.SessionContext.Config;
-                int poolSize = Math.Min(config.MissionParameterSelectionPoolSize, rankedCandidates.Count);
-                int displayedCount = Math.Min(LoggedCandidateCount, rankedCandidates.Count);
-                int selectedRank = -1;
-                for (int index = 0; index < rankedCandidates.Count; index++)
-                {
-                    if (ReferenceEquals(rankedCandidates[index], selectedCandidate))
-                    {
-                        selectedRank = index + 1;
-                        break;
-                    }
-                }
-
-                var message = new StringBuilder();
-                message.Append("Mission draw ranking: Section=").Append(context.Section)
-                    .Append(", Tier=").Append(selectedCandidate.Tier)
-                    .Append(", Kind=").Append(selectedCandidate.Condition.Kind)
-                    .Append(", Negated=").Append(selectedCandidate.Condition.IsNegated)
-                    .Append(", SelectedRank=").Append(selectedRank)
-                    .Append(", SelectedParameterA=").Append(selectedCandidate.Condition.ParameterA)
-                    .Append(", SelectedParameterB=").Append(selectedCandidate.Condition.ParameterB)
-                    .Append(", TargetRatio=").Append(
-                        config.TargetExpressionMatchRatio.ToString("0.0000", CultureInfo.InvariantCulture))
-                    .Append(", PoolSize=").Append(poolSize)
-                    .Append(", Candidates=").Append(rankedCandidates.Count);
-
-                for (int index = 0; index < displayedCount; index++)
-                {
-                    MissionCandidate candidate = rankedCandidates[index];
-                    MissionCondition condition = candidate.Condition;
-                    float difference = Math.Abs(
-                        candidate.ExpressionMatchRatio - config.TargetExpressionMatchRatio);
-                    message.AppendLine()
-                        .Append('#').Append(index + 1)
-                        .Append(" Kind=").Append(condition.Kind)
-                        .Append(" ParameterA=").Append(condition.ParameterA)
-                        .Append(" ParameterB=").Append(condition.ParameterB)
-                        .Append(" Negated=").Append(condition.IsNegated)
-                        .Append(" Match=").Append(candidate.ExpressionMatchCount)
-                        .Append('/').Append(candidate.EvaluatedExpressionCount)
-                        .Append(" Ratio=").Append(
-                            candidate.ExpressionMatchRatio.ToString("0.0000", CultureInfo.InvariantCulture))
-                        .Append(" Difference=").Append(difference.ToString("0.0000", CultureInfo.InvariantCulture));
-
-                    if (index < poolSize)
-                    {
-                        message.Append(" [Pool]");
-                    }
-
-                    if (ReferenceEquals(candidate, selectedCandidate))
-                    {
-                        message.Append(" [Selected]");
-                    }
-                }
-
-                _logger.LogDebug("{MissionDrawRanking}", message.ToString());
+                SelectedCandidates = selectedCandidates;
+                UnlockedCandidateCount = unlockedCandidateCount;
+                SatisfiedCandidateCount = satisfiedCandidateCount;
+                UnmatchedCandidateCount = unmatchedCandidateCount;
+                SelectedGroup = selectedGroup;
             }
-            catch (Exception)
-            {
-                // 診断ログの失敗をMission抽選の失敗に変えない。
-            }
+
+            public IReadOnlyList<MissionCandidate> SelectedCandidates { get; }
+
+            public int UnlockedCandidateCount { get; }
+
+            public int SatisfiedCandidateCount { get; }
+
+            public int UnmatchedCandidateCount { get; }
+
+            public CurrentExpressionCandidateGroup SelectedGroup { get; }
         }
     }
 }

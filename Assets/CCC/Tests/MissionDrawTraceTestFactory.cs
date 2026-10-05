@@ -1,0 +1,133 @@
+#nullable enable
+using System;
+using System.Collections.Generic;
+using Ccc.Core.Logic;
+using Ccc.Core.Model;
+using Ccc.Core.UseCases;
+using Ccc.Infrastructure.Logging;
+using Microsoft.Extensions.Logging;
+
+namespace Ccc.Tests
+{
+    /// <summary>
+    /// 診断出力のテストで共有するMission抽選Traceと診断設定を生成します。
+    /// </summary>
+    internal static class MissionDrawTraceTestFactory
+    {
+        private const int CandidateTier = 2;
+        private const int EvaluatedExpressionCount = 10;
+
+        /// <summary>
+        /// 目標適合率0.20に対して差の昇順に並ぶ3候補を持ち、2位の候補を選出したTraceを生成します。
+        /// </summary>
+        /// <param name="poolSize">順位先頭から抽選対象にした候補数。</param>
+        /// <returns>テスト用の抽選Trace。</returns>
+        internal static MissionDrawTrace CreateTrace(int poolSize = 2)
+        {
+            MissionCandidate[] rankedCandidates =
+            {
+                CreateCandidate(MissionCondition.Create(MissionKind.Exact, 1), matchCount: 2),
+                CreateCandidate(MissionCondition.Create(MissionKind.Exact, 2), matchCount: 3),
+                CreateCandidate(MissionCondition.Create(MissionKind.Exact, 3), matchCount: 5)
+            };
+            return new MissionDrawTrace(
+                section: 5,
+                isInitialDraw: false,
+                currentTier: 2,
+                config: CreateConfig(),
+                enabledCandidateCount: 40,
+                unlockedCandidateCount: 30,
+                satisfiedCandidateCount: 12,
+                unmatchedCandidateCount: 18,
+                selectedExpressionGroup: CurrentExpressionCandidateGroup.Unmatched,
+                selectedTier: 2,
+                tierStageCandidateCount: 10,
+                isNegatedPolaritySelected: false,
+                polarityStageCandidateCount: 6,
+                repeatFilteredCandidateCount: 5,
+                selectedKind: MissionKind.Exact,
+                rankedCandidates: rankedCandidates,
+                poolSize: poolSize,
+                selectedCandidate: rankedCandidates[1]);
+        }
+
+        /// <summary>
+        /// 指定候補数でMission抽選診断設定を生成します。
+        /// </summary>
+        /// <param name="logCandidateCount">Log出力に含める候補数。</param>
+        /// <param name="csvCandidateCount">CSV出力に含める候補数。</param>
+        /// <returns>テスト用の診断設定。</returns>
+        internal static MissionDrawDiagnosticsOptions CreateOptions(
+            int logCandidateCount = 10,
+            int csvCandidateCount = 10)
+        {
+            return new MissionDrawDiagnosticsOptions(
+                LogLevel.Debug,
+                logCandidateCount,
+                isCsvEnabled: true,
+                csvCandidateCount,
+                csvDirectoryName: "MissionDraw");
+        }
+
+        /// <summary>
+        /// テスト用のSession識別情報と通し番号から整形Contextを生成します。
+        /// </summary>
+        /// <param name="traceIndex">Session内の通し番号。</param>
+        /// <returns>テスト用の整形Context。</returns>
+        internal static DiagnosticsTraceContext CreateContext(int traceIndex = 1)
+        {
+            return new DiagnosticsTraceContext(CreateSession(), traceIndex);
+        }
+
+        /// <summary>
+        /// テスト用のSession識別情報を生成します。
+        /// </summary>
+        /// <returns>テスト用のSession識別情報。</returns>
+        internal static DiagnosticsSessionDescriptor CreateSession()
+        {
+            return new DiagnosticsSessionDescriptor(
+                "20261005_143012",
+                "LifeEndless, Normal",
+                GameMode.LifeEndless,
+                GameDifficulty.Normal);
+        }
+
+        private static GameplayConfig CreateConfig()
+        {
+            return new GameplayConfig(
+                minimumNumber: 1,
+                maximumNumber: 5,
+                initialExpression: new Expression(1, OperatorType.Add, 1),
+                initialLife: 3,
+                timer: new TimerConfig(
+                    TimeSpan.FromSeconds(10),
+                    TimeSpan.FromSeconds(0.5),
+                    TimeSpan.FromSeconds(3)),
+                tierProgression: new TierProgression(new List<int> { 1, 4, 8, 12 }),
+                showCurrentAnswer: false,
+                minimumExpressionMatchRatio: 0.10f,
+                maximumExpressionMatchRatio: 0.60f,
+                minimumExpressionMatchCount: 2,
+                zeroAndPrimeMinimumExpressionMatchCount: 1,
+                currentTierDrawWeight: 0.60f,
+                lowerTierDrawWeight: 0.40f,
+                currentExpressionSatisfiedMissionSelectionRatio: 0.10f,
+                targetExpressionMatchRatio: 0.20f,
+                negatedMissionSelectionWeight: 0.60f,
+                missionParameterSelectionPoolSize: 3);
+        }
+
+        private static MissionCandidate CreateCandidate(MissionCondition condition, int matchCount)
+        {
+            var answerExpression = new Expression(1, OperatorType.Add, 1);
+            return new MissionCandidate(
+                condition,
+                CandidateTier,
+                matchCount,
+                EvaluatedExpressionCount,
+                new ExpressionCandidate(
+                    answerExpression,
+                    ExpressionCalculator.Evaluate(answerExpression)));
+        }
+    }
+}

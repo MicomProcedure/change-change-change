@@ -1,4 +1,8 @@
+using System;
+using System.IO;
+using Ccc.Bootstrap.Log;
 using Ccc.Infrastructure.Audio;
+using Ccc.Infrastructure.Logging;
 using Ccc.Presentation.Audio;
 using Ccc.Infrastructure.Navigation;
 using Ccc.Presentation;
@@ -7,23 +11,21 @@ using UnityEngine;
 using VContainer;
 using VContainer.Unity;
 using Microsoft.Extensions.Logging;
-using ZLogger.Unity;
 
 namespace Ccc.Bootstrap
 {
     /// <summary>
-    /// 全画面で共有するAudio instanceを登録するApplication Scopeです。
+    /// 全画面で共有するAudio instanceとLog構成を登録するApplication Scopeです。
     /// </summary>
     public sealed class ApplicationLifetimeScope : LifetimeScope
     {
         [SerializeField] private UnityAudioPlayer audioPlayer;
         [SerializeField] private bool isDebugMode;
         [SerializeField] private TitleScreenState startingTitleScreenState = TitleScreenState.MainMenu;
-        // 出力するLogLevel設定
-        [SerializeField] private LogLevel logLevel = LogLevel.Debug;
+        [SerializeField] private LogSettingsAsset logSettingsAsset;
 
         /// <summary>
-        /// Application lifetimeのAudio出力を登録します。
+        /// Application lifetimeのAudio出力とLog構成を登録します。
         /// </summary>
         /// <param name="builder">VContainerの登録Builder。</param>
         protected override void Configure(IContainerBuilder builder)
@@ -44,17 +46,26 @@ namespace Ccc.Bootstrap
 
             builder.Register<ISceneNavigator, SceneNavigator>(Lifetime.Singleton);
             builder.RegisterInstance(new TitleStartRequest(startingTitleScreenState));
+            RegisterLogging(builder);
+        }
 
-            // LoggerFactoryを登録
+        private void RegisterLogging(IContainerBuilder builder)
+        {
+            if (logSettingsAsset == null)
+            {
+                throw new InvalidOperationException(
+                    "ApplicationLifetimeScope requires a LogSettingsAsset reference.");
+            }
+
+            string projectRootPath = Directory.GetParent(Application.dataPath).FullName;
+            LogDirectoryOptions directoryOptions = logSettingsAsset.CreateLogDirectoryOptions(projectRootPath);
+            LogOutputOptions outputOptions = logSettingsAsset.CreateLogOutputOptions();
+            DateTime startedAt = DateTime.Now;
+            builder.RegisterInstance(directoryOptions);
+            builder.RegisterInstance(logSettingsAsset.CreateMissionDrawDiagnosticsOptions());
             builder.Register<ILoggerFactory>(
-                _ => LoggerFactory.Create(logging => {  // 匿名関数を利用してILoggerFactoryのFactoryを登録
-                    logging.SetMinimumLevel(logLevel);
-#if UNITY_EDITOR
-                    logging.AddZLoggerUnityDebug();
-#endif
-                }),
-                Lifetime.Singleton
-            );
+                _ => LoggerFactoryComposer.Create(outputOptions, directoryOptions, startedAt),
+                Lifetime.Singleton);
         }
     }
 }
