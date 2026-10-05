@@ -5,6 +5,7 @@ using System.Linq;
 using Ccc.Core.Logic;
 using Ccc.Core.Model;
 using Ccc.Core.UseCases;
+using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
 using R3;
 
@@ -86,7 +87,7 @@ namespace Ccc.Tests
         public void DrawInitialMission_ShouldNotFilterSatisfiedCandidate()
         {
             var randomSource = new SequenceRandomSource(0d);
-            var strategy = new FullMissionDrawStrategy(randomSource);
+            var strategy = CreateStrategy(randomSource);
             var candidates = new[]
             {
                 CreateCandidate(MissionCondition.Create(MissionKind.Even)),
@@ -108,7 +109,7 @@ namespace Ccc.Tests
         public void DrawNextMission_ShouldSelectUnmatchedCandidateOutsideConfiguredRatio()
         {
             var randomSource = new SequenceRandomSource(0.10d);
-            var strategy = new FullMissionDrawStrategy(randomSource);
+            var strategy = CreateStrategy(randomSource);
             var candidates = new[]
             {
                 CreateCandidate(MissionCondition.Create(MissionKind.Even)),
@@ -132,7 +133,7 @@ namespace Ccc.Tests
         public void DrawNextMission_ShouldSelectSatisfiedCandidateWithinConfiguredRatio()
         {
             var randomSource = new SequenceRandomSource(0.09d);
-            var strategy = new FullMissionDrawStrategy(randomSource);
+            var strategy = CreateStrategy(randomSource);
             var satisfiedCandidate = CreateCandidate(
                 MissionCondition.Create(MissionKind.Even));
             var candidates = new[]
@@ -158,7 +159,7 @@ namespace Ccc.Tests
         public void DrawNextMission_ShouldUseConfiguredSatisfiedMissionSelectionRatio()
         {
             var randomSource = new SequenceRandomSource(0.24d);
-            var strategy = new FullMissionDrawStrategy(randomSource);
+            var strategy = CreateStrategy(randomSource);
             var satisfiedCandidate = CreateCandidate(
                 MissionCondition.Create(MissionKind.Even));
             GameplayConfig config = CreateConfig(
@@ -186,7 +187,7 @@ namespace Ccc.Tests
         public void DrawNextMission_WhenSatisfiedSelectionRatioIsZero_ShouldSelectUnmatchedWithoutRandom()
         {
             var randomSource = new SequenceRandomSource();
-            var strategy = new FullMissionDrawStrategy(randomSource);
+            var strategy = CreateStrategy(randomSource);
             var unmatchedCandidate = CreateCandidate(
                 MissionCondition.Create(MissionKind.Odd));
             GameplayConfig config = CreateConfig(
@@ -214,7 +215,7 @@ namespace Ccc.Tests
         public void DrawNextMission_WhenSatisfiedSelectionRatioIsOne_ShouldSelectSatisfiedWithoutRandom()
         {
             var randomSource = new SequenceRandomSource();
-            var strategy = new FullMissionDrawStrategy(randomSource);
+            var strategy = CreateStrategy(randomSource);
             var satisfiedCandidate = CreateCandidate(
                 MissionCondition.Create(MissionKind.Even));
             GameplayConfig config = CreateConfig(
@@ -241,7 +242,7 @@ namespace Ccc.Tests
         [Test]
         public void DrawNextMission_WhenOnlySatisfiedCandidateExists_ShouldSelectItWithoutRandom()
         {
-            var strategy = new FullMissionDrawStrategy(new SequenceRandomSource());
+            var strategy = CreateStrategy(new SequenceRandomSource());
             var candidate = CreateCandidate(MissionCondition.Create(MissionKind.Even));
 
             MissionDrawResult result = strategy.Draw(CreateNextContext(
@@ -259,7 +260,7 @@ namespace Ccc.Tests
         [Test]
         public void DrawNextMission_ShouldIgnoreLockedTierWhenPartitioningByCurrentExpression()
         {
-            var strategy = new FullMissionDrawStrategy(new SequenceRandomSource());
+            var strategy = CreateStrategy(new SequenceRandomSource());
             var unlockedSatisfiedCandidate = CreateCandidate(
                 MissionCondition.Create(MissionKind.Even),
                 tier: 1);
@@ -283,7 +284,7 @@ namespace Ccc.Tests
         [Test]
         public void DrawNextMission_ShouldTreatUndefinedExpressionAsUnmatchedForNegatedCandidate()
         {
-            var strategy = new FullMissionDrawStrategy(new SequenceRandomSource());
+            var strategy = CreateStrategy(new SequenceRandomSource());
             var negatedCandidate = CreateCandidate(
                 MissionCondition.Create(MissionKind.Even, isNegated: true));
 
@@ -303,7 +304,7 @@ namespace Ccc.Tests
         public void Draw_ShouldSelectNegatedCandidateByConfiguredWeight()
         {
             var randomSource = new SequenceRandomSource(0.70d);
-            var strategy = new FullMissionDrawStrategy(randomSource);
+            var strategy = CreateStrategy(randomSource);
             var candidates = new[]
             {
                 CreateCandidate(MissionCondition.Create(MissionKind.Even)),
@@ -325,7 +326,7 @@ namespace Ccc.Tests
         public void Draw_ShouldSelectLowerTierByConfiguredWeight()
         {
             var randomSource = new SequenceRandomSource(0.70d);
-            var strategy = new FullMissionDrawStrategy(randomSource);
+            var strategy = CreateStrategy(randomSource);
             var candidates = new[]
             {
                 CreateCandidate(MissionCondition.Create(MissionKind.Odd), tier: 1),
@@ -347,7 +348,7 @@ namespace Ccc.Tests
         public void Draw_WhenCurrentTierHasNoCandidate_ShouldSelectAvailableLowerTierUniformly()
         {
             var randomSource = new SequenceRandomSource(0.99d);
-            var strategy = new FullMissionDrawStrategy(randomSource);
+            var strategy = CreateStrategy(randomSource);
             var candidates = new[]
             {
                 CreateCandidate(MissionCondition.Create(MissionKind.Even), tier: 1),
@@ -368,7 +369,7 @@ namespace Ccc.Tests
         [Test]
         public void Draw_ShouldFailWhenOnlyNegatedCandidatesExistAndWeightIsZero()
         {
-            var strategy = new FullMissionDrawStrategy(new SequenceRandomSource());
+            var strategy = CreateStrategy(new SequenceRandomSource());
             var candidates = new[]
             {
                 CreateCandidate(MissionCondition.Create(MissionKind.Even, isNegated: true))
@@ -389,7 +390,7 @@ namespace Ccc.Tests
         public void Draw_WhenNegatedWeightIsZero_ShouldSelectOnlyPositiveCandidate()
         {
             var randomSource = new SequenceRandomSource();
-            var strategy = new FullMissionDrawStrategy(randomSource);
+            var strategy = CreateStrategy(randomSource);
             var positiveCandidate = CreateCandidate(MissionCondition.Create(MissionKind.Even));
             var candidates = new[]
             {
@@ -412,7 +413,7 @@ namespace Ccc.Tests
         [Test]
         public void DrawNextMission_ShouldExcludePreviousConditionWhenAlternativeExists()
         {
-            var strategy = new FullMissionDrawStrategy(new SequenceRandomSource());
+            var strategy = CreateStrategy(new SequenceRandomSource());
             var evenCandidate = CreateCandidate(MissionCondition.Create(MissionKind.Even));
             var oddCandidate = CreateCandidate(MissionCondition.Create(MissionKind.Odd));
 
@@ -431,7 +432,7 @@ namespace Ccc.Tests
         [Test]
         public void DrawNextMission_ShouldKeepPreviousConditionWhenNoAlternativeExists()
         {
-            var strategy = new FullMissionDrawStrategy(new SequenceRandomSource());
+            var strategy = CreateStrategy(new SequenceRandomSource());
             var candidate = CreateCandidate(MissionCondition.Create(MissionKind.Even));
 
             MissionDrawResult result = strategy.Draw(CreateNextContext(
@@ -449,7 +450,7 @@ namespace Ccc.Tests
         [Test]
         public void DrawNextMission_ShouldTreatDifferentNegatedStateAsDifferentCondition()
         {
-            var strategy = new FullMissionDrawStrategy(new SequenceRandomSource());
+            var strategy = CreateStrategy(new SequenceRandomSource());
             var negatedCandidate = CreateCandidate(
                 MissionCondition.Create(MissionKind.Even, isNegated: true));
 
@@ -469,7 +470,7 @@ namespace Ccc.Tests
         public void Draw_ShouldSelectFromCandidatesClosestToTargetMatchRatio()
         {
             var randomSource = new SequenceRandomSource(0.99d);
-            var strategy = new FullMissionDrawStrategy(randomSource);
+            var strategy = CreateStrategy(randomSource);
             var candidates = new[]
             {
                 CreateCandidate(MissionCondition.Create(MissionKind.Exact, 1), matchCount: 1, evaluatedCount: 10),
@@ -495,7 +496,7 @@ namespace Ccc.Tests
         [Test]
         public void Draw_ShouldFailWhenRandomSourceReturnsOutOfRangeValue()
         {
-            var strategy = new FullMissionDrawStrategy(new SequenceRandomSource(1d));
+            var strategy = CreateStrategy(new SequenceRandomSource(1d));
             var candidates = new[]
             {
                 CreateCandidate(MissionCondition.Create(MissionKind.Even)),
@@ -515,7 +516,7 @@ namespace Ccc.Tests
         [Test]
         public void Draw_ShouldFailWhenNoCandidateExistsInUnlockedTier()
         {
-            var strategy = new FullMissionDrawStrategy(new SequenceRandomSource());
+            var strategy = CreateStrategy(new SequenceRandomSource());
             var candidates = new[]
             {
                 CreateCandidate(MissionCondition.Create(MissionKind.Even), tier: 2)
@@ -535,7 +536,7 @@ namespace Ccc.Tests
         public void Draw_ShouldConsumeSamplesInFullSelectionOrder()
         {
             var randomSource = new SequenceRandomSource(0.20d, 0.10d, 0.99d, 0.99d);
-            var strategy = new FullMissionDrawStrategy(randomSource);
+            var strategy = CreateStrategy(randomSource);
             var candidates = new[]
             {
                 CreateCandidate(MissionCondition.Create(MissionKind.Odd), tier: 1),
@@ -583,8 +584,8 @@ namespace Ccc.Tests
             var firstRandomSource = new SequenceRandomSource(0.75d);
             var secondRandomSource = new SequenceRandomSource(0.75d);
 
-            MissionDrawResult firstResult = new FullMissionDrawStrategy(firstRandomSource).Draw(context);
-            MissionDrawResult secondResult = new FullMissionDrawStrategy(secondRandomSource).Draw(context);
+            MissionDrawResult firstResult = CreateStrategy(firstRandomSource).Draw(context);
+            MissionDrawResult secondResult = CreateStrategy(secondRandomSource).Draw(context);
 
             Assert.That(firstResult.IsSuccess, Is.True);
             Assert.That(secondResult.IsSuccess, Is.True);
@@ -607,7 +608,7 @@ namespace Ccc.Tests
                 config,
                 new ExpressionInput(config),
                 timer,
-                new FullMissionDrawStrategy(randomSource));
+                CreateStrategy(randomSource));
             using IDisposable subscription = controller.States.Subscribe(states.Add);
             MissionParameterCandidate[] candidates =
             {
@@ -757,6 +758,13 @@ namespace Ccc.Tests
         {
             Assert.Throws<ArgumentOutOfRangeException>(
                 () => CreateConfig(missionParameterSelectionPoolSize: 0));
+        }
+
+        private static FullMissionDrawStrategy CreateStrategy(IRandomSource randomSource)
+        {
+            return new FullMissionDrawStrategy(
+                randomSource,
+                NullLogger<FullMissionDrawStrategy>.Instance);
         }
 
         private static MissionDrawContext CreateNextContext(

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Ccc.Core.Model;
 using Ccc.Core.Logic;
 using Ccc.Core.UseCases;
+using Ccc.Bootstrap.Log;
 using Ccc.Infrastructure.Assets;
 using Ccc.Infrastructure.Random;
 using Ccc.Infrastructure.Time;
@@ -68,6 +69,9 @@ namespace Ccc.Bootstrap
                     .CreateRuntimeConfig(),
                 Lifetime.Scoped);
             builder.Register<IRandomSource, UnityRandomSource>(Lifetime.Scoped);
+            builder.RegisterLogger<FullMissionDrawStrategy>(
+                Lifetime.Scoped,
+                resolver => resolver.Resolve<IRuntimeMode>().IsDebugMode);
             builder.Register<IMissionDrawStrategy, FullMissionDrawStrategy>(Lifetime.Scoped);
             builder.Register<ISectionTimer, UniTaskSectionTimer>(Lifetime.Scoped);
             builder.Register<ExpressionInput>(Lifetime.Scoped);

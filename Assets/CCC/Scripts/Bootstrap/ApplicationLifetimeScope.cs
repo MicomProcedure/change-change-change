@@ -6,6 +6,8 @@ using Ccc.Presentation.Navigation;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
+using Microsoft.Extensions.Logging;
+using ZLogger.Unity;
 
 namespace Ccc.Bootstrap
 {
@@ -17,6 +19,8 @@ namespace Ccc.Bootstrap
         [SerializeField] private UnityAudioPlayer audioPlayer;
         [SerializeField] private bool isDebugMode;
         [SerializeField] private TitleScreenState startingTitleScreenState = TitleScreenState.MainMenu;
+        // 出力するLogLevel設定
+        [SerializeField] private LogLevel logLevel = LogLevel.Debug;
 
         /// <summary>
         /// Application lifetimeのAudio出力を登録します。
@@ -40,6 +44,17 @@ namespace Ccc.Bootstrap
 
             builder.Register<ISceneNavigator, SceneNavigator>(Lifetime.Singleton);
             builder.RegisterInstance(new TitleStartRequest(startingTitleScreenState));
+
+            // LoggerFactoryを登録
+            builder.Register<ILoggerFactory>(
+                _ => LoggerFactory.Create(logging => {  // 匿名関数を利用してILoggerFactoryのFactoryを登録
+                    logging.SetMinimumLevel(logLevel);
+#if UNITY_EDITOR
+                    logging.AddZLoggerUnityDebug();
+#endif
+                }),
+                Lifetime.Singleton
+            );
         }
     }
 }

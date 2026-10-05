@@ -7,7 +7,7 @@
 ## 1. アセンブリ（asmdef）定義と各層の責務
 
 ### 1.1 Ccc.Core
-`Ccc.Core` は Model、同期ロジック、および UseCases を包含する単一のアセンブリ（asmdef）とする。外部パッケージとしては R3 のみを参照し、`Ccc.Core.UseCases` 名前空間以下でのみ使用すること。
+`Ccc.Core` は Model、同期ロジック、および UseCases を包含する単一のアセンブリ（asmdef）とする。外部パッケージ参照は R3 と `Microsoft.Extensions.Logging.Abstractions` に限定し、いずれも `Ccc.Core.UseCases` 名前空間以下でのみ使用すること。ログの出力先と出力レベルは Bootstrap で構成し、Core は `ILogger<T>` のみに依存すること。
 
 > **名前空間ごとの責務分類**
 > - **`Ccc.Core.Model`**: 標準C#のみで構成される不変データおよび値オブジェクト。  
@@ -68,10 +68,10 @@
 
 | asmdef | プロジェクト内参照 | 外部パッケージ参照 |
 | --- | --- | --- |
-| `Ccc.Core` | （なし） | R3 |
+| `Ccc.Core` | （なし） | R3、Microsoft.Extensions.Logging.Abstractions |
 | `Ccc.Presentation` | `Ccc.Core` | R3、UniTask |
 | `Ccc.Infrastructure` | `Ccc.Core`、`Ccc.Presentation` | R3、UniTask、Input System、DOTween、VContainer、Unity modules |
-| `Ccc.Bootstrap` | `Ccc.Core`、`Ccc.Presentation`、`Ccc.Infrastructure` | VContainer、必要なUnity modules |
+| `Ccc.Bootstrap` | `Ccc.Core`、`Ccc.Presentation`、`Ccc.Infrastructure` | VContainer、Microsoft.Extensions.Logging、ZLogger.Unity、必要なUnity modules |
 
 - `Ccc.Infrastructure` が `Ccc.Core` を参照する主な目的は、アセットから純粋C# Modelへの変換処理、および Timer / Random などのポート実装とする。
 - `Ccc.Bootstrap` は依存関係グラフの最外層に配置すること。
@@ -119,12 +119,13 @@ Unity Inspector の **Assembly Definition References** には以下の順で登�
 
 | asmdef | 製品アセンブリ参照 | パッケージアセンブリ参照 |
 | --- | --- | --- |
-| `Ccc.Core` | （なし） | 導入済み R3 の Core アセンブリ |
+| `Ccc.Core` | （なし） | 導入済み R3 の Core アセンブリ、Microsoft.Extensions.Logging.Abstractions（自動参照） |
 | `Ccc.Presentation` | `Ccc.Core` | R3、UniTask |
 | `Ccc.Infrastructure` | `Ccc.Core`、`Ccc.Presentation` | R3、UniTask、Unity.InputSystem、DOTween、VContainerのUnity連携アセンブリ |
-| `Ccc.Bootstrap` | `Ccc.Core`、`Ccc.Presentation`、`Ccc.Infrastructure` | VContainerのCore / Unity連携アセンブリ |
+| `Ccc.Bootstrap` | `Ccc.Core`、`Ccc.Presentation`、`Ccc.Infrastructure` | VContainerのCore / Unity連携アセンブリ、ZLogger.Unity、Microsoft.Extensions.Logging（自動参照） |
 
 ※ パッケージアセンブリ参照は、Object Picker を使用して実際にプロジェクトへ導入されたアセンブリを選択すること。手入力は避けること。  
+※ NuGet for Unity 導入の `Microsoft.Extensions.Logging` と ZLogger の DLL は自動参照されるため、製品用 asmdef では Assembly Definition References に個別登録しないこと。`ZLogger.Unity` は UPM の asmdef なので Bootstrap から明示参照すること。
 ※ Infrastructure で DOTween の async/await 拡張をコンパイルする場合は、Infrastructure アセンブリのみに `UNITASK_DOTWEEN_SUPPORT` などの Define を設定すること。Core / Presentation / Bootstrap へ追加しないこと。
 
 ---
