@@ -1,5 +1,5 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
 using Ccc.Bootstrap.Log;
 using Ccc.Infrastructure.Audio;
 using Ccc.Infrastructure.Logging;
@@ -57,14 +57,17 @@ namespace Ccc.Bootstrap
                     "ApplicationLifetimeScope requires a LogSettingsAsset reference.");
             }
 
-            string projectRootPath = Directory.GetParent(Application.dataPath).FullName;
-            LogDirectoryOptions directoryOptions = logSettingsAsset.CreateLogDirectoryOptions(projectRootPath);
-            LogOutputOptions outputOptions = logSettingsAsset.CreateLogOutputOptions();
+            IReadOnlyList<string> errors = logSettingsAsset.Validate();
+            if (errors.Count > 0)
+            {
+                throw new InvalidOperationException(
+                    "Log settings validation failed: " + string.Join(" | ", errors));
+            }
+
             DateTime startedAt = DateTime.Now;
-            builder.RegisterInstance(directoryOptions);
-            builder.RegisterInstance(logSettingsAsset.CreateMissionDrawDiagnosticsOptions());
+            builder.RegisterInstance(logSettingsAsset);
             builder.Register<ILoggerFactory>(
-                _ => LoggerFactoryComposer.Create(outputOptions, directoryOptions, startedAt),
+                _ => LoggerFactoryComposer.Create(logSettingsAsset, startedAt),
                 Lifetime.Singleton);
         }
     }

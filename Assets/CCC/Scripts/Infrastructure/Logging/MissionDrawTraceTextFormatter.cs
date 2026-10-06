@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Text;
 using Ccc.Core.Model;
 using Ccc.Core.UseCases;
@@ -12,22 +13,28 @@ namespace Ccc.Infrastructure.Logging
     {
         private const string PoolMarker = " [Pool]";
         private const string SelectedMarker = " [Selected]";
+        private const string RatioFormat = "0.0000";
+        private const string PositivePolarityName = "Positive";
+        private const string NegatedPolarityName = "Negated";
 
         private readonly int _candidateCount;
 
         /// <summary>
-        /// Mission抽選診断設定から整形器を生成します。
+        /// Log出力に含める順位上位の候補数から整形器を生成します。
         /// </summary>
-        /// <param name="options">Log出力に含める候補数を持つMission抽選診断設定。</param>
-        /// <exception cref="ArgumentNullException">設定がnullの場合。</exception>
-        public MissionDrawTraceTextFormatter(MissionDrawDiagnosticsOptions options)
+        /// <param name="candidateCount">Log出力に含める順位上位の候補数。</param>
+        /// <exception cref="ArgumentOutOfRangeException">候補数が負の場合。</exception>
+        public MissionDrawTraceTextFormatter(int candidateCount)
         {
-            if (options == null)
+            if (candidateCount < 0)
             {
-                throw new ArgumentNullException(nameof(options));
+                throw new ArgumentOutOfRangeException(
+                    nameof(candidateCount),
+                    candidateCount,
+                    "Candidate count must not be negative.");
             }
 
-            _candidateCount = options.LogCandidateCount;
+            _candidateCount = candidateCount;
         }
 
         /// <summary>
@@ -56,8 +63,7 @@ namespace Ccc.Infrastructure.Logging
                 .Append(", Unmatched=").Append(trace.UnmatchedCandidateCount).Append(')')
                 .Append(", Tier=").Append(trace.SelectedTier)
                 .Append('(').Append(trace.TierStageCandidateCount).Append(')')
-                .Append(", Polarity=").Append(MissionDrawTraceValueFormatter.FormatPolarity(
-                    trace.IsNegatedPolaritySelected))
+                .Append(", Polarity=").Append(FormatPolarity(trace.IsNegatedPolaritySelected))
                 .Append('(').Append(trace.PolarityStageCandidateCount).Append(')')
                 .Append(", RepeatFiltered=").Append(trace.RepeatFilteredCandidateCount)
                 .Append(", Kind=").Append(trace.SelectedKind)
@@ -65,8 +71,7 @@ namespace Ccc.Infrastructure.Logging
                 .AppendLine();
             text.Append("Selection: SelectedRank=").Append(trace.SelectedRank)
                 .Append(", PoolSize=").Append(trace.PoolSize)
-                .Append(", TargetRatio=").Append(MissionDrawTraceValueFormatter.FormatRatio(
-                    trace.Config.TargetExpressionMatchRatio));
+                .Append(", TargetRatio=").Append(FormatRatio(trace.Config.TargetExpressionMatchRatio));
 
             int displayedCount = Math.Min(_candidateCount, trace.RankedCandidates.Count);
             for (int index = 0; index < displayedCount; index++)
@@ -93,20 +98,29 @@ namespace Ccc.Infrastructure.Logging
                 .Append(" Negated=").Append(condition.IsNegated)
                 .Append(" Match=").Append(candidate.ExpressionMatchCount)
                 .Append('/').Append(candidate.EvaluatedExpressionCount)
-                .Append(" Ratio=").Append(MissionDrawTraceValueFormatter.FormatRatio(
-                    candidate.ExpressionMatchRatio))
-                .Append(" Difference=").Append(MissionDrawTraceValueFormatter.FormatRatio(
-                    MissionDrawTraceValueFormatter.CalculateTargetDifference(trace, candidate)));
+                .Append(" Ratio=").Append(FormatRatio(candidate.ExpressionMatchRatio))
+                .Append(" Difference=").Append(FormatRatio(
+                    Math.Abs(candidate.ExpressionMatchRatio - trace.Config.TargetExpressionMatchRatio)));
 
-            if (MissionDrawTraceValueFormatter.IsInPool(trace, rank))
+            if (rank <= trace.PoolSize)
             {
                 text.Append(PoolMarker);
             }
 
-            if (MissionDrawTraceValueFormatter.IsSelected(trace, candidate))
+            if (ReferenceEquals(candidate, trace.SelectedCandidate))
             {
                 text.Append(SelectedMarker);
             }
+        }
+
+        private static string FormatRatio(float ratio)
+        {
+            return ratio.ToString(RatioFormat, CultureInfo.InvariantCulture);
+        }
+
+        private static string FormatPolarity(bool isNegated)
+        {
+            return isNegated ? NegatedPolarityName : PositivePolarityName;
         }
     }
 }

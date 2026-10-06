@@ -59,7 +59,7 @@ namespace Ccc.Infrastructure.Logging
         /// <param name="trace">報告する診断Trace。</param>
         /// <exception cref="ObjectDisposedException">Dispose後に呼び出した場合。</exception>
         /// <exception cref="IOException">同名のCSVファイルが既に存在する場合、または書き込みに失敗した場合。</exception>
-        /// <exception cref="InvalidOperationException">整形器が未定義の表へ行を返した場合。</exception>
+        /// <exception cref="InvalidOperationException">整形器が未定義の表へ行を返した場合、または行のフィールド数が列数と一致しない場合。</exception>
         public void Report(TTrace trace)
         {
             if (_isDisposed)
@@ -69,24 +69,29 @@ namespace Ccc.Infrastructure.Logging
 
             EnsureWritersOpened();
             _reportedTraceCount++;
-            IReadOnlyList<CsvTableRows> tableRows = _formatter.Format(
-                trace,
-                new DiagnosticsTraceContext(_session, _reportedTraceCount));
-            for (int tableIndex = 0; tableIndex < tableRows.Count; tableIndex++)
+            IReadOnlyList<(CsvTableDefinition Table, IReadOnlyList<string> Fields)> rows =
+                _formatter.Format(trace, _session, _reportedTraceCount);
+            for (int rowIndex = 0; rowIndex < rows.Count; rowIndex++)
             {
-                CsvTableRows rows = tableRows[tableIndex];
-                if (!_writersByFileSuffix.TryGetValue(rows.Table.FileSuffix, out StreamWriter writer))
+                (CsvTableDefinition table, IReadOnlyList<string> fields) = rows[rowIndex];
+                if (!_writersByFileSuffix.TryGetValue(table.FileSuffix, out StreamWriter writer))
                 {
                     throw new InvalidOperationException(
-                        $"CSV formatter returned rows for an undeclared table '{rows.Table.FileSuffix}'.");
+                        $"CSV formatter returned a row for an undeclared table '{table.FileSuffix}'.");
                 }
 
-                for (int rowIndex = 0; rowIndex < rows.Rows.Count; rowIndex++)
+                if (fields.Count != table.Columns.Count)
                 {
-                    writer.Write(CsvLineFormatter.FormatLine(rows.Rows[rowIndex]));
-                    writer.Write(LineSeparator);
+                    throw new InvalidOperationException(
+                        $"CSV row for table '{table.FileSuffix}' must contain {table.Columns.Count} fields.");
                 }
 
+                writer.Write(CsvLineFormatter.FormatLine(fields));
+                writer.Write(LineSeparator);
+            }
+
+            foreach (StreamWriter writer in _writersByFileSuffix.Values)
+            {
                 writer.Flush();
             }
         }

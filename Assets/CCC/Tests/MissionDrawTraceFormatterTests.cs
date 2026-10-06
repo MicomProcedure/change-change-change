@@ -11,14 +11,16 @@ namespace Ccc.Tests
     /// </summary>
     public sealed class MissionDrawTraceFormatterTests
     {
+        private const string DrawsFileSuffix = "draws";
+        private const string CandidatesFileSuffix = "candidates";
+
         /// <summary>
         /// テキスト整形が見出し3行の後に設定件数分の候補行を出力することを検証します。
         /// </summary>
         [Test]
         public void TextFormatter_ShouldListConfiguredNumberOfRankedCandidates()
         {
-            var formatter = new MissionDrawTraceTextFormatter(
-                MissionDrawTraceTestFactory.CreateOptions(logCandidateCount: 2));
+            var formatter = new MissionDrawTraceTextFormatter(candidateCount: 2);
 
             string[] lines = formatter.Format(MissionDrawTraceTestFactory.CreateTrace())
                 .Split('\n')
@@ -39,8 +41,7 @@ namespace Ccc.Tests
         [Test]
         public void TextFormatter_ShouldNotExceedRankedCandidateCount()
         {
-            var formatter = new MissionDrawTraceTextFormatter(
-                MissionDrawTraceTestFactory.CreateOptions(logCandidateCount: 100));
+            var formatter = new MissionDrawTraceTextFormatter(candidateCount: 100);
 
             string[] lines = formatter.Format(MissionDrawTraceTestFactory.CreateTrace()).Split('\n');
 
@@ -49,22 +50,20 @@ namespace Ccc.Tests
         }
 
         /// <summary>
-        /// CSV整形がdraws表とcandidates表を定義し、全行のフィールド数が列数と一致することを検証します。
+        /// CSV整形がdraws表とcandidates表を定義し、全行のフィールド数が書き出し先の列数と一致することを検証します。
         /// </summary>
         [Test]
         public void CsvFormatter_ShouldDeclareDrawsAndCandidatesTables()
         {
-            var formatter = new MissionDrawTraceCsvFormatter(MissionDrawTraceTestFactory.CreateOptions());
+            var formatter = new MissionDrawTraceCsvFormatter(candidateCount: 10);
 
-            IReadOnlyList<CsvTableRows> tableRows = formatter.Format(
-                MissionDrawTraceTestFactory.CreateTrace(),
-                MissionDrawTraceTestFactory.CreateContext());
+            var rows = Format(formatter, traceIndex: 1);
 
-            Assert.That(formatter.Tables.Select(table => table.FileSuffix), Is.EqualTo(new[] { "draws", "candidates" }));
-            Assert.That(tableRows.Select(rows => rows.Table), Is.EqualTo(formatter.Tables));
             Assert.That(
-                tableRows.SelectMany(rows => rows.Rows.Select(row => row.Count == rows.Table.Columns.Count)),
-                Is.All.True);
+                formatter.Tables.Select(table => table.FileSuffix),
+                Is.EqualTo(new[] { DrawsFileSuffix, CandidatesFileSuffix }));
+            Assert.That(rows.All(row => formatter.Tables.Contains(row.Table)), Is.True);
+            Assert.That(rows.Select(row => row.Fields.Count == row.Table.Columns.Count), Is.All.True);
         }
 
         /// <summary>
@@ -73,15 +72,12 @@ namespace Ccc.Tests
         [Test]
         public void CsvFormatter_ShouldWriteOneDrawRowWithSessionAndStageValues()
         {
-            var formatter = new MissionDrawTraceCsvFormatter(MissionDrawTraceTestFactory.CreateOptions());
+            var formatter = new MissionDrawTraceCsvFormatter(candidateCount: 10);
 
-            CsvTableRows drawRows = formatter.Format(
-                    MissionDrawTraceTestFactory.CreateTrace(),
-                    MissionDrawTraceTestFactory.CreateContext(traceIndex: 7))
-                .Single(rows => rows.Table.FileSuffix == "draws");
+            Dictionary<string, string>[] drawRows = SelectFields(Format(formatter, traceIndex: 7), DrawsFileSuffix);
 
-            Assert.That(drawRows.Rows, Has.Count.EqualTo(1));
-            Dictionary<string, string> fields = ToFields(drawRows.Table, drawRows.Rows[0]);
+            Assert.That(drawRows, Has.Length.EqualTo(1));
+            Dictionary<string, string> fields = drawRows[0];
             Assert.That(fields["SessionId"], Is.EqualTo("20261005_143012"));
             Assert.That(fields["GameMode"], Is.EqualTo("LifeEndless"));
             Assert.That(fields["TargetExpressionMatchRatio"], Is.EqualTo("0.2"));
@@ -102,15 +98,12 @@ namespace Ccc.Tests
         [Test]
         public void CsvFormatter_ShouldWriteConfiguredNumberOfCandidateRows()
         {
-            var formatter = new MissionDrawTraceCsvFormatter(
-                MissionDrawTraceTestFactory.CreateOptions(csvCandidateCount: 2));
+            var formatter = new MissionDrawTraceCsvFormatter(candidateCount: 2);
 
-            CsvTableRows candidateRows = formatter.Format(
-                    MissionDrawTraceTestFactory.CreateTrace(),
-                    MissionDrawTraceTestFactory.CreateContext())
-                .Single(rows => rows.Table.FileSuffix == "candidates");
+            Dictionary<string, string>[] candidateRows =
+                SelectFields(Format(formatter, traceIndex: 1), CandidatesFileSuffix);
 
-            Assert.That(candidateRows.Rows, Has.Count.EqualTo(2));
+            Assert.That(candidateRows, Has.Length.EqualTo(2));
         }
 
         /// <summary>
@@ -119,17 +112,15 @@ namespace Ccc.Tests
         [Test]
         public void CsvFormatter_ShouldMarkPoolAndSelectedCandidateRows()
         {
-            var formatter = new MissionDrawTraceCsvFormatter(
-                MissionDrawTraceTestFactory.CreateOptions(csvCandidateCount: 3));
+            var formatter = new MissionDrawTraceCsvFormatter(candidateCount: 3);
 
-            CsvTableRows candidateRows = formatter.Format(
+            Dictionary<string, string>[] rows = SelectFields(
+                formatter.Format(
                     MissionDrawTraceTestFactory.CreateTrace(poolSize: 2),
-                    MissionDrawTraceTestFactory.CreateContext())
-                .Single(rows => rows.Table.FileSuffix == "candidates");
+                    MissionDrawTraceTestFactory.CreateSession(),
+                    traceIndex: 1),
+                CandidatesFileSuffix);
 
-            Dictionary<string, string>[] rows = candidateRows.Rows
-                .Select(row => ToFields(candidateRows.Table, row))
-                .ToArray();
             Assert.That(rows.Select(row => row["Rank"]), Is.EqualTo(new[] { "1", "2", "3" }));
             Assert.That(rows.Select(row => row["IsInPool"]), Is.EqualTo(new[] { "True", "True", "False" }));
             Assert.That(rows.Select(row => row["IsSelected"]), Is.EqualTo(new[] { "False", "True", "False" }));
@@ -146,11 +137,26 @@ namespace Ccc.Tests
             Assert.That(line, Is.EqualTo("plain,\"a,b\",\"say \"\"hi\"\"\",\"line\nbreak\","));
         }
 
-        private static Dictionary<string, string> ToFields(CsvTableDefinition table, IReadOnlyList<string> row)
+        private static IReadOnlyList<(CsvTableDefinition Table, IReadOnlyList<string> Fields)> Format(
+            MissionDrawTraceCsvFormatter formatter,
+            int traceIndex)
         {
-            return table.Columns
-                .Select((column, index) => new { column, field = row[index] })
-                .ToDictionary(entry => entry.column, entry => entry.field);
+            return formatter.Format(
+                MissionDrawTraceTestFactory.CreateTrace(),
+                MissionDrawTraceTestFactory.CreateSession(),
+                traceIndex);
+        }
+
+        private static Dictionary<string, string>[] SelectFields(
+            IReadOnlyList<(CsvTableDefinition Table, IReadOnlyList<string> Fields)> rows,
+            string fileSuffix)
+        {
+            return rows
+                .Where(row => row.Table.FileSuffix == fileSuffix)
+                .Select(row => row.Table.Columns
+                    .Select((column, index) => new { column, field = row.Fields[index] })
+                    .ToDictionary(entry => entry.column, entry => entry.field))
+                .ToArray();
         }
     }
 }

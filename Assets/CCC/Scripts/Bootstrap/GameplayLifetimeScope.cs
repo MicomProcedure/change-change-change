@@ -139,9 +139,9 @@ namespace Ccc.Bootstrap
         private static DiagnosticsSessionDescriptor CreateDiagnosticsSessionDescriptor(IObjectResolver resolver)
         {
             GameplayConfigEntry entry = resolver.Resolve<GameplayConfigEntry>();
-            LogDirectoryOptions directoryOptions = resolver.Resolve<LogDirectoryOptions>();
+            LogSettingsAsset logSettings = resolver.Resolve<LogSettingsAsset>();
             return new DiagnosticsSessionDescriptor(
-                directoryOptions.FormatTimestamp(DateTime.Now),
+                logSettings.FormatTimestamp(DateTime.Now),
                 entry.DisplayName,
                 entry.GameMode,
                 entry.Difficulty);

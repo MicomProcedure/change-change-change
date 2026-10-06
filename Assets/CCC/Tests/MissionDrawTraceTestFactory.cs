@@ -5,12 +5,11 @@ using Ccc.Core.Logic;
 using Ccc.Core.Model;
 using Ccc.Core.UseCases;
 using Ccc.Infrastructure.Logging;
-using Microsoft.Extensions.Logging;
 
 namespace Ccc.Tests
 {
     /// <summary>
-    /// 診断出力のテストで共有するMission抽選Traceと診断設定を生成します。
+    /// 診断出力のテストで共有するMission抽選TraceとSession識別情報を生成します。
     /// </summary>
     internal static class MissionDrawTraceTestFactory
     {
@@ -49,34 +48,6 @@ namespace Ccc.Tests
                 rankedCandidates: rankedCandidates,
                 poolSize: poolSize,
                 selectedCandidate: rankedCandidates[1]);
-        }
-
-        /// <summary>
-        /// 指定候補数でMission抽選診断設定を生成します。
-        /// </summary>
-        /// <param name="logCandidateCount">Log出力に含める候補数。</param>
-        /// <param name="csvCandidateCount">CSV出力に含める候補数。</param>
-        /// <returns>テスト用の診断設定。</returns>
-        internal static MissionDrawDiagnosticsOptions CreateOptions(
-            int logCandidateCount = 10,
-            int csvCandidateCount = 10)
-        {
-            return new MissionDrawDiagnosticsOptions(
-                LogLevel.Debug,
-                logCandidateCount,
-                isCsvEnabled: true,
-                csvCandidateCount,
-                csvDirectoryName: "MissionDraw");
-        }
-
-        /// <summary>
-        /// テスト用のSession識別情報と通し番号から整形Contextを生成します。
-        /// </summary>
-        /// <param name="traceIndex">Session内の通し番号。</param>
-        /// <returns>テスト用の整形Context。</returns>
-        internal static DiagnosticsTraceContext CreateContext(int traceIndex = 1)
-        {
-            return new DiagnosticsTraceContext(CreateSession(), traceIndex);
         }
 
         /// <summary>

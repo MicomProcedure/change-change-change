@@ -16,7 +16,7 @@ namespace Ccc.Bootstrap.Log
         /// </summary>
         /// <param name="builder">DI登録を行うBuilder。</param>
         /// <remarks>
-        /// 親Scopeに<see cref="ILoggerFactory"/>、<see cref="MissionDrawDiagnosticsOptions"/>、<see cref="LogDirectoryOptions"/>、
+        /// 親Scopeに<see cref="ILoggerFactory"/>と<see cref="LogSettingsAsset"/>、
         /// 同じScopeに<see cref="DiagnosticsSessionDescriptor"/>が登録されている必要があります。
         /// </remarks>
         public static void RegisterMissionDrawDiagnostics(this IContainerBuilder builder)
@@ -26,19 +26,20 @@ namespace Ccc.Bootstrap.Log
             builder.Register<CsvDiagnosticsReporter<MissionDrawTrace>>(
                 resolver =>
                 {
-                    MissionDrawDiagnosticsOptions options = resolver.Resolve<MissionDrawDiagnosticsOptions>();
-                    LogDirectoryOptions directoryOptions = resolver.Resolve<LogDirectoryOptions>();
+                    LogSettingsAsset logSettings = resolver.Resolve<LogSettingsAsset>();
+                    MissionDrawDiagnosticsSetting setting = logSettings.MissionDrawDiagnostics;
                     return new CsvDiagnosticsReporter<MissionDrawTrace>(
-                        new MissionDrawTraceCsvFormatter(options),
+                        new MissionDrawTraceCsvFormatter(setting.CsvCandidateCount),
                         resolver.Resolve<DiagnosticsSessionDescriptor>(),
-                        directoryOptions.ResolveCategoryDirectoryPath(options.CsvDirectoryName));
+                        logSettings.ResolveCategoryDirectoryPath(setting.CsvDirectoryName));
                 },
                 Lifetime.Scoped);
 #endif
             builder.Register<IDiagnosticsReporter<MissionDrawTrace>>(
                 resolver =>
                 {
-                    MissionDrawDiagnosticsOptions options = resolver.Resolve<MissionDrawDiagnosticsOptions>();
+                    MissionDrawDiagnosticsSetting setting =
+                        resolver.Resolve<LogSettingsAsset>().MissionDrawDiagnostics;
                     ILogger failureLogger = resolver
                         .Resolve<ILoggerFactory>()
                         .CreateLogger<SafeDiagnosticsReporter<MissionDrawTrace>>();
@@ -47,12 +48,12 @@ namespace Ccc.Bootstrap.Log
                         new SafeDiagnosticsReporter<MissionDrawTrace>(
                             new LoggerDiagnosticsReporter<MissionDrawTrace>(
                                 resolver.Resolve<ILogger<MissionDrawTrace>>(),
-                                new MissionDrawTraceTextFormatter(options),
-                                options.LogLevel),
+                                new MissionDrawTraceTextFormatter(setting.LogCandidateCount),
+                                setting.LogLevel),
                             failureLogger)
                     };
 #if UNITY_EDITOR
-                    if (options.IsCsvEnabled)
+                    if (setting.IsCsvEnabled)
                     {
                         reporters.Add(new SafeDiagnosticsReporter<MissionDrawTrace>(
                             resolver.Resolve<CsvDiagnosticsReporter<MissionDrawTrace>>(),

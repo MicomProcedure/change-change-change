@@ -24,6 +24,7 @@ Logと診断の責務を「何を記録するか（UseCase）」と「どう整�
 - **出力先の並列はComposite、横断処理はDecorator**: 対等な出力先（Log、CSV）は `CompositeDiagnosticsReporter<TTrace>` で並べ、例外保護は `SafeDiagnosticsReporter<TTrace>` で各出力先を個別に包むこと。1つの出力先の失敗が他の出力先とUseCaseへ波及しないこと。
 - **整形とI/Oの分離**: Formatterは純粋な変換、Reporterは書き込みのみを担当すること。
 - **有効・無効はLog設定で決める**: `IsDebugMode` でLoggerを差し替えないこと。出力可否は `LogSettingsAsset` のLogLevel設定とCSV有効設定で決めること。
+- **設定はSOを直接参照する**: 設定を使うのはInfrastructureとBootstrapだけであるため、SOから純C#の設定値へ変換する層を設けないこと。SOとそのSerializable設定は読み取り専用プロパティだけを公開し、検証は `LogSettingsAsset.Validate()` に集約すること。
 - **出力ProviderとCSVはEditor時のみ**: 実機でのLog出力は未決定のため、出力Provider（Unity Console、通常Logファイル）とCSV ReporterはEditor実行時だけ構成すること。
 
 ---
@@ -34,11 +35,10 @@ Logと診断の責務を「何を記録するか（UseCase）」と「どう整�
 | --- | --- | --- |
 | `IDiagnosticsReporter<TTrace>` | `Ccc.Core` / `Ccc.Core.UseCases` | UseCaseが診断Traceを渡す出力ポート |
 | `MissionDrawTrace` / `CurrentExpressionCandidateGroup` | `Ccc.Core` / `Ccc.Core.UseCases` | Mission抽選1回分の不変の診断Trace |
-| `LogSettingsAsset` / `LogCategoryLevelSetting` / `MissionDrawDiagnosticsSetting` | `Ccc.Infrastructure` / `Ccc.Infrastructure.Logging` | Inspectorで編集するLog設定 |
-| `LogOutputOptions` / `LogCategoryLevelOverride` / `LogDirectoryOptions` / `MissionDrawDiagnosticsOptions` | `Ccc.Infrastructure` / `Ccc.Infrastructure.Logging` | 設定アセットから変換した実行時の不変設定 |
-| `DiagnosticsSessionDescriptor` / `DiagnosticsTraceContext` | `Ccc.Infrastructure` / `Ccc.Infrastructure.Logging` | CSV行に付与するSession情報と通し番号 |
+| `LogSettingsAsset` / `LogCategoryLevelSetting` / `MissionDrawDiagnosticsSetting` | `Ccc.Infrastructure` / `Ccc.Infrastructure.Logging` | Inspectorで編集するLog設定（同一ファイル `LogSettingsAsset.cs` に配置） |
+| `DiagnosticsSessionDescriptor` | `Ccc.Infrastructure` / `Ccc.Infrastructure.Logging` | CSV行に付与するSession情報 |
 | `CompositeDiagnosticsReporter<TTrace>` / `SafeDiagnosticsReporter<TTrace>` / `LoggerDiagnosticsReporter<TTrace>` / `CsvDiagnosticsReporter<TTrace>` | `Ccc.Infrastructure` / `Ccc.Infrastructure.Logging` | 診断Reporter群 |
-| `IDiagnosticsTextFormatter<TTrace>` / `ICsvTraceFormatter<TTrace>` / `CsvTableDefinition` / `CsvTableRows` / `CsvLineFormatter` | `Ccc.Infrastructure` / `Ccc.Infrastructure.Logging` | 整形の契約とCSV行の変換 |
+| `IDiagnosticsTextFormatter<TTrace>` / `ICsvTraceFormatter<TTrace>` / `CsvTableDefinition` / `CsvLineFormatter` | `Ccc.Infrastructure` / `Ccc.Infrastructure.Logging` | 整形の契約とCSV行の変換 |
 | `MissionDrawTraceTextFormatter` / `MissionDrawTraceCsvFormatter` | `Ccc.Infrastructure` / `Ccc.Infrastructure.Logging` | Mission抽選Traceの整形 |
 | `LoggerFactoryComposer` / `LoggingRegistrationExtensions` / `MissionDrawDiagnosticsRegistrationExtensions` | `Ccc.Bootstrap` / `Ccc.Bootstrap.Log` | LoggerFactoryの構成と診断ReporterのDI登録 |
 
@@ -106,12 +106,13 @@ public interface IDiagnosticsReporter<in TTrace>
 
 - ファイル名は `{SessionId}_{FileSuffix}.csv` とし、`FileMode.CreateNew` で作成すること。同名ファイルが存在する場合は上書きせず `IOException` とすること。
 - エンコードはBOMなしUTF-8、改行はCRLFとすること。
-- 通し番号（`DiagnosticsTraceContext.TraceIndex`）は報告ごとに1から加算すること。
-- Formatterが未定義の表へ行を返した場合は `InvalidOperationException`、Dispose後の `Report` は `ObjectDisposedException` とすること。
+- 通し番号は報告ごとに1から加算し、Session識別情報とともに `ICsvTraceFormatter<TTrace>.Format` へ渡すこと。
+- Formatterは `(CsvTableDefinition Table, IReadOnlyList<string> Fields)` の行一覧を返すこと。未定義の表への行、または列数と一致しないフィールド数の行は `InvalidOperationException`、Dispose後の `Report` は `ObjectDisposedException` とすること。
 
 ### 5.4 Formatter
 
 - `CsvLineFormatter.FormatLine` は区切り文字・引用符・改行を含むフィールドだけを引用符で囲み、引用符を二重化すること（RFC 4180）。nullは空文字として扱うこと。
+- 2つのMission抽選Formatterは出力件数（`int`、負数は `ArgumentOutOfRangeException`）だけを受け取り、比率書式や極性名などの補助処理をそれぞれ内部に持つこと。
 - `MissionDrawTraceTextFormatter` は見出し3行（抽選概要、段階別の選定結果、選出順位）の後に、`LogCandidateCount` 件と順位候補数の小さい方だけ候補行を出力すること。Pool内の候補には `[Pool]`、選出候補には `[Selected]` を付けること。
 - `MissionDrawTraceCsvFormatter` は次の2表を出力すること。数値はカルチャ非依存、比率は小数点以下4桁とすること。
 
@@ -144,8 +145,8 @@ public interface IDiagnosticsReporter<in TTrace>
 | Diagnostics | `missionDrawDiagnostics.csvDirectoryName` | `MissionDraw` | CSVの種類別ディレクトリ |
 
 - `Validate()` は技術的なエラー一覧を返すこと。空白の接頭辞・ディレクトリ名、ファイル名に使えない文字、絶対パスの出力ルート、不正な日時書式、負の候補数、`None` の診断LogLevelをエラーとすること。
-- `CreateLogOutputOptions()`、`CreateLogDirectoryOptions(projectRootPath)`、`CreateMissionDrawDiagnosticsOptions()` はエラーがある場合 `InvalidOperationException` とすること。
-- 新しい診断種類を追加する場合は、Diagnostics区画にその種類のSerializable設定を追加し、対応する実行時設定へ変換すること。
+- `ResolveCategoryDirectoryPath(categoryDirectoryName)` はプロジェクトルート（`Application.dataPath` の親）基準で種類別ディレクトリの絶対パスを返すこと。`FormatTimestamp(DateTime)` はファイル名とSessionIdの日時文字列を返すこと。
+- 新しい診断種類を追加する場合は、Diagnostics区画にその種類のSerializable設定を同じファイルへ追加し、`Validate()` に検証を追加すること。
 
 出力例:
 
@@ -163,8 +164,8 @@ Logs/Ccc/MissionDraw/20261005_143012_candidates.csv
 
 ### 7.1 Application Scope
 
-- `LogSettingsAsset` が未設定の場合は `InvalidOperationException` とすること。
-- `LogDirectoryOptions` と `MissionDrawDiagnosticsOptions` を `RegisterInstance` で登録すること。
+- `LogSettingsAsset` が未設定、または `Validate()` がエラーを返す場合は `InvalidOperationException` とすること。
+- `LogSettingsAsset` を `RegisterInstance` で登録すること。
 - `ILoggerFactory` は `LoggerFactoryComposer.Create` から `Singleton` で登録すること。最低LogLevelとカテゴリ別上書きを常に適用し、Editor実行時だけ有効なProvider（ZLogger Unity Console、`AddZLoggerFile` による起動ごとの通常Logファイル）を追加すること。通常Logファイルの各行には日時、LogLevel、カテゴリを前置すること。
 
 ### 7.2 Gameplay Scope

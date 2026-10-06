@@ -105,7 +105,7 @@ namespace Ccc.Tests
         public void Csv_ShouldCreateFilePerTableAndAppendRows()
         {
             using (var reporter = new CsvDiagnosticsReporter<MissionDrawTrace>(
-                       new MissionDrawTraceCsvFormatter(MissionDrawTraceTestFactory.CreateOptions(csvCandidateCount: 2)),
+                       new MissionDrawTraceCsvFormatter(candidateCount: 2),
                        MissionDrawTraceTestFactory.CreateSession(),
                        _temporaryDirectoryPath))
             {
@@ -131,7 +131,7 @@ namespace Ccc.Tests
             Directory.CreateDirectory(_temporaryDirectoryPath);
             File.WriteAllText(Path.Combine(_temporaryDirectoryPath, "20261005_143012_draws.csv"), "existing");
             using var reporter = new CsvDiagnosticsReporter<MissionDrawTrace>(
-                new MissionDrawTraceCsvFormatter(MissionDrawTraceTestFactory.CreateOptions()),
+                new MissionDrawTraceCsvFormatter(candidateCount: 10),
                 MissionDrawTraceTestFactory.CreateSession(),
                 _temporaryDirectoryPath);
 
@@ -146,7 +146,7 @@ namespace Ccc.Tests
         public void Csv_AfterDispose_ShouldBeDisabledAndRejectReport()
         {
             var reporter = new CsvDiagnosticsReporter<MissionDrawTrace>(
-                new MissionDrawTraceCsvFormatter(MissionDrawTraceTestFactory.CreateOptions()),
+                new MissionDrawTraceCsvFormatter(candidateCount: 10),
                 MissionDrawTraceTestFactory.CreateSession(),
                 _temporaryDirectoryPath);
 

@@ -15,125 +15,123 @@ namespace Ccc.Infrastructure.Logging
         private const string DrawsFileSuffix = "draws";
         private const string CandidatesFileSuffix = "candidates";
         private const string ListSeparator = ";";
+        private const string RatioFormat = "0.0000";
+        private const string PositivePolarityName = "Positive";
+        private const string NegatedPolarityName = "Negated";
 
-        private static readonly CsvColumn<DrawRowSource>[] DrawColumns =
+        private static readonly Column<DrawRowSource>[] DrawColumns =
         {
-            new CsvColumn<DrawRowSource>("SessionId", row => row.Context.Session.SessionId),
-            new CsvColumn<DrawRowSource>("ConfigDisplayName", row => row.Context.Session.ConfigDisplayName),
-            new CsvColumn<DrawRowSource>("GameMode", row => row.Context.Session.GameMode.ToString()),
-            new CsvColumn<DrawRowSource>("Difficulty", row => row.Context.Session.Difficulty.ToString()),
-            new CsvColumn<DrawRowSource>(
+            new Column<DrawRowSource>("SessionId", row => row.Session.SessionId),
+            new Column<DrawRowSource>("ConfigDisplayName", row => row.Session.ConfigDisplayName),
+            new Column<DrawRowSource>("GameMode", row => row.Session.GameMode.ToString()),
+            new Column<DrawRowSource>("Difficulty", row => row.Session.Difficulty.ToString()),
+            new Column<DrawRowSource>(
                 "TargetExpressionMatchRatio",
                 row => FormatNumber(row.Trace.Config.TargetExpressionMatchRatio)),
-            new CsvColumn<DrawRowSource>(
+            new Column<DrawRowSource>(
                 "MissionParameterSelectionPoolSize",
                 row => FormatNumber(row.Trace.Config.MissionParameterSelectionPoolSize)),
-            new CsvColumn<DrawRowSource>(
+            new Column<DrawRowSource>(
                 "NegatedMissionSelectionWeight",
                 row => FormatNumber(row.Trace.Config.NegatedMissionSelectionWeight)),
-            new CsvColumn<DrawRowSource>(
+            new Column<DrawRowSource>(
                 "CurrentExpressionSatisfiedMissionSelectionRatio",
                 row => FormatNumber(row.Trace.Config.CurrentExpressionSatisfiedMissionSelectionRatio)),
-            new CsvColumn<DrawRowSource>(
+            new Column<DrawRowSource>(
                 "CurrentTierDrawWeight",
                 row => FormatNumber(row.Trace.Config.CurrentTierDrawWeight)),
-            new CsvColumn<DrawRowSource>(
+            new Column<DrawRowSource>(
                 "LowerTierDrawWeight",
                 row => FormatNumber(row.Trace.Config.LowerTierDrawWeight)),
-            new CsvColumn<DrawRowSource>(
+            new Column<DrawRowSource>(
                 "TierMinimumSections",
                 row => string.Join(
                     ListSeparator,
                     row.Trace.Config.TierProgression.MinimumSectionsByTier.Select(
                         minimumSection => FormatNumber(minimumSection)))),
-            new CsvColumn<DrawRowSource>("DrawIndex", row => FormatNumber(row.Context.TraceIndex)),
-            new CsvColumn<DrawRowSource>("Section", row => FormatNumber(row.Trace.Section)),
-            new CsvColumn<DrawRowSource>("IsInitialDraw", row => row.Trace.IsInitialDraw.ToString()),
-            new CsvColumn<DrawRowSource>("CurrentTier", row => FormatNumber(row.Trace.CurrentTier)),
-            new CsvColumn<DrawRowSource>("EnabledCount", row => FormatNumber(row.Trace.EnabledCandidateCount)),
-            new CsvColumn<DrawRowSource>("UnlockedCount", row => FormatNumber(row.Trace.UnlockedCandidateCount)),
-            new CsvColumn<DrawRowSource>("SatisfiedCount", row => FormatNumber(row.Trace.SatisfiedCandidateCount)),
-            new CsvColumn<DrawRowSource>("UnmatchedCount", row => FormatNumber(row.Trace.UnmatchedCandidateCount)),
-            new CsvColumn<DrawRowSource>(
+            new Column<DrawRowSource>("DrawIndex", row => FormatNumber(row.TraceIndex)),
+            new Column<DrawRowSource>("Section", row => FormatNumber(row.Trace.Section)),
+            new Column<DrawRowSource>("IsInitialDraw", row => row.Trace.IsInitialDraw.ToString()),
+            new Column<DrawRowSource>("CurrentTier", row => FormatNumber(row.Trace.CurrentTier)),
+            new Column<DrawRowSource>("EnabledCount", row => FormatNumber(row.Trace.EnabledCandidateCount)),
+            new Column<DrawRowSource>("UnlockedCount", row => FormatNumber(row.Trace.UnlockedCandidateCount)),
+            new Column<DrawRowSource>("SatisfiedCount", row => FormatNumber(row.Trace.SatisfiedCandidateCount)),
+            new Column<DrawRowSource>("UnmatchedCount", row => FormatNumber(row.Trace.UnmatchedCandidateCount)),
+            new Column<DrawRowSource>(
                 "SelectedExpressionGroup",
                 row => row.Trace.SelectedExpressionGroup.ToString()),
-            new CsvColumn<DrawRowSource>(
+            new Column<DrawRowSource>(
                 "ExpressionStageCount",
                 row => FormatNumber(row.Trace.ExpressionStageCandidateCount)),
-            new CsvColumn<DrawRowSource>("SelectedTier", row => FormatNumber(row.Trace.SelectedTier)),
-            new CsvColumn<DrawRowSource>("TierStageCount", row => FormatNumber(row.Trace.TierStageCandidateCount)),
-            new CsvColumn<DrawRowSource>(
+            new Column<DrawRowSource>("SelectedTier", row => FormatNumber(row.Trace.SelectedTier)),
+            new Column<DrawRowSource>("TierStageCount", row => FormatNumber(row.Trace.TierStageCandidateCount)),
+            new Column<DrawRowSource>(
                 "SelectedPolarity",
-                row => MissionDrawTraceValueFormatter.FormatPolarity(row.Trace.IsNegatedPolaritySelected)),
-            new CsvColumn<DrawRowSource>(
+                row => FormatPolarity(row.Trace.IsNegatedPolaritySelected)),
+            new Column<DrawRowSource>(
                 "PolarityStageCount",
                 row => FormatNumber(row.Trace.PolarityStageCandidateCount)),
-            new CsvColumn<DrawRowSource>(
+            new Column<DrawRowSource>(
                 "RepeatFilteredCount",
                 row => FormatNumber(row.Trace.RepeatFilteredCandidateCount)),
-            new CsvColumn<DrawRowSource>("SelectedKind", row => row.Trace.SelectedKind.ToString()),
-            new CsvColumn<DrawRowSource>("KindStageCount", row => FormatNumber(row.Trace.RankedCandidates.Count)),
-            new CsvColumn<DrawRowSource>("PoolSize", row => FormatNumber(row.Trace.PoolSize)),
-            new CsvColumn<DrawRowSource>("SelectedRank", row => FormatNumber(row.Trace.SelectedRank)),
-            new CsvColumn<DrawRowSource>(
+            new Column<DrawRowSource>("SelectedKind", row => row.Trace.SelectedKind.ToString()),
+            new Column<DrawRowSource>("KindStageCount", row => FormatNumber(row.Trace.RankedCandidates.Count)),
+            new Column<DrawRowSource>("PoolSize", row => FormatNumber(row.Trace.PoolSize)),
+            new Column<DrawRowSource>("SelectedRank", row => FormatNumber(row.Trace.SelectedRank)),
+            new Column<DrawRowSource>(
                 "SelectedParameterA",
                 row => FormatNumber(row.Trace.SelectedCandidate.Condition.ParameterA)),
-            new CsvColumn<DrawRowSource>(
+            new Column<DrawRowSource>(
                 "SelectedParameterB",
                 row => FormatNumber(row.Trace.SelectedCandidate.Condition.ParameterB)),
-            new CsvColumn<DrawRowSource>(
+            new Column<DrawRowSource>(
                 "SelectedMatchCount",
                 row => FormatNumber(row.Trace.SelectedCandidate.ExpressionMatchCount)),
-            new CsvColumn<DrawRowSource>(
+            new Column<DrawRowSource>(
                 "SelectedEvaluatedCount",
                 row => FormatNumber(row.Trace.SelectedCandidate.EvaluatedExpressionCount)),
-            new CsvColumn<DrawRowSource>(
+            new Column<DrawRowSource>(
                 "SelectedRatio",
-                row => MissionDrawTraceValueFormatter.FormatRatio(
-                    row.Trace.SelectedCandidate.ExpressionMatchRatio)),
-            new CsvColumn<DrawRowSource>(
+                row => FormatRatio(row.Trace.SelectedCandidate.ExpressionMatchRatio)),
+            new Column<DrawRowSource>(
                 "SelectedDifference",
-                row => MissionDrawTraceValueFormatter.FormatRatio(
-                    MissionDrawTraceValueFormatter.CalculateTargetDifference(
-                        row.Trace,
-                        row.Trace.SelectedCandidate)))
+                row => FormatRatio(CalculateTargetDifference(row.Trace, row.Trace.SelectedCandidate)))
         };
 
-        private static readonly CsvColumn<CandidateRowSource>[] CandidateColumns =
+        private static readonly Column<CandidateRowSource>[] CandidateColumns =
         {
-            new CsvColumn<CandidateRowSource>("SessionId", row => row.Context.Session.SessionId),
-            new CsvColumn<CandidateRowSource>("DrawIndex", row => FormatNumber(row.Context.TraceIndex)),
-            new CsvColumn<CandidateRowSource>("Rank", row => FormatNumber(row.Rank)),
-            new CsvColumn<CandidateRowSource>("Tier", row => FormatNumber(row.Candidate.Tier)),
-            new CsvColumn<CandidateRowSource>("Kind", row => row.Candidate.Condition.Kind.ToString()),
-            new CsvColumn<CandidateRowSource>(
+            new Column<CandidateRowSource>("SessionId", row => row.Session.SessionId),
+            new Column<CandidateRowSource>("DrawIndex", row => FormatNumber(row.TraceIndex)),
+            new Column<CandidateRowSource>("Rank", row => FormatNumber(row.Rank)),
+            new Column<CandidateRowSource>("Tier", row => FormatNumber(row.Candidate.Tier)),
+            new Column<CandidateRowSource>("Kind", row => row.Candidate.Condition.Kind.ToString()),
+            new Column<CandidateRowSource>(
                 "ParameterA",
                 row => FormatNumber(row.Candidate.Condition.ParameterA)),
-            new CsvColumn<CandidateRowSource>(
+            new Column<CandidateRowSource>(
                 "ParameterB",
                 row => FormatNumber(row.Candidate.Condition.ParameterB)),
-            new CsvColumn<CandidateRowSource>(
+            new Column<CandidateRowSource>(
                 "IsNegated",
                 row => row.Candidate.Condition.IsNegated.ToString()),
-            new CsvColumn<CandidateRowSource>(
+            new Column<CandidateRowSource>(
                 "MatchCount",
                 row => FormatNumber(row.Candidate.ExpressionMatchCount)),
-            new CsvColumn<CandidateRowSource>(
+            new Column<CandidateRowSource>(
                 "EvaluatedCount",
                 row => FormatNumber(row.Candidate.EvaluatedExpressionCount)),
-            new CsvColumn<CandidateRowSource>(
+            new Column<CandidateRowSource>(
                 "Ratio",
-                row => MissionDrawTraceValueFormatter.FormatRatio(row.Candidate.ExpressionMatchRatio)),
-            new CsvColumn<CandidateRowSource>(
+                row => FormatRatio(row.Candidate.ExpressionMatchRatio)),
+            new Column<CandidateRowSource>(
                 "Difference",
-                row => MissionDrawTraceValueFormatter.FormatRatio(
-                    MissionDrawTraceValueFormatter.CalculateTargetDifference(row.Trace, row.Candidate))),
-            new CsvColumn<CandidateRowSource>(
+                row => FormatRatio(CalculateTargetDifference(row.Trace, row.Candidate))),
+            new Column<CandidateRowSource>(
                 "IsInPool",
-                row => MissionDrawTraceValueFormatter.IsInPool(row.Trace, row.Rank).ToString()),
-            new CsvColumn<CandidateRowSource>(
+                row => (row.Rank <= row.Trace.PoolSize).ToString()),
+            new Column<CandidateRowSource>(
                 "IsSelected",
-                row => MissionDrawTraceValueFormatter.IsSelected(row.Trace, row.Candidate).ToString())
+                row => ReferenceEquals(row.Candidate, row.Trace.SelectedCandidate).ToString())
         };
 
         private readonly int _candidateCount;
@@ -141,18 +139,21 @@ namespace Ccc.Infrastructure.Logging
         private readonly CsvTableDefinition _candidatesTable;
 
         /// <summary>
-        /// Mission抽選診断設定から整形器を生成します。
+        /// candidates表に含める順位上位の候補数から整形器を生成します。
         /// </summary>
-        /// <param name="options">CSV出力に含める候補数を持つMission抽選診断設定。</param>
-        /// <exception cref="ArgumentNullException">設定がnullの場合。</exception>
-        public MissionDrawTraceCsvFormatter(MissionDrawDiagnosticsOptions options)
+        /// <param name="candidateCount">candidates表に含める順位上位の候補数。</param>
+        /// <exception cref="ArgumentOutOfRangeException">候補数が負の場合。</exception>
+        public MissionDrawTraceCsvFormatter(int candidateCount)
         {
-            if (options == null)
+            if (candidateCount < 0)
             {
-                throw new ArgumentNullException(nameof(options));
+                throw new ArgumentOutOfRangeException(
+                    nameof(candidateCount),
+                    candidateCount,
+                    "Candidate count must not be negative.");
             }
 
-            _candidateCount = options.CsvCandidateCount;
+            _candidateCount = candidateCount;
             _drawsTable = new CsvTableDefinition(
                 DrawsFileSuffix,
                 DrawColumns.Select(column => column.Name).ToArray());
@@ -171,46 +172,52 @@ namespace Ccc.Infrastructure.Logging
         /// Mission抽選Traceをdraws表1行と、順位上位候補のcandidates表の行へ整形します。
         /// </summary>
         /// <param name="trace">整形する抽選Trace。</param>
-        /// <param name="context">Session情報とSession内の抽選通し番号。</param>
-        /// <returns>draws表とcandidates表の追記データ。</returns>
-        /// <exception cref="ArgumentNullException">引数がnullの場合。</exception>
-        public IReadOnlyList<CsvTableRows> Format(MissionDrawTrace trace, DiagnosticsTraceContext context)
+        /// <param name="session">Traceが属するSessionの識別情報。</param>
+        /// <param name="traceIndex">Session内で1から始まる抽選の通し番号。</param>
+        /// <returns>draws表1行と、続くcandidates表の行。</returns>
+        /// <exception cref="ArgumentNullException">Traceまたは識別情報がnullの場合。</exception>
+        /// <exception cref="ArgumentOutOfRangeException">通し番号が1未満の場合。</exception>
+        public IReadOnlyList<(CsvTableDefinition Table, IReadOnlyList<string> Fields)> Format(
+            MissionDrawTrace trace,
+            DiagnosticsSessionDescriptor session,
+            int traceIndex)
         {
             if (trace == null)
             {
                 throw new ArgumentNullException(nameof(trace));
             }
 
-            if (context == null)
+            if (session == null)
             {
-                throw new ArgumentNullException(nameof(context));
+                throw new ArgumentNullException(nameof(session));
             }
 
-            var drawSource = new DrawRowSource(trace, context);
-            IReadOnlyList<string>[] drawRows =
+            if (traceIndex < 1)
             {
-                DrawColumns.Select(column => column.SelectField(drawSource)).ToArray()
+                throw new ArgumentOutOfRangeException(nameof(traceIndex), traceIndex, "Trace index must start from one.");
+            }
+
+            var drawSource = new DrawRowSource(trace, session, traceIndex);
+            var rows = new List<(CsvTableDefinition Table, IReadOnlyList<string> Fields)>
+            {
+                (_drawsTable, DrawColumns.Select(column => column.SelectField(drawSource)).ToArray())
             };
 
-            int rowCount = Math.Min(_candidateCount, trace.RankedCandidates.Count);
-            var candidateRows = new IReadOnlyList<string>[rowCount];
-            for (int index = 0; index < rowCount; index++)
+            int candidateRowCount = Math.Min(_candidateCount, trace.RankedCandidates.Count);
+            for (int index = 0; index < candidateRowCount; index++)
             {
                 var candidateSource = new CandidateRowSource(
                     trace,
-                    context,
+                    session,
+                    traceIndex,
                     index + 1,
                     trace.RankedCandidates[index]);
-                candidateRows[index] = CandidateColumns
-                    .Select(column => column.SelectField(candidateSource))
-                    .ToArray();
+                rows.Add((
+                    _candidatesTable,
+                    CandidateColumns.Select(column => column.SelectField(candidateSource)).ToArray()));
             }
 
-            return new[]
-            {
-                new CsvTableRows(_drawsTable, drawRows),
-                new CsvTableRows(_candidatesTable, candidateRows)
-            };
+            return rows;
         }
 
         private static string FormatNumber(int number)
@@ -223,36 +230,76 @@ namespace Ccc.Infrastructure.Logging
             return number.ToString(CultureInfo.InvariantCulture);
         }
 
+        private static string FormatRatio(float ratio)
+        {
+            return ratio.ToString(RatioFormat, CultureInfo.InvariantCulture);
+        }
+
+        private static string FormatPolarity(bool isNegated)
+        {
+            return isNegated ? NegatedPolarityName : PositivePolarityName;
+        }
+
+        private static float CalculateTargetDifference(MissionDrawTrace trace, MissionCandidate candidate)
+        {
+            return Math.Abs(candidate.ExpressionMatchRatio - trace.Config.TargetExpressionMatchRatio);
+        }
+
+        private sealed class Column<TRow>
+        {
+            private readonly Func<TRow, string> _selectField;
+
+            public Column(string name, Func<TRow, string> selectField)
+            {
+                Name = name;
+                _selectField = selectField;
+            }
+
+            public string Name { get; }
+
+            public string SelectField(TRow row)
+            {
+                return _selectField(row);
+            }
+        }
+
         private readonly struct DrawRowSource
         {
-            public DrawRowSource(MissionDrawTrace trace, DiagnosticsTraceContext context)
+            public DrawRowSource(MissionDrawTrace trace, DiagnosticsSessionDescriptor session, int traceIndex)
             {
                 Trace = trace;
-                Context = context;
+                Session = session;
+                TraceIndex = traceIndex;
             }
 
             public MissionDrawTrace Trace { get; }
 
-            public DiagnosticsTraceContext Context { get; }
+            public DiagnosticsSessionDescriptor Session { get; }
+
+            public int TraceIndex { get; }
         }
 
         private readonly struct CandidateRowSource
         {
             public CandidateRowSource(
                 MissionDrawTrace trace,
-                DiagnosticsTraceContext context,
+                DiagnosticsSessionDescriptor session,
+                int traceIndex,
                 int rank,
                 MissionCandidate candidate)
             {
                 Trace = trace;
-                Context = context;
+                Session = session;
+                TraceIndex = traceIndex;
                 Rank = rank;
                 Candidate = candidate;
             }
 
             public MissionDrawTrace Trace { get; }
 
-            public DiagnosticsTraceContext Context { get; }
+            public DiagnosticsSessionDescriptor Session { get; }
+
+            public int TraceIndex { get; }
 
             public int Rank { get; }
 
