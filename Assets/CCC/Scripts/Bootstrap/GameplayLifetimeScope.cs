@@ -127,6 +127,8 @@ namespace Ccc.Bootstrap
                     $"GameMode.{request.GameMode} and GameDifficulty.{request.Difficulty}.");
             }
 
+            Debug.Log($"[GameplayLifetimeScope] Selected entry: {entry.DisplayName}");
+
             return new GameplayStartContext(request, entry);
         }
     }
