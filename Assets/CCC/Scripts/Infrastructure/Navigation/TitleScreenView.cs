@@ -8,6 +8,8 @@ using UnityEngine.Serialization;
 using UnityEngine.UI;
 using VContainer;
 using Ccc.Presentation;
+using Ccc.Infrastructure.UI;
+using Ccc.Presentation.UI;
 
 namespace Ccc.Infrastructure.Navigation
 {
@@ -36,6 +38,9 @@ namespace Ccc.Infrastructure.Navigation
         [SerializeField] private Button _openCreditButton;
         [SerializeField] private Button _closeCreditButton;
 
+        [Header("難易度選択")]
+        [SerializeField] private CycleSelectorView _difficultySelectorView;
+
         [Header("エラー表示")]
         [SerializeField] private TMP_Text _errorText;
 
@@ -44,6 +49,8 @@ namespace Ccc.Infrastructure.Navigation
         private IDisposable _screenSubscription;
         private IDisposable _busySubscription;
         private IDisposable _errorSubscription;
+        private IDisposable _difficultyChangeSubscription;
+        private IDisposable _difficultySubscription;
         private bool _isInitialized;
 
         [Inject]
@@ -95,6 +102,12 @@ namespace Ccc.Infrastructure.Navigation
                 _closeCreditButton.onClick.AddListener(_model.CloseCredit);
             }
 
+            if (_difficultySelectorView != null)
+            {
+                _difficultyChangeSubscription =
+                    _difficultySelectorView.ChangeRequested.Subscribe(_ => _model.CycleDifficulty());
+            }
+
             _screenSubscription =
                 _model.CurrentScreen.Subscribe(RenderScreen);
 
@@ -103,6 +116,9 @@ namespace Ccc.Infrastructure.Navigation
 
             _errorSubscription =
                 _model.ErrorMessage.Subscribe(RenderErrorMessage);
+
+            _difficultySubscription =
+                _model.SelectedDifficulty.Subscribe(RenderDifficulty);
 
             RenderScreen(_model.CurrentScreen.CurrentValue);
             RenderBusyState(_model.IsBusy.CurrentValue);
@@ -116,6 +132,8 @@ namespace Ccc.Infrastructure.Navigation
             _screenSubscription?.Dispose();
             _busySubscription?.Dispose();
             _errorSubscription?.Dispose();
+            _difficultySubscription?.Dispose();
+            _difficultyChangeSubscription?.Dispose();
 
             if (!_isInitialized || _model == null)
             {
@@ -198,6 +216,20 @@ namespace Ccc.Infrastructure.Navigation
             SetInteractableIfAvailable(_closeOptionButton, isInteractable);
             SetInteractableIfAvailable(_openCreditButton, isInteractable);
             SetInteractableIfAvailable(_closeCreditButton, isInteractable);
+            RenderDifficulty(_model.SelectedDifficulty.CurrentValue);
+        }
+
+        private void RenderDifficulty(GameDifficulty difficulty)
+        {
+            if (_difficultySelectorView == null)
+            {
+                return;
+            }
+
+            _difficultySelectorView.Render(
+                new CycleSelectorStateDto(
+                    difficulty.ToString(),
+                    !_model.IsBusy.CurrentValue));
         }
 
         private void RenderErrorMessage(string errorMessage)
@@ -289,6 +321,11 @@ namespace Ccc.Infrastructure.Navigation
             if (_closeCreditButton == null)
             {
                 LogMissingReference(nameof(_closeCreditButton));
+            }
+
+            if (_difficultySelectorView == null)
+            {
+                LogMissingReference(nameof(_difficultySelectorView));
             }
 
             if (_errorText == null)

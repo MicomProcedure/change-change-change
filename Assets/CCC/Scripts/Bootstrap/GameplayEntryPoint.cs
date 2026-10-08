@@ -261,13 +261,6 @@ namespace Ccc.Bootstrap
                 errors.Add(
                     $"Unsupported gameplay mode: {request.GameMode}.");
             }
-
-            if (request.Difficulty !=
-                Ccc.Presentation.Navigation.GameDifficulty.Normal)
-            {
-                errors.Add(
-                    $"Unsupported gameplay difficulty: {request.Difficulty}.");
-            }
         }
 
         private void ThrowIfDisposed()
@@ -360,8 +353,14 @@ namespace Ccc.Bootstrap
         {
             switch (difficulty)
             {
+                case Ccc.Presentation.Navigation.GameDifficulty.Easy:
+                    return Ccc.Core.Model.GameDifficulty.Easy;
+
                 case Ccc.Presentation.Navigation.GameDifficulty.Normal:
                     return Ccc.Core.Model.GameDifficulty.Normal;
+
+                case Ccc.Presentation.Navigation.GameDifficulty.Hard:
+                    return Ccc.Core.Model.GameDifficulty.Hard;
 
                 default:
                     throw new ArgumentOutOfRangeException(

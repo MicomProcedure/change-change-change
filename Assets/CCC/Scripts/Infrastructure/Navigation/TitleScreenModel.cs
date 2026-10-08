@@ -22,6 +22,7 @@ namespace Ccc.Infrastructure.Navigation
         private readonly ReactiveProperty<TitleScreenState> _currentScreen;
         private readonly ReactiveProperty<bool> _isBusy;
         private readonly ReactiveProperty<string> _errorMessage;
+        private readonly ReactiveProperty<GameDifficulty> _selectedDifficulty;
 
         private bool _isDisposed;
 
@@ -39,6 +40,11 @@ namespace Ccc.Infrastructure.Navigation
         /// 画面に表示するエラーメッセージを取得します。
         /// </summary>
         public ReadOnlyReactiveProperty<string> ErrorMessage { get; }
+
+        /// <summary>
+        /// Stageで選択中のゲーム難易度を取得します。
+        /// </summary>
+        public ReadOnlyReactiveProperty<GameDifficulty> SelectedDifficulty { get; }
 
         /// <summary>
         /// TitleScreenModelを生成します。
@@ -67,10 +73,12 @@ namespace Ccc.Infrastructure.Navigation
 
             _isBusy = new ReactiveProperty<bool>(false);
             _errorMessage = new ReactiveProperty<string>(string.Empty);
+            _selectedDifficulty = new ReactiveProperty<GameDifficulty>(GameDifficulty.Normal);
 
             CurrentScreen = _currentScreen.ToReadOnlyReactiveProperty();
             IsBusy = _isBusy.ToReadOnlyReactiveProperty();
             ErrorMessage = _errorMessage.ToReadOnlyReactiveProperty();
+            SelectedDifficulty = _selectedDifficulty.ToReadOnlyReactiveProperty();
         }
 
         /// <summary>
@@ -134,6 +142,25 @@ namespace Ccc.Infrastructure.Navigation
         }
 
         /// <summary>
+        /// 選択中の難易度を宣言順（Easy → Normal → Hard → Easy）に切り替えます。
+        /// </summary>
+        public void CycleDifficulty()
+        {
+            if (_isDisposed ||
+                _isBusy.Value ||
+                _currentScreen.Value != TitleScreenState.Stage)
+            {
+                return;
+            }
+
+            GameDifficulty[] difficulties =
+                (GameDifficulty[])Enum.GetValues(typeof(GameDifficulty));
+            int nextIndex =
+                (Array.IndexOf(difficulties, _selectedDifficulty.Value) + 1) % difficulties.Length;
+            _selectedDifficulty.Value = difficulties[nextIndex];
+        }
+
+        /// <summary>
         /// StageからGameSceneを開始します。
         /// </summary>
         public async UniTask StartGameplayAsync()
@@ -157,7 +184,7 @@ namespace Ccc.Infrastructure.Navigation
                 GameplayNavigationRequest request =
                     new GameplayNavigationRequest(
                         GameMode.LifeEndless,
-                        GameDifficulty.Normal,
+                        _selectedDifficulty.Value,
                         optionSettings);
 
                 SceneNavigationResult result =
@@ -207,10 +234,12 @@ namespace Ccc.Infrastructure.Navigation
             CurrentScreen.Dispose();
             IsBusy.Dispose();
             ErrorMessage.Dispose();
+            SelectedDifficulty.Dispose();
 
             _currentScreen.Dispose();
             _isBusy.Dispose();
             _errorMessage.Dispose();
+            _selectedDifficulty.Dispose();
         }
 
         private void ChangeScreen(
