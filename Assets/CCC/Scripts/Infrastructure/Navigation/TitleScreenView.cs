@@ -41,6 +41,10 @@ namespace Ccc.Infrastructure.Navigation
         [Header("難易度選択")]
         [SerializeField] private CycleSelectorView _difficultySelectorView;
 
+        [Header("音量設定")]
+        [SerializeField] private CycleSelectorView _seVolumeSelectorView;
+        [SerializeField] private CycleSelectorView _bgmVolumeSelectorView;
+
         [Header("エラー表示")]
         [SerializeField] private TMP_Text _errorText;
 
@@ -51,12 +55,21 @@ namespace Ccc.Infrastructure.Navigation
         private IDisposable _errorSubscription;
         private IDisposable _difficultyChangeSubscription;
         private IDisposable _difficultySubscription;
+        private OptionMenuModel _optionMenuModel;
+        private IDisposable _seVolumeChangeSubscription;
+        private IDisposable _seVolumeSubscription;
+        private IDisposable _bgmVolumeChangeSubscription;
+        private IDisposable _bgmVolumeSubscription;
         private bool _isInitialized;
 
         [Inject]
-        private void Construct(TitleScreenModel model, IRuntimeMode runtimeMode)
+        private void Construct(
+            TitleScreenModel model,
+            OptionMenuModel optionMenuModel,
+            IRuntimeMode runtimeMode)
         {
             _model = model;
+            _optionMenuModel = optionMenuModel;
             _runtimeMode = runtimeMode;
         }
 
@@ -108,6 +121,18 @@ namespace Ccc.Infrastructure.Navigation
                     _difficultySelectorView.ChangeRequested.Subscribe(_ => _model.CycleDifficulty());
             }
 
+            if (_seVolumeSelectorView != null)
+            {
+                _seVolumeChangeSubscription =
+                    _seVolumeSelectorView.ChangeRequested.Subscribe(_ => _optionMenuModel.CycleSeVolumeLevel());
+            }
+
+            if (_bgmVolumeSelectorView != null)
+            {
+                _bgmVolumeChangeSubscription =
+                    _bgmVolumeSelectorView.ChangeRequested.Subscribe(_ => _optionMenuModel.CycleBgmVolumeLevel());
+            }
+
             _screenSubscription =
                 _model.CurrentScreen.Subscribe(RenderScreen);
 
@@ -119,6 +144,12 @@ namespace Ccc.Infrastructure.Navigation
 
             _difficultySubscription =
                 _model.SelectedDifficulty.Subscribe(RenderDifficulty);
+            
+            _seVolumeSubscription =
+                _optionMenuModel.SeVolumeLevel.Subscribe(RenderSeVolumeLevel);
+
+            _bgmVolumeSubscription =
+                _optionMenuModel.BgmVolumeLevel.Subscribe(RenderBgmVolumeLevel);
 
             RenderScreen(_model.CurrentScreen.CurrentValue);
             RenderBusyState(_model.IsBusy.CurrentValue);
@@ -134,6 +165,10 @@ namespace Ccc.Infrastructure.Navigation
             _errorSubscription?.Dispose();
             _difficultySubscription?.Dispose();
             _difficultyChangeSubscription?.Dispose();
+            _seVolumeSubscription?.Dispose();
+            _seVolumeChangeSubscription?.Dispose();
+            _bgmVolumeSubscription?.Dispose();
+            _bgmVolumeChangeSubscription?.Dispose();
 
             if (!_isInitialized || _model == null)
             {
@@ -217,6 +252,8 @@ namespace Ccc.Infrastructure.Navigation
             SetInteractableIfAvailable(_openCreditButton, isInteractable);
             SetInteractableIfAvailable(_closeCreditButton, isInteractable);
             RenderDifficulty(_model.SelectedDifficulty.CurrentValue);
+            RenderSeVolumeLevel(_optionMenuModel.SeVolumeLevel.CurrentValue);
+            RenderBgmVolumeLevel(_optionMenuModel.BgmVolumeLevel.CurrentValue);
         }
 
         private void RenderDifficulty(GameDifficulty difficulty)
@@ -229,6 +266,29 @@ namespace Ccc.Infrastructure.Navigation
             _difficultySelectorView.Render(
                 new CycleSelectorStateDto(
                     difficulty.ToString(),
+                    !_model.IsBusy.CurrentValue));
+        }
+
+        private void RenderSeVolumeLevel(int volumeLevel)
+        {
+            RenderVolumeLevel(_seVolumeSelectorView, volumeLevel);
+        }
+
+        private void RenderBgmVolumeLevel(int volumeLevel)
+        {
+            RenderVolumeLevel(_bgmVolumeSelectorView, volumeLevel);
+        }
+
+        private void RenderVolumeLevel(CycleSelectorView selectorView, int volumeLevel)
+        {
+            if (selectorView == null)
+            {
+                return;
+            }
+
+            selectorView.Render(
+                new CycleSelectorStateDto(
+                    volumeLevel.ToString(),
                     !_model.IsBusy.CurrentValue));
         }
 
@@ -260,6 +320,12 @@ namespace Ccc.Infrastructure.Navigation
             if (_model == null)
             {
                 LogMissingReference(nameof(_model));
+                return false;
+            }
+
+            if (_optionMenuModel == null)
+            {
+                LogMissingReference(nameof(_optionMenuModel));
                 return false;
             }
 
@@ -326,6 +392,16 @@ namespace Ccc.Infrastructure.Navigation
             if (_difficultySelectorView == null)
             {
                 LogMissingReference(nameof(_difficultySelectorView));
+            }
+
+            if (_seVolumeSelectorView == null)
+            {
+                LogMissingReference(nameof(_seVolumeSelectorView));
+            }
+
+            if (_bgmVolumeSelectorView == null)
+            {
+                LogMissingReference(nameof(_bgmVolumeSelectorView));
             }
 
             if (_errorText == null)

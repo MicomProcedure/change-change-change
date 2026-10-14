@@ -2,28 +2,35 @@ using System;
 using System.Collections.Generic;
 using Ccc.Presentation.Audio;
 using UnityEngine;
+using Ccc.Presentation.Navigation;
 
 namespace Ccc.Infrastructure.Audio
 {
     /// <summary>
     /// AudioCatalogAssetの定義を用途別のAudioSourceで再生するUnity実装です。
     /// </summary>
-    public sealed class UnityAudioPlayer : MonoBehaviour, IAudioPlayer
+    public sealed class UnityAudioPlayer : MonoBehaviour, IAudioPlayer, IAudioVolumeSettings
     {
         [SerializeField] private AudioCatalogAsset catalog;
         [SerializeField] private AudioSource bgmSource;
         [SerializeField] private AudioSource seSource;
         [SerializeField] private AudioSource loopingSeSource;
+        [SerializeField] private AudioVolumeLevelTableAsset volumeLevelTable;
 
         private readonly HashSet<string> _warnedIssues = new HashSet<string>();
         private AudioKey _currentBgmKey;
         private AudioKey _currentLoopingSeKey;
+        private float _seVolumeRate = 1f;
+        private float _bgmVolumeRate = 1f;
 
         /// <summary>
         /// Inspector参照を検証し、Audio Catalogの不正をログへ出力します。
         /// </summary>
         private void Awake()
         {
+            ValidateVolumeLevelTable();
+            SetSeVolumeLevel(OptionVolumeLevels.Default);
+            SetBgmVolumeLevel(OptionVolumeLevels.Default);
             var configurationErrors = new List<string>();
             if (catalog == null)
             {
@@ -127,7 +134,7 @@ namespace Ccc.Infrastructure.Audio
                 return;
             }
 
-            seSource.PlayOneShot(entry.Clip, entry.Volume);
+            seSource.PlayOneShot(entry.Clip, entry.Volume * _seVolumeRate);
         }
 
         /// <summary>
@@ -181,7 +188,7 @@ namespace Ccc.Infrastructure.Audio
 
             loopingSeSource.Stop();
             loopingSeSource.clip = entry.Clip;
-            loopingSeSource.volume = entry.Volume;
+            loopingSeSource.volume = entry.Volume * _seVolumeRate;
             loopingSeSource.loop = true;
             loopingSeSource.Play();
             _currentLoopingSeKey = key;
@@ -258,7 +265,7 @@ namespace Ccc.Infrastructure.Audio
 
             bgmSource.Stop();
             bgmSource.clip = entry.Clip;
-            bgmSource.volume = entry.Volume;
+            bgmSource.volume = entry.Volume * _bgmVolumeRate;
             bgmSource.loop = true;
             bgmSource.Play();
             _currentBgmKey = key;
@@ -276,6 +283,89 @@ namespace Ccc.Infrastructure.Audio
             }
 
             bgmSource.Stop();
+        }
+        
+        /// <summary>
+        /// 効果音の音量レベルを設定し、再生中のループSEにも反映します。
+        /// </summary>
+        /// <param name="level">音量レベル。</param>
+        public void SetSeVolumeLevel(int level)
+        {
+            if (volumeLevelTable == null)
+            {
+                LogWarningOnce(
+                    "configuration:UnityAudioPlayer requires an AudioVolumeLevelTableAsset.",
+                    "AudioVolumeLevelTableAsset is not configured. SE volume level was ignored.");
+                return;
+            }
+
+            if (!volumeLevelTable.TryGetSeVolumeRate(level, out float volumeRate))
+            {
+                LogWarningOnce(
+                    $"volume-level:SE:{level}",
+                    $"SE volume level {level} is not configured or is invalid. Volume was not changed.");
+                return;
+            }
+
+            _seVolumeRate = volumeRate;
+
+            if (loopingSeSource != null &&
+                catalog != null &&
+                _currentLoopingSeKey != AudioKey.None &&
+                catalog.TryGetSE(_currentLoopingSeKey, out AudioEntry entry))
+            {
+                loopingSeSource.volume = entry.Volume * _seVolumeRate;
+            }
+        }
+
+        /// <summary>
+        /// BGMの音量レベルを設定し、再生中のBGMにも反映します。
+        /// </summary>
+        /// <param name="level">音量レベル。</param>
+        public void SetBgmVolumeLevel(int level)
+        {
+            if (volumeLevelTable == null)
+            {
+                LogWarningOnce(
+                    "configuration:UnityAudioPlayer requires an AudioVolumeLevelTableAsset.",
+                    "AudioVolumeLevelTableAsset is not configured. BGM volume level was ignored.");
+                return;
+            }
+
+            if (!volumeLevelTable.TryGetBgmVolumeRate(level, out float volumeRate))
+            {
+                LogWarningOnce(
+                    $"volume-level:BGM:{level}",
+                    $"BGM volume level {level} is not configured or is invalid. Volume was not changed.");
+                return;
+            }
+
+            _bgmVolumeRate = volumeRate;
+
+            if (bgmSource != null &&
+                catalog != null &&
+                _currentBgmKey != AudioKey.None &&
+                catalog.TryGetBgm(_currentBgmKey, out AudioEntry entry))
+            {
+                bgmSource.volume = entry.Volume * _bgmVolumeRate;
+            }
+        }
+
+        private void ValidateVolumeLevelTable()
+        {
+            if (volumeLevelTable == null)
+            {
+                LogErrorOnce(
+                    "configuration:UnityAudioPlayer requires an AudioVolumeLevelTableAsset.",
+                    "UnityAudioPlayer requires an AudioVolumeLevelTableAsset.");
+                return;
+            }
+
+            IReadOnlyList<string> errors = volumeLevelTable.Validate();
+            for (int index = 0; index < errors.Count; index++)
+            {
+                LogErrorOnce($"volume-table:{errors[index]}", errors[index]);
+            }
         }
 
         private void WarnMissingKey(AudioKey key, string category)

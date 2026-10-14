@@ -13,21 +13,31 @@ namespace Ccc.Bootstrap
     public sealed class TitleEntryPoint : IStartable, IDisposable
     {
         private readonly TitleScreenModel _model;
+        private readonly OptionMenuModel _optionMenuModel;
         private readonly IAudioPlayer _audio;
+        private readonly IAudioVolumeSettings _audioVolumeSettings;
         private IDisposable _screenSubscription;
+        private IDisposable _seVolumeSubscription;
+        private IDisposable _bgmVolumeSubscription;
         private TitleScreenState _previousScreen;
 
         /// <summary>
         /// TitleEntryPointを生成します。
         /// </summary>
         /// <param name="model">Title画面Model。</param>
+        /// <param name="optionMenuModel">Option設定Model。</param>
         /// <param name="audio">Audio再生ポート。</param>
+        /// <param name="audioVolumeSettings">音量レベル設定ポート。</param>
         public TitleEntryPoint(
             TitleScreenModel model,
-            IAudioPlayer audio)
+            OptionMenuModel optionMenuModel,
+            IAudioPlayer audio,
+            IAudioVolumeSettings audioVolumeSettings)
         {
             _model = model ?? throw new ArgumentNullException(nameof(model));
+            _optionMenuModel = optionMenuModel ?? throw new ArgumentNullException(nameof(optionMenuModel));
             _audio = audio ?? throw new ArgumentNullException(nameof(audio));
+            _audioVolumeSettings = audioVolumeSettings ?? throw new ArgumentNullException(nameof(audioVolumeSettings));
         }
 
         /// <summary>
@@ -37,6 +47,10 @@ namespace Ccc.Bootstrap
         {
             _previousScreen = _model.CurrentScreen.CurrentValue;
             _screenSubscription = _model.CurrentScreen.Subscribe(HandleScreenChanged);
+            _seVolumeSubscription =
+                _optionMenuModel.SeVolumeLevel.Subscribe(_audioVolumeSettings.SetSeVolumeLevel);
+            _bgmVolumeSubscription =
+                _optionMenuModel.BgmVolumeLevel.Subscribe(_audioVolumeSettings.SetBgmVolumeLevel);
             _audio.PlayBgm(AudioKey.BgmTitle);
         }
 
@@ -47,6 +61,10 @@ namespace Ccc.Bootstrap
         {
             _screenSubscription?.Dispose();
             _screenSubscription = null;
+            _seVolumeSubscription?.Dispose();
+            _seVolumeSubscription = null;
+            _bgmVolumeSubscription?.Dispose();
+            _bgmVolumeSubscription = null;
             _model.Dispose();
         }
 
