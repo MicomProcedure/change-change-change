@@ -361,6 +361,9 @@ namespace Ccc.Presentation
                 ? (float)timerSnapshot.Value.RemainingTime.TotalSeconds
                 : 0f;
 
+            TimeSpan sectionDuration = _gameplayConfig.Timer.GetDuration(gameplayState.Section);
+            float sectionDurationSeconds = (float)sectionDuration.TotalSeconds;
+
             return new GameplayViewStateDto(
                 _gameplayRequest.GameMode.ToString(),
                 _gameplayRequest.Difficulty.ToString(),
@@ -373,6 +376,7 @@ namespace Ccc.Presentation
                 answerText,
                 hasRemainingTime,
                 remainingSeconds,
+                sectionDurationSeconds,
                 false,
                 gameplayState.IsAcceptingSubmit);
         }

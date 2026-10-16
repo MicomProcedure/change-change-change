@@ -63,6 +63,11 @@ namespace Ccc.Presentation
         public float RemainingSeconds { get; }
 
         /// <summary>
+        /// 現在Sectionの制限時間を秒単位で取得します。
+        /// </summary>
+        public float SectionDurationSeconds { get; }
+
+        /// <summary>
         /// 時間警告中かどうかを取得します。
         /// </summary>
         public bool IsTimeWarning { get; }
@@ -86,6 +91,7 @@ namespace Ccc.Presentation
         /// <param name="answerText">答えの表示文言。</param>
         /// <param name="hasRemainingTime">残り時間が有効かどうか。</param>
         /// <param name="remainingSeconds">残り秒数。</param>
+        /// <param name="sectionDurationSeconds">現在Sectionの制限時間。</param>
         /// <param name="isTimeWarning">時間警告中かどうか。</param>
         /// <param name="canSubmit">式を提出できるかどうか。</param>
         /// <exception cref="ArgumentNullException">文字列引数のいずれかがnullの場合。</exception>
@@ -102,6 +108,7 @@ namespace Ccc.Presentation
             string answerText,
             bool hasRemainingTime,
             float remainingSeconds,
+            float sectionDurationSeconds,
             bool isTimeWarning,
             bool canSubmit)
         {
@@ -150,6 +157,16 @@ namespace Ccc.Presentation
                     "Remaining seconds must be finite and zero or positive.");
             }
 
+            if (float.IsNaN(sectionDurationSeconds) ||
+                float.IsInfinity(sectionDurationSeconds) ||
+                sectionDurationSeconds <= 0f)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(sectionDurationSeconds),
+                    sectionDurationSeconds,
+                    "Section duration must be finite and positive.");
+            }
+
             GameModeText = gameModeText;
             DifficultyText = difficultyText;
             Section = section;
@@ -161,6 +178,7 @@ namespace Ccc.Presentation
             AnswerText = answerText;
             HasRemainingTime = hasRemainingTime;
             RemainingSeconds = hasRemainingTime ? remainingSeconds : 0f;
+            SectionDurationSeconds = sectionDurationSeconds;
             IsTimeWarning = isTimeWarning;
             CanSubmit = canSubmit;
         }
