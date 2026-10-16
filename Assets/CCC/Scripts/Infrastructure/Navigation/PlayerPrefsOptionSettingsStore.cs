@@ -9,7 +9,7 @@ namespace Ccc.Infrastructure.Navigation
     /// </summary>
     public sealed class PlayerPrefsOptionSettingsStore : IOptionSettingsStore
     {
-        private const string SeVolumeLevelKey = "Option.SeVolumeLevel";
+        private const string SEVolumeLevelKey = "Option.SEVolumeLevel";
         private const string BgmVolumeLevelKey = "Option.BgmVolumeLevel";
 
         /// <summary>
@@ -19,7 +19,7 @@ namespace Ccc.Infrastructure.Navigation
         public OptionSettingsSnapshot Load()
         {
             return new OptionSettingsSnapshot(
-                LoadVolumeLevel(SeVolumeLevelKey),
+                LoadVolumeLevel(SEVolumeLevelKey),
                 LoadVolumeLevel(BgmVolumeLevelKey));
         }
 
@@ -35,7 +35,7 @@ namespace Ccc.Infrastructure.Navigation
                 throw new ArgumentNullException(nameof(snapshot));
             }
 
-            PlayerPrefs.SetInt(SeVolumeLevelKey, snapshot.SeVolumeLevel);
+            PlayerPrefs.SetInt(SEVolumeLevelKey, snapshot.SEVolumeLevel);
             PlayerPrefs.SetInt(BgmVolumeLevelKey, snapshot.BgmVolumeLevel);
             PlayerPrefs.Save();
         }

@@ -50,7 +50,7 @@ namespace Ccc.Infrastructure.Audio
         /// 効果音の音量レベル設定を無視します。
         /// </summary>
         /// <param name="level">音量レベル。</param>
-        public void SetSeVolumeLevel(int level)
+        public void SetSEVolumeLevel(int level)
         {
         }
 

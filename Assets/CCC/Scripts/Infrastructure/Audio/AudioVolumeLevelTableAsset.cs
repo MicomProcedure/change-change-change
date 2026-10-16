@@ -32,7 +32,7 @@ namespace Ccc.Infrastructure.Audio
         /// <param name="level">音量レベル。</param>
         /// <param name="volumeRate">取得できた音量倍率。</param>
         /// <returns>取得できた場合はtrue。</returns>
-        public bool TryGetSeVolumeRate(int level, out float volumeRate)
+        public bool TryGetSEVolumeRate(int level, out float volumeRate)
         {
             return TryGetVolumeRate(seVolumeRates, level, out volumeRate);
         }

@@ -15,7 +15,7 @@ namespace Ccc.Infrastructure.Audio
         private enum AudioCategory
         {
             Unknown = 0,
-            Se = 1,
+            SE = 1,
             Bgm = 2
         }
 
@@ -90,7 +90,7 @@ namespace Ccc.Infrastructure.Audio
                 allEntries.AddRange(bgmEntries);
             }
 
-            ValidateEntries(seEntries, AudioCategory.Se, "SE", errors);
+            ValidateEntries(seEntries, AudioCategory.SE, "SE", errors);
             ValidateEntries(bgmEntries, AudioCategory.Bgm, "BGM", errors);
 
             foreach (var duplicateGroup in allEntries
@@ -122,7 +122,7 @@ namespace Ccc.Infrastructure.Audio
                     }
                 }
 
-                if (expectedCategory == AudioCategory.Se)
+                if (expectedCategory == AudioCategory.SE)
                 {
                     var seCount = seEntries == null ? 0 : seEntries.Count(entry => entry != null && entry.Key == key);
                     if (seCount != 1)
@@ -203,9 +203,9 @@ namespace Ccc.Infrastructure.Audio
                 case AudioKey.SETimeClock:
                 case AudioKey.SEGameOver:
                 case AudioKey.SECancelClick:
-                case AudioKey.SeCuntdown:
+                case AudioKey.SECountdown:
                 case AudioKey.SEHizimere:
-                    return AudioCategory.Se;
+                    return AudioCategory.SE;
                 default:
                     return AudioCategory.Unknown;
             }

@@ -9,7 +9,7 @@ namespace Ccc.Presentation.Audio
         ///     効果音の音量レベルを設定する。
         /// </summary>
         /// <param name="level">音量レベル。</param>
-        void SetSeVolumeLevel(int level);
+        void SetSEVolumeLevel(int level);
 
         /// <summary>
         ///     BGMの音量レベルを設定する。

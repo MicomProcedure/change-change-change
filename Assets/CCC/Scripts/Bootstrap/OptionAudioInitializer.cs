@@ -33,7 +33,7 @@ namespace Ccc.Bootstrap
         public void ApplySavedVolumeLevels()
         {
             OptionSettingsSnapshot savedSettings = _optionSettingsStore.Load();
-            _audioVolumeControl.SetSeVolumeLevel(savedSettings.SeVolumeLevel);
+            _audioVolumeControl.SetSEVolumeLevel(savedSettings.SEVolumeLevel);
             _audioVolumeControl.SetBgmVolumeLevel(savedSettings.BgmVolumeLevel);
         }
     }

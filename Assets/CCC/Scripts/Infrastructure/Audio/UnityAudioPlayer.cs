@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Ccc.Presentation.Audio;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Ccc.Presentation.Navigation;
 
 namespace Ccc.Infrastructure.Audio
@@ -14,12 +15,13 @@ namespace Ccc.Infrastructure.Audio
         [SerializeField] private AudioCatalogAsset catalog;
         [SerializeField] private AudioSource bgmSource;
         [SerializeField] private AudioSource seSource;
-        [SerializeField] private AudioSource loopingSeSource;
+        [FormerlySerializedAs("loopingSeSource")]
+        [SerializeField] private AudioSource loopingSESource;
         [SerializeField] private AudioVolumeLevelTableAsset volumeLevelTable;
 
         private readonly HashSet<string> _warnedIssues = new HashSet<string>();
         private AudioKey _currentBgmKey;
-        private AudioKey _currentLoopingSeKey;
+        private AudioKey _currentLoopingSEKey;
         private float _seVolumeRate = 1f;
         private float _bgmVolumeRate = 1f;
 
@@ -29,7 +31,7 @@ namespace Ccc.Infrastructure.Audio
         private void Awake()
         {
             ValidateVolumeLevelTable();
-            SetSeVolumeLevel(OptionVolumeLevels.Default);
+            SetSEVolumeLevel(OptionVolumeLevels.Default);
             SetBgmVolumeLevel(OptionVolumeLevels.Default);
             var configurationErrors = new List<string>();
             if (catalog == null)
@@ -47,7 +49,7 @@ namespace Ccc.Infrastructure.Audio
                 configurationErrors.Add("UnityAudioPlayer requires an SE AudioSource.");
             }
 
-            if (loopingSeSource == null)
+            if (loopingSESource == null)
             {
                 configurationErrors.Add(
                     "UnityAudioPlayer requires a looping SE AudioSource.");
@@ -59,13 +61,13 @@ namespace Ccc.Infrastructure.Audio
                     "UnityAudioPlayer requires different AudioSource instances for BGM and SE.");
             }
 
-            if (bgmSource != null && ReferenceEquals(bgmSource, loopingSeSource))
+            if (bgmSource != null && ReferenceEquals(bgmSource, loopingSESource))
             {
                 configurationErrors.Add(
                     "UnityAudioPlayer requires different AudioSource instances for BGM and looping SE.");
             }
 
-            if (seSource != null && ReferenceEquals(seSource, loopingSeSource))
+            if (seSource != null && ReferenceEquals(seSource, loopingSESource))
             {
                 configurationErrors.Add(
                     "UnityAudioPlayer requires different AudioSource instances for SE and looping SE.");
@@ -151,7 +153,7 @@ namespace Ccc.Infrastructure.Audio
                 return;
             }
 
-            if (loopingSeSource == null)
+            if (loopingSESource == null)
             {
                 LogWarningOnce(
                     "configuration:UnityAudioPlayer requires a looping SE AudioSource.",
@@ -181,17 +183,17 @@ namespace Ccc.Infrastructure.Audio
                 return;
             }
 
-            if (_currentLoopingSeKey == key && loopingSeSource.isPlaying)
+            if (_currentLoopingSEKey == key && loopingSESource.isPlaying)
             {
                 return;
             }
 
-            loopingSeSource.Stop();
-            loopingSeSource.clip = entry.Clip;
-            loopingSeSource.volume = entry.Volume * _seVolumeRate;
-            loopingSeSource.loop = true;
-            loopingSeSource.Play();
-            _currentLoopingSeKey = key;
+            loopingSESource.Stop();
+            loopingSESource.clip = entry.Clip;
+            loopingSESource.volume = entry.Volume * _seVolumeRate;
+            loopingSESource.loop = true;
+            loopingSESource.Play();
+            _currentLoopingSEKey = key;
         }
 
         /// <summary>
@@ -200,18 +202,18 @@ namespace Ccc.Infrastructure.Audio
         /// <param name="key">停止対象のループSEのキー。</param>
         public void StopLoopingSE(AudioKey key)
         {
-            if (_currentLoopingSeKey != key)
+            if (_currentLoopingSEKey != key)
             {
                 return;
             }
 
-            _currentLoopingSeKey = AudioKey.None;
-            if (loopingSeSource == null)
+            _currentLoopingSEKey = AudioKey.None;
+            if (loopingSESource == null)
             {
                 return;
             }
 
-            loopingSeSource.Stop();
+            loopingSESource.Stop();
         }
 
         /// <summary>
@@ -289,7 +291,7 @@ namespace Ccc.Infrastructure.Audio
         /// 効果音の音量レベルを設定し、再生中のループSEにも反映します。
         /// </summary>
         /// <param name="level">音量レベル。</param>
-        public void SetSeVolumeLevel(int level)
+        public void SetSEVolumeLevel(int level)
         {
             if (volumeLevelTable == null)
             {
@@ -299,7 +301,7 @@ namespace Ccc.Infrastructure.Audio
                 return;
             }
 
-            if (!volumeLevelTable.TryGetSeVolumeRate(level, out float volumeRate))
+            if (!volumeLevelTable.TryGetSEVolumeRate(level, out float volumeRate))
             {
                 LogWarningOnce(
                     $"volume-level:SE:{level}",
@@ -309,12 +311,12 @@ namespace Ccc.Infrastructure.Audio
 
             _seVolumeRate = volumeRate;
 
-            if (loopingSeSource != null &&
+            if (loopingSESource != null &&
                 catalog != null &&
-                _currentLoopingSeKey != AudioKey.None &&
-                catalog.TryGetSE(_currentLoopingSeKey, out AudioEntry entry))
+                _currentLoopingSEKey != AudioKey.None &&
+                catalog.TryGetSE(_currentLoopingSEKey, out AudioEntry entry))
             {
-                loopingSeSource.volume = entry.Volume * _seVolumeRate;
+                loopingSESource.volume = entry.Volume * _seVolumeRate;
             }
         }
 

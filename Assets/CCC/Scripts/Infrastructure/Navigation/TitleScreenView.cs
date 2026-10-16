@@ -124,7 +124,7 @@ namespace Ccc.Infrastructure.Navigation
             if (_seVolumeSelectorView != null)
             {
                 _seVolumeChangeSubscription =
-                    _seVolumeSelectorView.ChangeRequested.Subscribe(_ => _optionMenuModel.CycleSeVolumeLevel());
+                    _seVolumeSelectorView.ChangeRequested.Subscribe(_ => _optionMenuModel.CycleSEVolumeLevel());
             }
 
             if (_bgmVolumeSelectorView != null)
@@ -146,7 +146,7 @@ namespace Ccc.Infrastructure.Navigation
                 _model.SelectedDifficulty.Subscribe(RenderDifficulty);
             
             _seVolumeSubscription =
-                _optionMenuModel.SeVolumeLevel.Subscribe(RenderSeVolumeLevel);
+                _optionMenuModel.SEVolumeLevel.Subscribe(RenderSEVolumeLevel);
 
             _bgmVolumeSubscription =
                 _optionMenuModel.BgmVolumeLevel.Subscribe(RenderBgmVolumeLevel);
@@ -252,7 +252,7 @@ namespace Ccc.Infrastructure.Navigation
             SetInteractableIfAvailable(_openCreditButton, isInteractable);
             SetInteractableIfAvailable(_closeCreditButton, isInteractable);
             RenderDifficulty(_model.SelectedDifficulty.CurrentValue);
-            RenderSeVolumeLevel(_optionMenuModel.SeVolumeLevel.CurrentValue);
+            RenderSEVolumeLevel(_optionMenuModel.SEVolumeLevel.CurrentValue);
             RenderBgmVolumeLevel(_optionMenuModel.BgmVolumeLevel.CurrentValue);
         }
 
@@ -269,7 +269,7 @@ namespace Ccc.Infrastructure.Navigation
                     !_model.IsBusy.CurrentValue));
         }
 
-        private void RenderSeVolumeLevel(int volumeLevel)
+        private void RenderSEVolumeLevel(int volumeLevel)
         {
             RenderVolumeLevel(_seVolumeSelectorView, volumeLevel);
         }

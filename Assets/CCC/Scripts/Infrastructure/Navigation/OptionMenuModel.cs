@@ -18,7 +18,7 @@ namespace Ccc.Infrastructure.Navigation
         /// <summary>
         /// 効果音の音量レベルを取得します。
         /// </summary>
-        public ReadOnlyReactiveProperty<int> SeVolumeLevel { get; }
+        public ReadOnlyReactiveProperty<int> SEVolumeLevel { get; }
 
         /// <summary>
         /// BGMの音量レベルを取得します。
@@ -36,17 +36,17 @@ namespace Ccc.Infrastructure.Navigation
                 optionSettingsStore ?? throw new ArgumentNullException(nameof(optionSettingsStore));
 
             OptionSettingsSnapshot savedSettings = _optionSettingsStore.Load();
-            _seVolumeLevel = new ReactiveProperty<int>(savedSettings.SeVolumeLevel);
+            _seVolumeLevel = new ReactiveProperty<int>(savedSettings.SEVolumeLevel);
             _bgmVolumeLevel = new ReactiveProperty<int>(savedSettings.BgmVolumeLevel);
 
-            SeVolumeLevel = _seVolumeLevel.ToReadOnlyReactiveProperty();
+            SEVolumeLevel = _seVolumeLevel.ToReadOnlyReactiveProperty();
             BgmVolumeLevel = _bgmVolumeLevel.ToReadOnlyReactiveProperty();
         }
 
         /// <summary>
         /// 効果音の音量レベルを次の段階へ切り替えて保存します。最大値の次は最小値に戻ります。
         /// </summary>
-        public void CycleSeVolumeLevel()
+        public void CycleSEVolumeLevel()
         {
             if (_isDisposed)
             {
@@ -94,7 +94,7 @@ namespace Ccc.Infrastructure.Navigation
 
             _isDisposed = true;
 
-            SeVolumeLevel.Dispose();
+            SEVolumeLevel.Dispose();
             BgmVolumeLevel.Dispose();
 
             _seVolumeLevel.Dispose();

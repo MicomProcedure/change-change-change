@@ -48,7 +48,7 @@ namespace Ccc.Bootstrap
             _previousScreen = _model.CurrentScreen.CurrentValue;
             _screenSubscription = _model.CurrentScreen.Subscribe(HandleScreenChanged);
             _seVolumeSubscription =
-                _optionMenuModel.SeVolumeLevel.Subscribe(_audioVolumeControl.SetSeVolumeLevel);
+                _optionMenuModel.SEVolumeLevel.Subscribe(_audioVolumeControl.SetSEVolumeLevel);
             _bgmVolumeSubscription =
                 _optionMenuModel.BgmVolumeLevel.Subscribe(_audioVolumeControl.SetBgmVolumeLevel);
             _audio.PlayBgm(AudioKey.BgmTitle);
