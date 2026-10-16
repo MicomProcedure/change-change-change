@@ -217,6 +217,7 @@ SessionResult *-- SubmissionResolution : last
 ```mermaid
 flowchart LR
     Preparation[MissionCatalogPreparationSettings]
+    Preparer[MissionCatalogPreparer]
     Gen[ExpressionCandidateGenerator]
     ParameterGen[MissionParameterCandidateGenerator]
     Calc[ExpressionCalculator]
@@ -225,6 +226,10 @@ flowchart LR
     Matcher[MissionConditionMatcher]
     Catalog[MissionCatalog]
 
+    Preparation --> Preparer
+    Preparer --> Gen
+    Preparer --> ParameterGen
+    Preparer --> Builder
     Gen --> Calc
     Gen --> Expressions
     Expressions --> ParameterGen
@@ -236,7 +241,7 @@ flowchart LR
     Builder -->|Build成功| Catalog
 ```
 
-`MissionKindDefinitionCatalog`はパラメータ構造、固定肯定Tier、Negated可否・Tierを一元管理する。`MissionParameterCandidateGenerator`と`MissionCatalogBuilder`は状態を持たないためDI登録しない。
+`MissionCatalogPreparer`が候補式生成、Missionパラメータ候補準備、Catalog構築を順に呼び出し、`GameplayController`とシミュレーションはこれを共有する。`MissionKindDefinitionCatalog`はパラメータ構造、固定肯定Tier、Negated可否・Tierを一元管理する。`MissionCatalogPreparer`、`MissionParameterCandidateGenerator`、`MissionCatalogBuilder`は状態を持たないためDI登録しない。
 
 ```mermaid
 flowchart TD

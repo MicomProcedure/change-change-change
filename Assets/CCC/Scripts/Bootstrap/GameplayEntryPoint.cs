@@ -99,7 +99,7 @@ namespace Ccc.Bootstrap
             {
                 try
                 {
-                    preparationSettings = CreateCatalogPreparationSettings(configEntry);
+                    preparationSettings = configEntry.CreateCatalogPreparationSettings(_config);
                 }
                 catch (Exception exception)
                 {
@@ -220,34 +220,6 @@ namespace Ccc.Bootstrap
             for (int index = 0; index < presetErrors.Count; index++)
             {
                 validationErrors.Add($"Mission preset asset: {presetErrors[index]}");
-            }
-        }
-
-        private MissionCatalogPreparationSettings CreateCatalogPreparationSettings(
-            GameplayConfigEntry configEntry)
-        {
-            MissionParameterGenerationSettings generationSettings =
-                configEntry.MissionParameterGenerationProfileAsset
-                    .CreateGenerationSettings();
-            MissionCatalogEvaluationPolicy evaluationPolicy =
-                configEntry.MissionParameterGenerationProfileAsset
-                    .CreateEvaluationPolicy(_config);
-            switch (configEntry.MissionParameterSourceMode)
-            {
-                case MissionParameterSourceMode.Automatic:
-                    return MissionCatalogPreparationSettings.CreateAutomatic(
-                        generationSettings,
-                        evaluationPolicy);
-                case MissionParameterSourceMode.PresetDebug:
-                    return MissionCatalogPreparationSettings.CreatePresetDebug(
-                        generationSettings,
-                        evaluationPolicy,
-                        configEntry.MissionPresetAsset.CreateCandidates());
-                default:
-                    throw new ArgumentOutOfRangeException(
-                        nameof(configEntry.MissionParameterSourceMode),
-                        configEntry.MissionParameterSourceMode,
-                        null);
             }
         }
 

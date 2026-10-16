@@ -147,6 +147,58 @@ namespace Ccc.Infrastructure.Assets
         }
 
         /// <summary>
+        /// Missionパラメータ取得経路に応じて、Profile AssetとPreset AssetからCatalog準備設定を生成します。
+        /// </summary>
+        /// <param name="config">評価規則の適合率範囲を持つGameplay設定。</param>
+        /// <returns>MissionCatalog準備設定。</returns>
+        /// <exception cref="ArgumentNullException">Gameplay設定がnullの場合。</exception>
+        /// <exception cref="InvalidOperationException">取得経路に必要なAssetが未設定の場合。</exception>
+        /// <exception cref="ArgumentOutOfRangeException">取得経路が未定義の場合。</exception>
+        public MissionCatalogPreparationSettings CreateCatalogPreparationSettings(GameplayConfig config)
+        {
+            if (config == null)
+            {
+                throw new ArgumentNullException(nameof(config));
+            }
+
+            if (missionParameterGenerationProfileAsset == null)
+            {
+                throw new InvalidOperationException(
+                    "GameplayConfigEntry has no MissionParameterGenerationProfileAsset.");
+            }
+
+            MissionParameterGenerationSettings generationSettings =
+                missionParameterGenerationProfileAsset.CreateGenerationSettings();
+            MissionCatalogEvaluationPolicy evaluationPolicy =
+                missionParameterGenerationProfileAsset.CreateEvaluationPolicy(config);
+            switch (missionParameterSourceMode)
+            {
+                case MissionParameterSourceMode.Automatic:
+                    return MissionCatalogPreparationSettings.CreateAutomatic(
+                        generationSettings,
+                        evaluationPolicy);
+
+                case MissionParameterSourceMode.PresetDebug:
+                    if (missionPresetAsset == null)
+                    {
+                        throw new InvalidOperationException(
+                            "GameplayConfigEntry has no MissionPresetAsset for PresetDebug.");
+                    }
+
+                    return MissionCatalogPreparationSettings.CreatePresetDebug(
+                        generationSettings,
+                        evaluationPolicy,
+                        missionPresetAsset.CreateCandidates());
+
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(missionParameterSourceMode),
+                        missionParameterSourceMode,
+                        null);
+            }
+        }
+
+        /// <summary>
         /// 指定されたNavigation RequestがこのEntryに対応するかを取得します。
         /// </summary>
         /// <param name="request">対応を確認するGameplay開始Request。</param>

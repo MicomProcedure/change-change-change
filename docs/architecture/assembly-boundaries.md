@@ -59,7 +59,7 @@
 
 ※ Bootstrapの責務は、アプリ全体の依存関係の登録（DI）と起動ライフサイクルの管理に限定すること。
 
-`GameplayEntryPoint`は選択Sourceに必要なAssetだけを検証し、Profile/Presetを純C#の`MissionCatalogPreparationSettings`へ変換すること。Profile、候補Generator、Catalog Builder、Mission候補Tier Resolverは状態を持たないためDI登録しないこと。`MissionPresetAsset`を直接DI登録しないこと。
+`GameplayEntryPoint`は選択Sourceに必要なAssetだけを検証し、`GameplayConfigEntry.CreateCatalogPreparationSettings`でProfile/Presetを純C#の`MissionCatalogPreparationSettings`へ変換すること。Profile、候補Generator、Catalog Builder、Mission候補Tier Resolverは状態を持たないためDI登録しないこと。`MissionPresetAsset`を直接DI登録しないこと。
 
 ---
 
