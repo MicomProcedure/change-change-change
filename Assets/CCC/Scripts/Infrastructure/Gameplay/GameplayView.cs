@@ -118,7 +118,10 @@ namespace Ccc.Infrastructure.Gameplay
 
             if (_timerView != null)
             {
-                _timerView.Render(state.HasRemainingTime, state.RemainingSeconds);
+                _timerView.Render(
+                    state.HasRemainingTime,
+                    state.RemainingSeconds,
+                    state.SectionDurationSeconds);
             }
 
             if (_expressionView != null)

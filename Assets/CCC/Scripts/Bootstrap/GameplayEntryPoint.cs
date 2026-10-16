@@ -233,13 +233,6 @@ namespace Ccc.Bootstrap
                 errors.Add(
                     $"Unsupported gameplay mode: {request.GameMode}.");
             }
-
-            if (request.Difficulty !=
-                GameDifficulty.Normal)
-            {
-                errors.Add(
-                    $"Unsupported gameplay difficulty: {request.Difficulty}.");
-            }
         }
 
         private void ThrowIfDisposed()
@@ -266,7 +259,7 @@ namespace Ccc.Bootstrap
                 _countdownView.ShowCountdown(remainingSeconds);
                 if (remainingSeconds == CountdownStartSeconds)
                 {
-                    _audio.PlaySE(AudioKey.SeCuntdown);
+                    _audio.PlaySE(AudioKey.SECountdown);
                 }
 
                 await UniTask.Delay(

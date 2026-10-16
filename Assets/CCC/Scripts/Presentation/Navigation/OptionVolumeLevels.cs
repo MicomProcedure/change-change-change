@@ -14,5 +14,15 @@ namespace Ccc.Presentation.Navigation
         /// 最大音量レベルです。
         /// </summary>
         public const int Max = 5;
+
+        /// <summary>
+        /// 既定の音量レベルです。保存値がない場合に使用します。
+        /// </summary>
+        public const int Default = 3;
+
+        /// <summary>
+        /// 音量レベルの段階数です。
+        /// </summary>
+        public const int Count = Max - Min + 1;
     }
 }
