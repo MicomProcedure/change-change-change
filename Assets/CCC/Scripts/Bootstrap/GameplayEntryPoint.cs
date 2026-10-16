@@ -287,7 +287,7 @@ namespace Ccc.Bootstrap
                 _countdownView.ShowCountdown(remainingSeconds);
                 if (remainingSeconds == CountdownStartSeconds)
                 {
-                    _audio.PlaySE(AudioKey.SeCuntdown);
+                    _audio.PlaySE(AudioKey.SECountdown);
                 }
 
                 await UniTask.Delay(

@@ -28,18 +28,24 @@ namespace Ccc.Bootstrap
 
             if (audioPlayer != null)
             {
-                builder.RegisterComponent(audioPlayer).As<IAudioPlayer>();
+                builder.RegisterComponent(audioPlayer).As<IAudioPlayer, IAudioVolumeControl>();
             }
             else
             {
                 UnityEngine.Debug.LogError(
                     "ApplicationLifetimeScope has no UnityAudioPlayer. " +
                     "Gameplay will continue without audio.");
-                builder.Register<IAudioPlayer, NullAudioPlayer>(Lifetime.Singleton);
+                builder.Register<NullAudioPlayer>(Lifetime.Singleton)
+                    .As<IAudioPlayer, IAudioVolumeControl>();
             }
+
+            builder.Register<IOptionSettingsStore, PlayerPrefsOptionSettingsStore>(Lifetime.Singleton);
+            builder.Register<OptionAudioInitializer>(Lifetime.Singleton);
 
             builder.Register<ISceneNavigator, SceneNavigator>(Lifetime.Singleton);
             builder.RegisterInstance(new TitleStartRequest(startingTitleScreenState));
+
+            builder.RegisterEntryPoint<ApplicationEntryPoint>();
         }
     }
 }

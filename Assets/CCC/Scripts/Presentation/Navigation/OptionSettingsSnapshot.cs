@@ -10,7 +10,7 @@ namespace Ccc.Presentation.Navigation
         /// <summary>
         /// 効果音の音量レベルを取得します。
         /// </summary>
-        public int SeVolumeLevel { get; }
+        public int SEVolumeLevel { get; }
 
         /// <summary>
         /// BGMの音量レベルを取得します。
@@ -34,7 +34,7 @@ namespace Ccc.Presentation.Navigation
                 bgmVolumeLevel,
                 nameof(bgmVolumeLevel));
 
-            SeVolumeLevel = seVolumeLevel;
+            SEVolumeLevel = seVolumeLevel;
             BgmVolumeLevel = bgmVolumeLevel;
         }
 

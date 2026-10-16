@@ -171,8 +171,8 @@ namespace Ccc.Infrastructure.Assets
                 gameMode,
                 difficulty,
                 new OptionSettingsSnapshot(
-                    OptionVolumeLevels.Min,
-                    OptionVolumeLevels.Min));
+                    OptionVolumeLevels.Default,
+                    OptionVolumeLevels.Default));
         }
 
         /// <summary>
