@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 using VContainer;
+using Ccc.Core.Model;
 using Ccc.Presentation;
 using Ccc.Infrastructure.UI;
 using Ccc.Presentation.UI;
