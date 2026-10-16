@@ -40,10 +40,12 @@ namespace Ccc.Bootstrap
             }
 
             builder.Register<IOptionSettingsStore, PlayerPrefsOptionSettingsStore>(Lifetime.Singleton);
-            builder.RegisterEntryPoint<OptionAudioInitializer>();
+            builder.Register<OptionAudioInitializer>(Lifetime.Singleton);
 
             builder.Register<ISceneNavigator, SceneNavigator>(Lifetime.Singleton);
             builder.RegisterInstance(new TitleStartRequest(startingTitleScreenState));
+
+            builder.RegisterEntryPoint<ApplicationEntryPoint>();
         }
     }
 }

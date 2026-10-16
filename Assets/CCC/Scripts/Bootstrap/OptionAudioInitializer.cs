@@ -1,14 +1,13 @@
 using System;
 using Ccc.Presentation.Audio;
 using Ccc.Presentation.Navigation;
-using VContainer.Unity;
 
 namespace Ccc.Bootstrap
 {
     /// <summary>
-    /// アプリ起動時に保存済みの音量レベルをAudioへ反映します。
+    /// 保存済みの音量レベルをAudioへ反映します。
     /// </summary>
-    public sealed class OptionAudioInitializer : IStartable
+    public sealed class OptionAudioInitializer
     {
         private readonly IOptionSettingsStore _optionSettingsStore;
         private readonly IAudioVolumeControl _audioVolumeControl;
@@ -29,9 +28,9 @@ namespace Ccc.Bootstrap
         }
 
         /// <summary>
-        /// 保存済みの音量レベルを反映します。
+        /// 保存済みの音量レベルを読み込み、Audioへ反映します。
         /// </summary>
-        public void Start()
+        public void ApplySavedVolumeLevels()
         {
             OptionSettingsSnapshot savedSettings = _optionSettingsStore.Load();
             _audioVolumeControl.SetSeVolumeLevel(savedSettings.SeVolumeLevel);
