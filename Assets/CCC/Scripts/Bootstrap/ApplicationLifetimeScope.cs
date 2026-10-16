@@ -28,7 +28,7 @@ namespace Ccc.Bootstrap
 
             if (audioPlayer != null)
             {
-                builder.RegisterComponent(audioPlayer).As<IAudioPlayer, IAudioVolumeSettings>();
+                builder.RegisterComponent(audioPlayer).As<IAudioPlayer, IAudioVolumeControl>();
             }
             else
             {
@@ -36,7 +36,7 @@ namespace Ccc.Bootstrap
                     "ApplicationLifetimeScope has no UnityAudioPlayer. " +
                     "Gameplay will continue without audio.");
                 builder.Register<NullAudioPlayer>(Lifetime.Singleton)
-                    .As<IAudioPlayer, IAudioVolumeSettings>();
+                    .As<IAudioPlayer, IAudioVolumeControl>();
             }
 
             builder.Register<IOptionSettingsStore, PlayerPrefsOptionSettingsStore>(Lifetime.Singleton);

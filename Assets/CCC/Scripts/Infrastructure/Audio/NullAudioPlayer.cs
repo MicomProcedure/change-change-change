@@ -5,7 +5,7 @@ namespace Ccc.Infrastructure.Audio
     /// <summary>
     /// Audio設定がない起動環境で使用するNo-op Audio実装です。
     /// </summary>
-    public sealed class NullAudioPlayer : IAudioPlayer, IAudioVolumeSettings
+    public sealed class NullAudioPlayer : IAudioPlayer, IAudioVolumeControl
     {
         /// <summary>
         /// 効果音の再生要求を無視します。

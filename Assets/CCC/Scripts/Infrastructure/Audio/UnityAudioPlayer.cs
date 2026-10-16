@@ -9,7 +9,7 @@ namespace Ccc.Infrastructure.Audio
     /// <summary>
     /// AudioCatalogAssetの定義を用途別のAudioSourceで再生するUnity実装です。
     /// </summary>
-    public sealed class UnityAudioPlayer : MonoBehaviour, IAudioPlayer, IAudioVolumeSettings
+    public sealed class UnityAudioPlayer : MonoBehaviour, IAudioPlayer, IAudioVolumeControl
     {
         [SerializeField] private AudioCatalogAsset catalog;
         [SerializeField] private AudioSource bgmSource;

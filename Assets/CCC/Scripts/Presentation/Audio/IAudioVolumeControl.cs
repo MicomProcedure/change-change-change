@@ -1,9 +1,9 @@
 namespace Ccc.Presentation.Audio
 {
     /// <summary>
-    ///     音量レベル設定の公開API。
+    ///     音量レベルを変更する公開API
     /// </summary>
-    public interface IAudioVolumeSettings
+    public interface IAudioVolumeControl
     {
         /// <summary>
         ///     効果音の音量レベルを設定する。

@@ -11,21 +11,21 @@ namespace Ccc.Bootstrap
     public sealed class OptionAudioInitializer : IStartable
     {
         private readonly IOptionSettingsStore _optionSettingsStore;
-        private readonly IAudioVolumeSettings _audioVolumeSettings;
+        private readonly IAudioVolumeControl _audioVolumeControl;
 
         /// <summary>
         /// OptionAudioInitializerを生成します。
         /// </summary>
         /// <param name="optionSettingsStore">Option設定の保存先。</param>
-        /// <param name="audioVolumeSettings">音量レベル設定ポート。</param>
+        /// <param name="audioVolumeControl">音量レベル変更ポート。</param>
         public OptionAudioInitializer(
             IOptionSettingsStore optionSettingsStore,
-            IAudioVolumeSettings audioVolumeSettings)
+            IAudioVolumeControl audioVolumeControl)
         {
             _optionSettingsStore =
                 optionSettingsStore ?? throw new ArgumentNullException(nameof(optionSettingsStore));
-            _audioVolumeSettings =
-                audioVolumeSettings ?? throw new ArgumentNullException(nameof(audioVolumeSettings));
+            _audioVolumeControl =
+                audioVolumeControl ?? throw new ArgumentNullException(nameof(audioVolumeControl));
         }
 
         /// <summary>
@@ -34,8 +34,8 @@ namespace Ccc.Bootstrap
         public void Start()
         {
             OptionSettingsSnapshot savedSettings = _optionSettingsStore.Load();
-            _audioVolumeSettings.SetSeVolumeLevel(savedSettings.SeVolumeLevel);
-            _audioVolumeSettings.SetBgmVolumeLevel(savedSettings.BgmVolumeLevel);
+            _audioVolumeControl.SetSeVolumeLevel(savedSettings.SeVolumeLevel);
+            _audioVolumeControl.SetBgmVolumeLevel(savedSettings.BgmVolumeLevel);
         }
     }
 }
