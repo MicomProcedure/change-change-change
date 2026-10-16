@@ -1,0 +1,20 @@
+{
+    "name": "Ccc.Editor.Simulation",
+    "rootNamespace": "",
+    "references": [
+        "Ccc.Simulation",
+        "Ccc.Core",
+        "Ccc.Infrastructure"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

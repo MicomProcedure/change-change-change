@@ -77,7 +77,19 @@
 - `Ccc.Infrastructure` が `Ccc.Core` を参照する主な目的は、アセットから純粋C# Modelへの変換処理、および Timer / Random などのポート実装とする。
 - `Ccc.Bootstrap` は依存関係グラフの最外層に配置すること。
 
-### 2.2 テスト用アセンブリの構成
+### 2.2 開発ツール用アセンブリ
+
+| asmdef | 配置 | プロジェクト内参照 | 設定 |
+| --- | --- | --- | --- |
+| `Ccc.Simulation` | `Assets/CCC/Scripts/Simulation/` | `Ccc.Core` | `includePlatforms: Editor`、`noEngineReferences: true`、`autoReferenced: false` |
+| `Ccc.Editor.Simulation` | `Assets/CCC/Editor/Simulation/` | `Ccc.Simulation`、`Ccc.Core`、`Ccc.Infrastructure` | `includePlatforms: Editor`、`autoReferenced: false` |
+
+- `Ccc.Simulation` はUnity APIに依存しない純C#のシミュレーション本体とし、EditModeテストの対象とすること。
+- `Ccc.Editor.Simulation` は設定Asset、EditorWindow、Asset変換、CSV出力の組み立てだけを担当し、静的検証と手動確認で確認すること。
+- 製品アセンブリから開発ツール用アセンブリを参照しないこと。
+- 詳細は [Mission抽選シミュレーション設計](./tools/mission-draw-simulation.md) を参照すること。
+
+### 2.3 テスト用アセンブリの構成
 - **EditModeテスト**: 単一のアセンブリ `Ccc.Editor.Tests` に配置すること。`includePlatforms` を `Editor` に設定し、`Ccc.Core`、`Ccc.Presentation`、`Ccc.Infrastructure` および Test Assemblies を参照すること。内部フォルダ/名前空間は `Ccc.Editor.Tests.Core`、`Ccc.Editor.Tests.Presentation`、`Ccc.Editor.Tests.Infrastructure` に分けて整理すること。
 - **PlayModeテスト**: 必要に応じて `Ccc.PlayMode.Tests` を作成し、テスト対象の製品アセンブリおよび Test Assemblies を参照すること。
 
