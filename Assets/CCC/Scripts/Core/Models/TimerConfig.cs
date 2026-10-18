@@ -5,7 +5,6 @@ namespace Ccc.Core.Model
     public sealed class TimerConfig
     {
         private const double DisabledBonusRatio = 0d;
-        private const double DefaultMaximumBonusRatio = 1d;
 
         public TimeSpan InitialDuration { get; }
         public TimeSpan ReductionPerSection { get; }
@@ -22,9 +21,9 @@ namespace Ccc.Core.Model
         public TimeSpan ManualSubmitBonusDuration { get; }
 
         /// <summary>
-        /// 付与先Sectionの通常制限時間に対するボーナス上限の割合を取得します。
+        /// 付与するボーナス時間の上限を取得します。
         /// </summary>
-        public double MaximumBonusRatio { get; }
+        public TimeSpan MaximumBonusDuration { get; }
 
         /// <summary>
         /// 成功時に、使い切らなかったボーナスを次のSectionへ持ち越すかどうかを取得します。
@@ -41,7 +40,7 @@ namespace Ccc.Core.Model
             TimeSpan reductionPerSection,
             TimeSpan minimumDuration,
             double bonusRatio = DisabledBonusRatio,
-            double maximumBonusRatio = DefaultMaximumBonusRatio,
+            TimeSpan maximumBonusDuration = default,
             bool isBonusCarryOverOnSuccessEnabled = false,
             bool isBonusCarryOverOnFailureEnabled = false,
             TimeSpan manualSubmitBonusDuration = default)
@@ -71,9 +70,9 @@ namespace Ccc.Core.Model
                 throw new ArgumentOutOfRangeException(nameof(bonusRatio), bonusRatio, "Bonus ratio must be finite and zero or positive.");
             }
 
-            if (double.IsNaN(maximumBonusRatio) || double.IsInfinity(maximumBonusRatio) || maximumBonusRatio < 0d)
+            if (maximumBonusDuration < TimeSpan.Zero)
             {
-                throw new ArgumentOutOfRangeException(nameof(maximumBonusRatio), maximumBonusRatio, "Maximum bonus ratio must be finite and zero or positive.");
+                throw new ArgumentOutOfRangeException(nameof(maximumBonusDuration), maximumBonusDuration, "Maximum bonus duration must be zero or positive.");
             }
 
             if (manualSubmitBonusDuration < TimeSpan.Zero)
@@ -85,7 +84,7 @@ namespace Ccc.Core.Model
             ReductionPerSection = reductionPerSection;
             MinimumDuration = minimumDuration;
             BonusRatio = bonusRatio;
-            MaximumBonusRatio = maximumBonusRatio;
+            MaximumBonusDuration = maximumBonusDuration;
             IsBonusCarryOverOnSuccessEnabled = isBonusCarryOverOnSuccessEnabled;
             IsBonusCarryOverOnFailureEnabled = isBonusCarryOverOnFailureEnabled;
             ManualSubmitBonusDuration = manualSubmitBonusDuration;

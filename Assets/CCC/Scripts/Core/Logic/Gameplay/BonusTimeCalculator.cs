@@ -45,7 +45,7 @@ namespace Ccc.Core.Logic
             if (!isSuccess)
             {
                 return timerConfig.IsBonusCarryOverOnFailureEnabled
-                    ? ClampBonusDuration(timerConfig, currentSection, unusedBonus)
+                    ? ClampBonusDuration(timerConfig, unusedBonus)
                     : TimeSpan.Zero;
             }
 
@@ -62,12 +62,12 @@ namespace Ccc.Core.Logic
                 ? earnedBonus + unusedBonus
                 : earnedBonus;
 
-            return ClampBonusDuration(timerConfig, checked(currentSection + 1), nextBonus);
+            return ClampBonusDuration(timerConfig, nextBonus);
         }
 
-        private static TimeSpan ClampBonusDuration(TimerConfig timerConfig, int targetSection, TimeSpan bonusDuration)
+        private static TimeSpan ClampBonusDuration(TimerConfig timerConfig, TimeSpan bonusDuration)
         {
-            TimeSpan maximumBonus = Multiply(timerConfig.GetDuration(targetSection), timerConfig.MaximumBonusRatio);
+            TimeSpan maximumBonus = timerConfig.MaximumBonusDuration;
             return bonusDuration < maximumBonus ? bonusDuration : maximumBonus;
         }
 
