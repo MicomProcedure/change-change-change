@@ -50,7 +50,7 @@ MonoBehaviour:
   catalog: {fileID: 11400000, guid: a73fcf88ee29d4728ab7aa93c62d89db, type: 2}
   bgmSource: {fileID: 6019000000000000006}
   seSource: {fileID: 6019000000000000009}
-  loopingSeSource: {fileID: 6019000000000000012}
+  loopingSESource: {fileID: 6019000000000000012}
   volumeLevelTable: {fileID: 11400000, guid: 6253f93e32b7b4cb0b61b4f15d3974db, type: 2}
 --- !u!1 &6019000000000000004
 GameObject:
@@ -141,7 +141,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.75
+      value: 0
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -270,7 +270,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.75
+      value: 0
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -399,7 +399,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.75
+      value: 0
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -465,7 +465,7 @@ Transform:
   m_GameObject: {fileID: 8299158433045992876}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1095.0245, y: 690.4803, z: 96.9369}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
