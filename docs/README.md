@@ -30,7 +30,7 @@
 - [CCCテスト仕様](./requirements/testing/acceptance-specification.md) — テスト仕様
 
 ### アーキテクチャ・クラス設計
-モジュール間の依存方向、クラスの境界、画面遷移、UIコンポーネント、およびAudio実装境界に関する設計書。
+モジュール間の依存方向、クラスの境界、画面遷移、UIコンポーネント、Audio実装境界、およびLog・診断出力に関する設計書。
 
 - [CCC Unityクラス設計](./architecture/unity-class-design.md) — クラス設計
 - [CCC実装における設計原則](./architecture/design-principles.md) — 設計原則
@@ -39,6 +39,8 @@
 - [CCC Unity画面遷移クラス設計](./architecture/presentation/scene-navigation.md) — クラス設計
 - [UIコンポーネントクラス設計](./architecture/presentation/ui-components.md) — クラス設計
 - [CCC UnityAudioクラス設計](./architecture/infrastructure/audio.md) — クラス設計
+- [CCC Log・診断出力クラス設計](./architecture/infrastructure/logging.md) — クラス設計
+- [Mission抽選シミュレーション設計](./architecture/tools/mission-draw-simulation.md) — クラス設計
 
 ### プロジェクト規約
 ディレクトリ構造、ファイル配置、および命名規則に関する開発者向けガイドライン。

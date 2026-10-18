@@ -99,7 +99,7 @@ namespace Ccc.Bootstrap
             {
                 try
                 {
-                    preparationSettings = CreateCatalogPreparationSettings(configEntry);
+                    preparationSettings = configEntry.CreateCatalogPreparationSettings(_config);
                 }
                 catch (Exception exception)
                 {
@@ -223,50 +223,15 @@ namespace Ccc.Bootstrap
             }
         }
 
-        private MissionCatalogPreparationSettings CreateCatalogPreparationSettings(
-            GameplayConfigEntry configEntry)
-        {
-            MissionParameterGenerationSettings generationSettings =
-                configEntry.MissionParameterGenerationProfileAsset
-                    .CreateGenerationSettings();
-            MissionCatalogEvaluationPolicy evaluationPolicy =
-                configEntry.MissionParameterGenerationProfileAsset
-                    .CreateEvaluationPolicy(_config);
-            switch (configEntry.MissionParameterSourceMode)
-            {
-                case MissionParameterSourceMode.Automatic:
-                    return MissionCatalogPreparationSettings.CreateAutomatic(
-                        generationSettings,
-                        evaluationPolicy);
-                case MissionParameterSourceMode.PresetDebug:
-                    return MissionCatalogPreparationSettings.CreatePresetDebug(
-                        generationSettings,
-                        evaluationPolicy,
-                        configEntry.MissionPresetAsset.CreateCandidates());
-                default:
-                    throw new ArgumentOutOfRangeException(
-                        nameof(configEntry.MissionParameterSourceMode),
-                        configEntry.MissionParameterSourceMode,
-                        null);
-            }
-        }
-
         private static void ValidateRequest(
             NavigationGameplayStartRequest request,
             ICollection<string> errors)
         {
             if (request.GameMode !=
-                Ccc.Presentation.Navigation.GameMode.LifeEndless)
+                GameMode.LifeEndless)
             {
                 errors.Add(
                     $"Unsupported gameplay mode: {request.GameMode}.");
-            }
-
-            if (request.Difficulty !=
-                Ccc.Presentation.Navigation.GameDifficulty.Normal)
-            {
-                errors.Add(
-                    $"Unsupported gameplay difficulty: {request.Difficulty}.");
             }
         }
 
@@ -294,7 +259,7 @@ namespace Ccc.Bootstrap
                 _countdownView.ShowCountdown(remainingSeconds);
                 if (remainingSeconds == CountdownStartSeconds)
                 {
-                    _audio.PlaySE(AudioKey.SeCuntdown);
+                    _audio.PlaySE(AudioKey.SECountdown);
                 }
 
                 await UniTask.Delay(
@@ -312,8 +277,8 @@ namespace Ccc.Bootstrap
 
             CoreGameplayStartRequest sessionRequest =
                 new CoreGameplayStartRequest(
-                    ConvertGameMode(_startContext.Request.GameMode),
-                    ConvertDifficulty(_startContext.Request.Difficulty),
+                    _startContext.Request.GameMode,
+                    _startContext.Request.Difficulty,
                     preparationSettings);
             GameplayStartResult startResult = _flow.StartSession(sessionRequest);
             if (!startResult.IsSuccess)
@@ -338,37 +303,6 @@ namespace Ccc.Bootstrap
             _countdownView.SetInputEnabled(false);
             _presenter.Dispose();
             _view.ShowFatalError($"Gameplay startup failed: {exception.Message}");
-        }
-
-        private static Ccc.Core.Model.GameMode ConvertGameMode(
-            Ccc.Presentation.Navigation.GameMode gameMode)
-        {
-            switch (gameMode)
-            {
-                case Ccc.Presentation.Navigation.GameMode.LifeEndless:
-                    return Ccc.Core.Model.GameMode.LifeEndless;
-
-                default:
-                    throw new ArgumentOutOfRangeException(
-                        nameof(gameMode),
-                        gameMode,
-                        null);
-            }
-        }
-        private static Ccc.Core.Model.GameDifficulty ConvertDifficulty(
-            Ccc.Presentation.Navigation.GameDifficulty difficulty)
-        {
-            switch (difficulty)
-            {
-                case Ccc.Presentation.Navigation.GameDifficulty.Normal:
-                    return Ccc.Core.Model.GameDifficulty.Normal;
-
-                default:
-                    throw new ArgumentOutOfRangeException(
-                        nameof(difficulty),
-                        difficulty,
-                        null);
-            }
         }
     }
 }

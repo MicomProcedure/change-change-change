@@ -13,16 +13,22 @@ namespace Ccc.Core.UseCases
     public sealed class FullMissionDrawStrategy : IMissionDrawStrategy
     {
         private readonly MissionDrawSelectionModule _selectionModule;
+        private readonly IDiagnosticsReporter<MissionDrawTrace> _diagnosticsReporter;
 
         /// <summary>
-        /// 乱数提供元から本実装版Strategyを生成します。
+        /// 乱数提供元と診断Reporterから本実装版Strategyを生成します。
         /// </summary>
         /// <param name="randomSource">0以上1未満の乱数提供元。</param>
-        /// <exception cref="ArgumentNullException">乱数提供元がnullの場合。</exception>
-        public FullMissionDrawStrategy(IRandomSource randomSource)
+        /// <param name="diagnosticsReporter">抽選成功時のTraceを受け取る診断Reporter。</param>
+        /// <exception cref="ArgumentNullException">乱数提供元または診断Reporterがnullの場合。</exception>
+        public FullMissionDrawStrategy(
+            IRandomSource randomSource,
+            IDiagnosticsReporter<MissionDrawTrace> diagnosticsReporter)
         {
             _selectionModule = new MissionDrawSelectionModule(
                 randomSource ?? throw new ArgumentNullException(nameof(randomSource)));
+            _diagnosticsReporter = diagnosticsReporter ??
+                throw new ArgumentNullException(nameof(diagnosticsReporter));
         }
 
         /// <summary>
@@ -58,17 +64,19 @@ namespace Ccc.Core.UseCases
                         "Negated mission selection is disabled and no positive candidates are available.");
                 }
 
+                int currentTier = TierResolver.ResolveCurrentTier(context.Section, config);
                 if (!TrySelectCurrentExpressionCandidates(
                         context,
                         enabledCandidates,
-                        out IReadOnlyList<MissionCandidate> currentExpressionCandidates,
+                        currentTier,
+                        out CurrentExpressionSelection expressionSelection,
                         out string currentExpressionFailure))
                 {
                     return MissionDrawResult.Failure(currentExpressionFailure);
                 }
 
                 if (!_selectionModule.TrySelectTierCandidates(
-                        currentExpressionCandidates,
+                        expressionSelection.SelectedCandidates,
                         context.Section,
                         config,
                         shouldSelectSpecificLowerTierWhenCurrentTierIsUnavailable: true,
@@ -99,10 +107,13 @@ namespace Ccc.Core.UseCases
                     return MissionDrawResult.Failure(kindFailure);
                 }
 
-                IReadOnlyList<MissionCandidate> closestCandidates = SelectClosestCandidates(
+                IReadOnlyList<MissionCandidate> rankedCandidates = RankCandidatesByTargetMatchRatio(
                     selectedKindCandidates,
-                    config.TargetExpressionMatchRatio,
-                    config.MissionParameterSelectionPoolSize);
+                    config.TargetExpressionMatchRatio);
+                IReadOnlyList<MissionCandidate> closestCandidates = rankedCandidates
+                    .Take(config.MissionParameterSelectionPoolSize)
+                    .ToArray();
+
                 if (!_selectionModule.TrySelectCandidate(
                         closestCandidates,
                         "target match ratio candidate",
@@ -110,6 +121,29 @@ namespace Ccc.Core.UseCases
                         out string candidateFailure))
                 {
                     return MissionDrawResult.Failure(candidateFailure);
+                }
+
+                if (_diagnosticsReporter.IsEnabled)
+                {
+                    _diagnosticsReporter.Report(new MissionDrawTrace(
+                        section: context.Section,
+                        isInitialDraw: context.IsInitialDraw,
+                        currentTier: currentTier,
+                        config: config,
+                        enabledCandidateCount: enabledCandidates.Length,
+                        unlockedCandidateCount: expressionSelection.UnlockedCandidateCount,
+                        satisfiedCandidateCount: expressionSelection.SatisfiedCandidateCount,
+                        unmatchedCandidateCount: expressionSelection.UnmatchedCandidateCount,
+                        selectedExpressionGroup: expressionSelection.SelectedGroup,
+                        selectedTier: selectedTierCandidates[0].Tier,
+                        tierStageCandidateCount: selectedTierCandidates.Count,
+                        isNegatedPolaritySelected: selectedPolarityCandidates[0].Condition.IsNegated,
+                        polarityStageCandidateCount: selectedPolarityCandidates.Count,
+                        repeatFilteredCandidateCount: repeatFilteredCandidates.Count,
+                        selectedKind: selectedKindCandidates[0].Condition.Kind,
+                        rankedCandidates: rankedCandidates,
+                        poolSize: closestCandidates.Count,
+                        selectedCandidate: selectedCandidate));
                 }
 
                 return MissionDrawResult.Success(selectedCandidate);
@@ -124,20 +158,23 @@ namespace Ccc.Core.UseCases
         private bool TrySelectCurrentExpressionCandidates(
             MissionDrawContext context,
             IReadOnlyList<MissionCandidate> enabledCandidates,
-            out IReadOnlyList<MissionCandidate> selectedCandidates,
+            int currentTier,
+            out CurrentExpressionSelection selection,
             out string failureMessage)
         {
-            selectedCandidates = Array.Empty<MissionCandidate>();
+            selection = default;
             failureMessage = null;
-            int currentTier = TierResolver.ResolveCurrentTier(
-                context.Section,
-                context.SessionContext.Config);
             MissionCandidate[] unlockedCandidates = enabledCandidates
                 .Where(candidate => candidate.Tier <= currentTier)
                 .ToArray();
             if (context.IsInitialDraw)
             {
-                selectedCandidates = unlockedCandidates;
+                selection = new CurrentExpressionSelection(
+                    unlockedCandidates,
+                    unlockedCandidates.Length,
+                    satisfiedCandidateCount: 0,
+                    unmatchedCandidateCount: 0,
+                    CurrentExpressionCandidateGroup.AllUnlocked);
                 return true;
             }
 
@@ -160,13 +197,26 @@ namespace Ccc.Core.UseCases
                 }
             }
 
-            return _selectionModule.TrySelectCandidateGroupByRatio(
-                satisfiedCandidates,
-                unmatchedCandidates,
-                context.SessionContext.Config.CurrentExpressionSatisfiedMissionSelectionRatio,
-                "current expression satisfaction",
-                out selectedCandidates,
-                out failureMessage);
+            if (!_selectionModule.TrySelectCandidateGroupByRatio(
+                    satisfiedCandidates,
+                    unmatchedCandidates,
+                    context.SessionContext.Config.CurrentExpressionSatisfiedMissionSelectionRatio,
+                    "current expression satisfaction",
+                    out IReadOnlyList<MissionCandidate> selectedCandidates,
+                    out failureMessage))
+            {
+                return false;
+            }
+
+            selection = new CurrentExpressionSelection(
+                selectedCandidates,
+                unlockedCandidates.Length,
+                satisfiedCandidates.Count,
+                unmatchedCandidates.Count,
+                ReferenceEquals(selectedCandidates, satisfiedCandidates)
+                    ? CurrentExpressionCandidateGroup.Satisfied
+                    : CurrentExpressionCandidateGroup.Unmatched);
+            return true;
         }
 
         private static IReadOnlyList<MissionCandidate> ExcludePreviousConditionWhenAlternativeExists(
@@ -187,10 +237,9 @@ namespace Ccc.Core.UseCases
             return alternatives.Length > 0 ? alternatives : candidates;
         }
 
-        private static IReadOnlyList<MissionCandidate> SelectClosestCandidates(
+        private static IReadOnlyList<MissionCandidate> RankCandidatesByTargetMatchRatio(
             IReadOnlyList<MissionCandidate> candidates,
-            float targetExpressionMatchRatio,
-            int selectionPoolSize)
+            float targetExpressionMatchRatio)
         {
             return candidates
                 .Select((candidate, catalogOrder) => new
@@ -202,9 +251,35 @@ namespace Ccc.Core.UseCases
                 })
                 .OrderBy(entry => entry.Difference)
                 .ThenBy(entry => entry.CatalogOrder)
-                .Take(selectionPoolSize)
                 .Select(entry => entry.Candidate)
                 .ToArray();
+        }
+
+        private readonly struct CurrentExpressionSelection
+        {
+            public CurrentExpressionSelection(
+                IReadOnlyList<MissionCandidate> selectedCandidates,
+                int unlockedCandidateCount,
+                int satisfiedCandidateCount,
+                int unmatchedCandidateCount,
+                CurrentExpressionCandidateGroup selectedGroup)
+            {
+                SelectedCandidates = selectedCandidates;
+                UnlockedCandidateCount = unlockedCandidateCount;
+                SatisfiedCandidateCount = satisfiedCandidateCount;
+                UnmatchedCandidateCount = unmatchedCandidateCount;
+                SelectedGroup = selectedGroup;
+            }
+
+            public IReadOnlyList<MissionCandidate> SelectedCandidates { get; }
+
+            public int UnlockedCandidateCount { get; }
+
+            public int SatisfiedCandidateCount { get; }
+
+            public int UnmatchedCandidateCount { get; }
+
+            public CurrentExpressionCandidateGroup SelectedGroup { get; }
         }
     }
 }

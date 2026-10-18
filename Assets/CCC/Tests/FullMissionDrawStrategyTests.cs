@@ -86,7 +86,7 @@ namespace Ccc.Tests
         public void DrawInitialMission_ShouldNotFilterSatisfiedCandidate()
         {
             var randomSource = new SequenceRandomSource(0d);
-            var strategy = new FullMissionDrawStrategy(randomSource);
+            var strategy = CreateStrategy(randomSource);
             var candidates = new[]
             {
                 CreateCandidate(MissionCondition.Create(MissionKind.Even)),
@@ -108,7 +108,7 @@ namespace Ccc.Tests
         public void DrawNextMission_ShouldSelectUnmatchedCandidateOutsideConfiguredRatio()
         {
             var randomSource = new SequenceRandomSource(0.10d);
-            var strategy = new FullMissionDrawStrategy(randomSource);
+            var strategy = CreateStrategy(randomSource);
             var candidates = new[]
             {
                 CreateCandidate(MissionCondition.Create(MissionKind.Even)),
@@ -132,7 +132,7 @@ namespace Ccc.Tests
         public void DrawNextMission_ShouldSelectSatisfiedCandidateWithinConfiguredRatio()
         {
             var randomSource = new SequenceRandomSource(0.09d);
-            var strategy = new FullMissionDrawStrategy(randomSource);
+            var strategy = CreateStrategy(randomSource);
             var satisfiedCandidate = CreateCandidate(
                 MissionCondition.Create(MissionKind.Even));
             var candidates = new[]
@@ -158,7 +158,7 @@ namespace Ccc.Tests
         public void DrawNextMission_ShouldUseConfiguredSatisfiedMissionSelectionRatio()
         {
             var randomSource = new SequenceRandomSource(0.24d);
-            var strategy = new FullMissionDrawStrategy(randomSource);
+            var strategy = CreateStrategy(randomSource);
             var satisfiedCandidate = CreateCandidate(
                 MissionCondition.Create(MissionKind.Even));
             GameplayConfig config = CreateConfig(
@@ -186,7 +186,7 @@ namespace Ccc.Tests
         public void DrawNextMission_WhenSatisfiedSelectionRatioIsZero_ShouldSelectUnmatchedWithoutRandom()
         {
             var randomSource = new SequenceRandomSource();
-            var strategy = new FullMissionDrawStrategy(randomSource);
+            var strategy = CreateStrategy(randomSource);
             var unmatchedCandidate = CreateCandidate(
                 MissionCondition.Create(MissionKind.Odd));
             GameplayConfig config = CreateConfig(
@@ -214,7 +214,7 @@ namespace Ccc.Tests
         public void DrawNextMission_WhenSatisfiedSelectionRatioIsOne_ShouldSelectSatisfiedWithoutRandom()
         {
             var randomSource = new SequenceRandomSource();
-            var strategy = new FullMissionDrawStrategy(randomSource);
+            var strategy = CreateStrategy(randomSource);
             var satisfiedCandidate = CreateCandidate(
                 MissionCondition.Create(MissionKind.Even));
             GameplayConfig config = CreateConfig(
@@ -241,7 +241,7 @@ namespace Ccc.Tests
         [Test]
         public void DrawNextMission_WhenOnlySatisfiedCandidateExists_ShouldSelectItWithoutRandom()
         {
-            var strategy = new FullMissionDrawStrategy(new SequenceRandomSource());
+            var strategy = CreateStrategy(new SequenceRandomSource());
             var candidate = CreateCandidate(MissionCondition.Create(MissionKind.Even));
 
             MissionDrawResult result = strategy.Draw(CreateNextContext(
@@ -259,7 +259,7 @@ namespace Ccc.Tests
         [Test]
         public void DrawNextMission_ShouldIgnoreLockedTierWhenPartitioningByCurrentExpression()
         {
-            var strategy = new FullMissionDrawStrategy(new SequenceRandomSource());
+            var strategy = CreateStrategy(new SequenceRandomSource());
             var unlockedSatisfiedCandidate = CreateCandidate(
                 MissionCondition.Create(MissionKind.Even),
                 tier: 1);
@@ -283,7 +283,7 @@ namespace Ccc.Tests
         [Test]
         public void DrawNextMission_ShouldTreatUndefinedExpressionAsUnmatchedForNegatedCandidate()
         {
-            var strategy = new FullMissionDrawStrategy(new SequenceRandomSource());
+            var strategy = CreateStrategy(new SequenceRandomSource());
             var negatedCandidate = CreateCandidate(
                 MissionCondition.Create(MissionKind.Even, isNegated: true));
 
@@ -303,7 +303,7 @@ namespace Ccc.Tests
         public void Draw_ShouldSelectNegatedCandidateByConfiguredWeight()
         {
             var randomSource = new SequenceRandomSource(0.70d);
-            var strategy = new FullMissionDrawStrategy(randomSource);
+            var strategy = CreateStrategy(randomSource);
             var candidates = new[]
             {
                 CreateCandidate(MissionCondition.Create(MissionKind.Even)),
@@ -325,7 +325,7 @@ namespace Ccc.Tests
         public void Draw_ShouldSelectLowerTierByConfiguredWeight()
         {
             var randomSource = new SequenceRandomSource(0.70d);
-            var strategy = new FullMissionDrawStrategy(randomSource);
+            var strategy = CreateStrategy(randomSource);
             var candidates = new[]
             {
                 CreateCandidate(MissionCondition.Create(MissionKind.Odd), tier: 1),
@@ -347,7 +347,7 @@ namespace Ccc.Tests
         public void Draw_WhenCurrentTierHasNoCandidate_ShouldSelectAvailableLowerTierUniformly()
         {
             var randomSource = new SequenceRandomSource(0.99d);
-            var strategy = new FullMissionDrawStrategy(randomSource);
+            var strategy = CreateStrategy(randomSource);
             var candidates = new[]
             {
                 CreateCandidate(MissionCondition.Create(MissionKind.Even), tier: 1),
@@ -368,7 +368,7 @@ namespace Ccc.Tests
         [Test]
         public void Draw_ShouldFailWhenOnlyNegatedCandidatesExistAndWeightIsZero()
         {
-            var strategy = new FullMissionDrawStrategy(new SequenceRandomSource());
+            var strategy = CreateStrategy(new SequenceRandomSource());
             var candidates = new[]
             {
                 CreateCandidate(MissionCondition.Create(MissionKind.Even, isNegated: true))
@@ -389,7 +389,7 @@ namespace Ccc.Tests
         public void Draw_WhenNegatedWeightIsZero_ShouldSelectOnlyPositiveCandidate()
         {
             var randomSource = new SequenceRandomSource();
-            var strategy = new FullMissionDrawStrategy(randomSource);
+            var strategy = CreateStrategy(randomSource);
             var positiveCandidate = CreateCandidate(MissionCondition.Create(MissionKind.Even));
             var candidates = new[]
             {
@@ -412,7 +412,7 @@ namespace Ccc.Tests
         [Test]
         public void DrawNextMission_ShouldExcludePreviousConditionWhenAlternativeExists()
         {
-            var strategy = new FullMissionDrawStrategy(new SequenceRandomSource());
+            var strategy = CreateStrategy(new SequenceRandomSource());
             var evenCandidate = CreateCandidate(MissionCondition.Create(MissionKind.Even));
             var oddCandidate = CreateCandidate(MissionCondition.Create(MissionKind.Odd));
 
@@ -431,7 +431,7 @@ namespace Ccc.Tests
         [Test]
         public void DrawNextMission_ShouldKeepPreviousConditionWhenNoAlternativeExists()
         {
-            var strategy = new FullMissionDrawStrategy(new SequenceRandomSource());
+            var strategy = CreateStrategy(new SequenceRandomSource());
             var candidate = CreateCandidate(MissionCondition.Create(MissionKind.Even));
 
             MissionDrawResult result = strategy.Draw(CreateNextContext(
@@ -449,7 +449,7 @@ namespace Ccc.Tests
         [Test]
         public void DrawNextMission_ShouldTreatDifferentNegatedStateAsDifferentCondition()
         {
-            var strategy = new FullMissionDrawStrategy(new SequenceRandomSource());
+            var strategy = CreateStrategy(new SequenceRandomSource());
             var negatedCandidate = CreateCandidate(
                 MissionCondition.Create(MissionKind.Even, isNegated: true));
 
@@ -469,7 +469,7 @@ namespace Ccc.Tests
         public void Draw_ShouldSelectFromCandidatesClosestToTargetMatchRatio()
         {
             var randomSource = new SequenceRandomSource(0.99d);
-            var strategy = new FullMissionDrawStrategy(randomSource);
+            var strategy = CreateStrategy(randomSource);
             var candidates = new[]
             {
                 CreateCandidate(MissionCondition.Create(MissionKind.Exact, 1), matchCount: 1, evaluatedCount: 10),
@@ -495,7 +495,7 @@ namespace Ccc.Tests
         [Test]
         public void Draw_ShouldFailWhenRandomSourceReturnsOutOfRangeValue()
         {
-            var strategy = new FullMissionDrawStrategy(new SequenceRandomSource(1d));
+            var strategy = CreateStrategy(new SequenceRandomSource(1d));
             var candidates = new[]
             {
                 CreateCandidate(MissionCondition.Create(MissionKind.Even)),
@@ -515,7 +515,7 @@ namespace Ccc.Tests
         [Test]
         public void Draw_ShouldFailWhenNoCandidateExistsInUnlockedTier()
         {
-            var strategy = new FullMissionDrawStrategy(new SequenceRandomSource());
+            var strategy = CreateStrategy(new SequenceRandomSource());
             var candidates = new[]
             {
                 CreateCandidate(MissionCondition.Create(MissionKind.Even), tier: 2)
@@ -535,7 +535,7 @@ namespace Ccc.Tests
         public void Draw_ShouldConsumeSamplesInFullSelectionOrder()
         {
             var randomSource = new SequenceRandomSource(0.20d, 0.10d, 0.99d, 0.99d);
-            var strategy = new FullMissionDrawStrategy(randomSource);
+            var strategy = CreateStrategy(randomSource);
             var candidates = new[]
             {
                 CreateCandidate(MissionCondition.Create(MissionKind.Odd), tier: 1),
@@ -583,8 +583,8 @@ namespace Ccc.Tests
             var firstRandomSource = new SequenceRandomSource(0.75d);
             var secondRandomSource = new SequenceRandomSource(0.75d);
 
-            MissionDrawResult firstResult = new FullMissionDrawStrategy(firstRandomSource).Draw(context);
-            MissionDrawResult secondResult = new FullMissionDrawStrategy(secondRandomSource).Draw(context);
+            MissionDrawResult firstResult = CreateStrategy(firstRandomSource).Draw(context);
+            MissionDrawResult secondResult = CreateStrategy(secondRandomSource).Draw(context);
 
             Assert.That(firstResult.IsSuccess, Is.True);
             Assert.That(secondResult.IsSuccess, Is.True);
@@ -607,7 +607,7 @@ namespace Ccc.Tests
                 config,
                 new ExpressionInput(config),
                 timer,
-                new FullMissionDrawStrategy(randomSource));
+                CreateStrategy(randomSource));
             using IDisposable subscription = controller.States.Subscribe(states.Add);
             MissionParameterCandidate[] candidates =
             {
@@ -759,6 +759,178 @@ namespace Ccc.Tests
                 () => CreateConfig(missionParameterSelectionPoolSize: 0));
         }
 
+        /// <summary>
+        /// 診断Reporterが有効な場合に、各段階の選定結果と順位をTraceとして1回報告することを検証します。
+        /// </summary>
+        [Test]
+        public void Draw_WhenDiagnosticsEnabled_ShouldReportEveryStageOfTheDraw()
+        {
+            var randomSource = new SequenceRandomSource(0.20d, 0.10d, 0.99d, 0.99d);
+            var reporter = new RecordingDiagnosticsReporter(isEnabled: true);
+            var strategy = CreateStrategy(randomSource, reporter);
+            MissionCandidate closestCandidate = CreateCandidate(
+                MissionCondition.Create(MissionKind.Exact, 1),
+                tier: 2,
+                matchCount: 2,
+                evaluatedCount: 10);
+            MissionCandidate secondCandidate = CreateCandidate(
+                MissionCondition.Create(MissionKind.Exact, 2),
+                tier: 2,
+                matchCount: 3,
+                evaluatedCount: 10);
+            var candidates = new[]
+            {
+                CreateCandidate(MissionCondition.Create(MissionKind.Odd), tier: 1),
+                CreateCandidate(MissionCondition.Create(MissionKind.Even), tier: 2),
+                CreateCandidate(
+                    MissionCondition.Create(MissionKind.Odd, isNegated: true),
+                    tier: 2),
+                closestCandidate,
+                secondCandidate
+            };
+
+            MissionDrawResult result = strategy.Draw(
+                MissionDrawContext.CreateForInitialMission(CreateSessionContext(candidates), 4));
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(reporter.Traces, Has.Count.EqualTo(1));
+            MissionDrawTrace trace = reporter.Traces[0];
+            Assert.That(trace.Section, Is.EqualTo(4));
+            Assert.That(trace.IsInitialDraw, Is.True);
+            Assert.That(trace.CurrentTier, Is.EqualTo(2));
+            Assert.That(trace.EnabledCandidateCount, Is.EqualTo(5));
+            Assert.That(trace.UnlockedCandidateCount, Is.EqualTo(5));
+            Assert.That(trace.SelectedExpressionGroup, Is.EqualTo(CurrentExpressionCandidateGroup.AllUnlocked));
+            Assert.That(trace.ExpressionStageCandidateCount, Is.EqualTo(5));
+            Assert.That(trace.SelectedTier, Is.EqualTo(2));
+            Assert.That(trace.TierStageCandidateCount, Is.EqualTo(4));
+            Assert.That(trace.IsNegatedPolaritySelected, Is.False);
+            Assert.That(trace.PolarityStageCandidateCount, Is.EqualTo(3));
+            Assert.That(trace.RepeatFilteredCandidateCount, Is.EqualTo(3));
+            Assert.That(trace.SelectedKind, Is.EqualTo(MissionKind.Exact));
+            Assert.That(trace.RankedCandidates, Is.EqualTo(new[] { closestCandidate, secondCandidate }));
+            Assert.That(trace.PoolSize, Is.EqualTo(2));
+            Assert.That(trace.SelectedCandidate, Is.SameAs(result.Candidate));
+            Assert.That(trace.SelectedRank, Is.EqualTo(2));
+        }
+
+        /// <summary>
+        /// 診断Reporterの有効状態が抽選結果と乱数消費順を変えないことを検証します。
+        /// </summary>
+        [Test]
+        public void Draw_WhenDiagnosticsEnabled_ShouldKeepResultAndSampleConsumption()
+        {
+            var candidates = new[]
+            {
+                CreateCandidate(MissionCondition.Create(MissionKind.Even)),
+                CreateCandidate(MissionCondition.Create(MissionKind.Odd))
+            };
+            MissionDrawContext context = MissionDrawContext.CreateForInitialMission(
+                CreateSessionContext(candidates),
+                1);
+            var disabledRandomSource = new SequenceRandomSource(0.75d);
+            var enabledRandomSource = new SequenceRandomSource(0.75d);
+
+            MissionDrawResult disabledResult = CreateStrategy(disabledRandomSource).Draw(context);
+            MissionDrawResult enabledResult = CreateStrategy(
+                enabledRandomSource,
+                new RecordingDiagnosticsReporter(isEnabled: true)).Draw(context);
+
+            Assert.That(enabledResult.Candidate, Is.SameAs(disabledResult.Candidate));
+            Assert.That(enabledRandomSource.ConsumedSamples, Is.EqualTo(disabledRandomSource.ConsumedSamples));
+        }
+
+        /// <summary>
+        /// 診断Reporterが無効な場合にTraceを報告しないことを検証します。
+        /// </summary>
+        [Test]
+        public void Draw_WhenDiagnosticsDisabled_ShouldNotReportTrace()
+        {
+            var reporter = new RecordingDiagnosticsReporter(isEnabled: false);
+            var strategy = CreateStrategy(new SequenceRandomSource(0d), reporter);
+            var candidates = new[]
+            {
+                CreateCandidate(MissionCondition.Create(MissionKind.Even)),
+                CreateCandidate(MissionCondition.Create(MissionKind.Odd))
+            };
+
+            MissionDrawResult result = strategy.Draw(
+                MissionDrawContext.CreateForInitialMission(CreateSessionContext(candidates), 1));
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(reporter.Traces, Is.Empty);
+        }
+
+        /// <summary>
+        /// 次回抽選のTraceが現在式による達成群と未達成群の件数、および選ばれた群を保持することを検証します。
+        /// </summary>
+        [Test]
+        public void DrawNextMission_WhenDiagnosticsEnabled_ShouldReportCurrentExpressionGroups()
+        {
+            var reporter = new RecordingDiagnosticsReporter(isEnabled: true);
+            var strategy = CreateStrategy(new SequenceRandomSource(0.09d), reporter);
+            var candidates = new[]
+            {
+                CreateCandidate(MissionCondition.Create(MissionKind.Even)),
+                CreateCandidate(MissionCondition.Create(MissionKind.Odd)),
+                CreateCandidate(MissionCondition.Create(MissionKind.Prime))
+            };
+
+            MissionDrawResult result = strategy.Draw(CreateNextContext(
+                candidates,
+                new Expression(1, OperatorType.Add, 3),
+                CreateMission(MissionCondition.Create(MissionKind.Exact, 9))));
+
+            Assert.That(result.IsSuccess, Is.True);
+            MissionDrawTrace trace = reporter.Traces.Single();
+            Assert.That(trace.IsInitialDraw, Is.False);
+            Assert.That(trace.SatisfiedCandidateCount, Is.EqualTo(1));
+            Assert.That(trace.UnmatchedCandidateCount, Is.EqualTo(2));
+            Assert.That(trace.SelectedExpressionGroup, Is.EqualTo(CurrentExpressionCandidateGroup.Satisfied));
+            Assert.That(trace.ExpressionStageCandidateCount, Is.EqualTo(1));
+        }
+
+        /// <summary>
+        /// 抽選TraceがPool外の候補を選出候補として受け付けないことを検証します。
+        /// </summary>
+        [Test]
+        public void MissionDrawTrace_ShouldRejectSelectedCandidateOutsidePool()
+        {
+            MissionCandidate pooledCandidate = CreateCandidate(MissionCondition.Create(MissionKind.Exact, 1));
+            MissionCandidate outsideCandidate = CreateCandidate(MissionCondition.Create(MissionKind.Exact, 2));
+
+            var exception = Assert.Throws<ArgumentException>(() => new MissionDrawTrace(
+                section: 1,
+                isInitialDraw: true,
+                currentTier: 1,
+                config: CreateConfig(),
+                enabledCandidateCount: 2,
+                unlockedCandidateCount: 2,
+                satisfiedCandidateCount: 0,
+                unmatchedCandidateCount: 0,
+                selectedExpressionGroup: CurrentExpressionCandidateGroup.AllUnlocked,
+                selectedTier: 1,
+                tierStageCandidateCount: 2,
+                isNegatedPolaritySelected: false,
+                polarityStageCandidateCount: 2,
+                repeatFilteredCandidateCount: 2,
+                selectedKind: MissionKind.Exact,
+                rankedCandidates: new[] { pooledCandidate, outsideCandidate },
+                poolSize: 1,
+                selectedCandidate: outsideCandidate));
+
+            Assert.That(exception!.ParamName, Is.EqualTo("selectedCandidate"));
+        }
+
+        private static FullMissionDrawStrategy CreateStrategy(
+            IRandomSource randomSource,
+            IDiagnosticsReporter<MissionDrawTrace>? diagnosticsReporter = null)
+        {
+            return new FullMissionDrawStrategy(
+                randomSource,
+                diagnosticsReporter ?? new RecordingDiagnosticsReporter(isEnabled: false));
+        }
+
         private static MissionDrawContext CreateNextContext(
             IReadOnlyList<MissionCandidate> candidates,
             Expression currentExpression,
@@ -863,6 +1035,35 @@ namespace Ccc.Tests
                 double sample = _samples.Dequeue();
                 ((List<double>)ConsumedSamples).Add(sample);
                 return (float)sample;
+            }
+        }
+
+        private sealed class RecordingDiagnosticsReporter : IDiagnosticsReporter<MissionDrawTrace>
+        {
+            private readonly List<MissionDrawTrace> _traces = new List<MissionDrawTrace>();
+
+            public RecordingDiagnosticsReporter(bool isEnabled)
+            {
+                IsEnabled = isEnabled;
+            }
+
+            /// <summary>
+            /// 生成時に指定された有効状態を取得します。
+            /// </summary>
+            public bool IsEnabled { get; }
+
+            /// <summary>
+            /// 報告されたTraceを報告順に取得します。
+            /// </summary>
+            public IReadOnlyList<MissionDrawTrace> Traces => _traces;
+
+            /// <summary>
+            /// 報告されたTraceを記録します。
+            /// </summary>
+            /// <param name="trace">記録するTrace。</param>
+            public void Report(MissionDrawTrace trace)
+            {
+                _traces.Add(trace);
             }
         }
 

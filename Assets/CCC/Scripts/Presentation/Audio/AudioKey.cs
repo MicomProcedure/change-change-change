@@ -22,7 +22,7 @@ namespace Ccc.Presentation.Audio
         BgmGameplayDifficult = 103,
 
         SECancelClick = 207,
-        SeCuntdown = 208,
+        SECountdown = 208,
         SEHizimere = 209,
     }
 }

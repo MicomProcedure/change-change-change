@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.Assets.GameplayConfigEntry
   displayName: Life-Endless Normal
   gameMode: 0
-  difficulty: 0
+  difficulty: 1
   gameplayConfigAsset: {fileID: 11400000, guid: 25081134d817a4299ae7d9065497d583, type: 2}
   missionParameterSourceMode: 0
   missionParameterGenerationProfileAsset: {fileID: 11400000, guid: c67ec2046f8a447db0f07017e360216d, type: 2}

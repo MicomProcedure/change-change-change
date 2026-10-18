@@ -43,6 +43,7 @@ namespace Ccc.Presentation
         private bool _isStarted;
         private bool _isDisposed;
         private bool _isNavigationInProgress;
+        private int _timerSection;
 
         /// <summary>
         /// GameplayPresenterを生成します。
@@ -201,6 +202,7 @@ namespace Ccc.Presentation
             if (isMissionChanged)
             {
                 _hasTimerSnapshot = false;
+                _timerSection = state.Section;
                 StopTimeWarning();
             }
 
@@ -361,6 +363,9 @@ namespace Ccc.Presentation
                 ? (float)timerSnapshot.Value.RemainingTime.TotalSeconds
                 : 0f;
 
+            TimeSpan sectionDuration = _gameplayConfig.Timer.GetDuration(_timerSection);
+            float sectionDurationSeconds = (float)sectionDuration.TotalSeconds;
+
             return new GameplayViewStateDto(
                 _gameplayRequest.GameMode.ToString(),
                 _gameplayRequest.Difficulty.ToString(),
@@ -373,6 +378,7 @@ namespace Ccc.Presentation
                 answerText,
                 hasRemainingTime,
                 remainingSeconds,
+                sectionDurationSeconds,
                 false,
                 gameplayState.IsAcceptingSubmit);
         }

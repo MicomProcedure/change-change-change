@@ -7,7 +7,10 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 using VContainer;
+using Ccc.Core.Model;
 using Ccc.Presentation;
+using Ccc.Infrastructure.UI;
+using Ccc.Presentation.UI;
 
 namespace Ccc.Infrastructure.Navigation
 {
@@ -36,6 +39,13 @@ namespace Ccc.Infrastructure.Navigation
         [SerializeField] private Button _openCreditButton;
         [SerializeField] private Button _closeCreditButton;
 
+        [Header("難易度選択")]
+        [SerializeField] private CycleSelectorView _difficultySelectorView;
+
+        [Header("音量設定")]
+        [SerializeField] private CycleSelectorView _seVolumeSelectorView;
+        [SerializeField] private CycleSelectorView _bgmVolumeSelectorView;
+
         [Header("エラー表示")]
         [SerializeField] private TMP_Text _errorText;
 
@@ -44,12 +54,23 @@ namespace Ccc.Infrastructure.Navigation
         private IDisposable _screenSubscription;
         private IDisposable _busySubscription;
         private IDisposable _errorSubscription;
+        private IDisposable _difficultyChangeSubscription;
+        private IDisposable _difficultySubscription;
+        private OptionMenuModel _optionMenuModel;
+        private IDisposable _seVolumeChangeSubscription;
+        private IDisposable _seVolumeSubscription;
+        private IDisposable _bgmVolumeChangeSubscription;
+        private IDisposable _bgmVolumeSubscription;
         private bool _isInitialized;
 
         [Inject]
-        private void Construct(TitleScreenModel model, IRuntimeMode runtimeMode)
+        private void Construct(
+            TitleScreenModel model,
+            OptionMenuModel optionMenuModel,
+            IRuntimeMode runtimeMode)
         {
             _model = model;
+            _optionMenuModel = optionMenuModel;
             _runtimeMode = runtimeMode;
         }
 
@@ -95,6 +116,24 @@ namespace Ccc.Infrastructure.Navigation
                 _closeCreditButton.onClick.AddListener(_model.CloseCredit);
             }
 
+            if (_difficultySelectorView != null)
+            {
+                _difficultyChangeSubscription =
+                    _difficultySelectorView.ChangeRequested.Subscribe(_ => _model.CycleDifficulty());
+            }
+
+            if (_seVolumeSelectorView != null)
+            {
+                _seVolumeChangeSubscription =
+                    _seVolumeSelectorView.ChangeRequested.Subscribe(_ => _optionMenuModel.CycleSEVolumeLevel());
+            }
+
+            if (_bgmVolumeSelectorView != null)
+            {
+                _bgmVolumeChangeSubscription =
+                    _bgmVolumeSelectorView.ChangeRequested.Subscribe(_ => _optionMenuModel.CycleBgmVolumeLevel());
+            }
+
             _screenSubscription =
                 _model.CurrentScreen.Subscribe(RenderScreen);
 
@@ -103,6 +142,15 @@ namespace Ccc.Infrastructure.Navigation
 
             _errorSubscription =
                 _model.ErrorMessage.Subscribe(RenderErrorMessage);
+
+            _difficultySubscription =
+                _model.SelectedDifficulty.Subscribe(RenderDifficulty);
+            
+            _seVolumeSubscription =
+                _optionMenuModel.SEVolumeLevel.Subscribe(RenderSEVolumeLevel);
+
+            _bgmVolumeSubscription =
+                _optionMenuModel.BgmVolumeLevel.Subscribe(RenderBgmVolumeLevel);
 
             RenderScreen(_model.CurrentScreen.CurrentValue);
             RenderBusyState(_model.IsBusy.CurrentValue);
@@ -116,6 +164,12 @@ namespace Ccc.Infrastructure.Navigation
             _screenSubscription?.Dispose();
             _busySubscription?.Dispose();
             _errorSubscription?.Dispose();
+            _difficultySubscription?.Dispose();
+            _difficultyChangeSubscription?.Dispose();
+            _seVolumeSubscription?.Dispose();
+            _seVolumeChangeSubscription?.Dispose();
+            _bgmVolumeSubscription?.Dispose();
+            _bgmVolumeChangeSubscription?.Dispose();
 
             if (!_isInitialized || _model == null)
             {
@@ -198,6 +252,45 @@ namespace Ccc.Infrastructure.Navigation
             SetInteractableIfAvailable(_closeOptionButton, isInteractable);
             SetInteractableIfAvailable(_openCreditButton, isInteractable);
             SetInteractableIfAvailable(_closeCreditButton, isInteractable);
+            RenderDifficulty(_model.SelectedDifficulty.CurrentValue);
+            RenderSEVolumeLevel(_optionMenuModel.SEVolumeLevel.CurrentValue);
+            RenderBgmVolumeLevel(_optionMenuModel.BgmVolumeLevel.CurrentValue);
+        }
+
+        private void RenderDifficulty(GameDifficulty difficulty)
+        {
+            if (_difficultySelectorView == null)
+            {
+                return;
+            }
+
+            _difficultySelectorView.Render(
+                new CycleSelectorStateDto(
+                    difficulty.ToString(),
+                    !_model.IsBusy.CurrentValue));
+        }
+
+        private void RenderSEVolumeLevel(int volumeLevel)
+        {
+            RenderVolumeLevel(_seVolumeSelectorView, volumeLevel);
+        }
+
+        private void RenderBgmVolumeLevel(int volumeLevel)
+        {
+            RenderVolumeLevel(_bgmVolumeSelectorView, volumeLevel);
+        }
+
+        private void RenderVolumeLevel(CycleSelectorView selectorView, int volumeLevel)
+        {
+            if (selectorView == null)
+            {
+                return;
+            }
+
+            selectorView.Render(
+                new CycleSelectorStateDto(
+                    volumeLevel.ToString(),
+                    !_model.IsBusy.CurrentValue));
         }
 
         private void RenderErrorMessage(string errorMessage)
@@ -228,6 +321,12 @@ namespace Ccc.Infrastructure.Navigation
             if (_model == null)
             {
                 LogMissingReference(nameof(_model));
+                return false;
+            }
+
+            if (_optionMenuModel == null)
+            {
+                LogMissingReference(nameof(_optionMenuModel));
                 return false;
             }
 
@@ -289,6 +388,21 @@ namespace Ccc.Infrastructure.Navigation
             if (_closeCreditButton == null)
             {
                 LogMissingReference(nameof(_closeCreditButton));
+            }
+
+            if (_difficultySelectorView == null)
+            {
+                LogMissingReference(nameof(_difficultySelectorView));
+            }
+
+            if (_seVolumeSelectorView == null)
+            {
+                LogMissingReference(nameof(_seVolumeSelectorView));
+            }
+
+            if (_bgmVolumeSelectorView == null)
+            {
+                LogMissingReference(nameof(_bgmVolumeSelectorView));
             }
 
             if (_errorText == null)

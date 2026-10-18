@@ -153,6 +153,7 @@ public sealed class TitleStartRequest
 ```
 
 - `GameplayStartRequest` は生成後の変更が不可能な不変オブジェクトとする。
+- `GameMode` と `GameDifficulty` は `Ccc.Core.Model` の型を使用し、Presentation 層に同名の型を定義しないこと。
 - MainMenu でのゲーム開始時は `OptionMenuModel.CreateSnapshot()` により設定スナップショットを生成し、`GameplayStartRequest` を構築してシーンロードを開始すること。
 - リトライ実行時は、GameScene の LifetimeScope に保持された同一の `GameplayStartRequest` を再利用すること。
 

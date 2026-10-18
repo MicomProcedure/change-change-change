@@ -27,6 +27,7 @@
     - [5.4 Catalog構築](#54-catalog構築)
     - [5.4.1 具体例](#541-具体例)
     - [5.4.2 受け入れ条件](#542-受け入れ条件)
+    - [5.4.3 Catalog準備](#543-catalog準備)
     - [5.5 Index Selector](#55-index-selector)
       - [5.5.1 所属とファイル](#551-所属とファイル)
       - [5.5.2 公開API](#552-公開api)
@@ -569,6 +570,7 @@ KindごとのswitchをMatcherへ集約し、ReducerとCatalogBuilderに同じ判
 | 候補の統計取得 | `MissionCatalogBuilder`内部の`Analyze` |
 | Catalogへ含める判断 | `ShouldInclude` |
 | Catalog構築 | `MissionCatalogBuilder.Build` |
+| 候補式生成からCatalog構築までの一括準備 | `MissionCatalogPreparer.Prepare` |
 | Catalogからの実行時抽選 | `IMissionDrawStrategy.Draw` |
 | Reducerによる提示確定 | `PresentMissionCommand` |
 | 提示完了Event | `MissionPresentedEvent` |
@@ -660,6 +662,58 @@ AnswerExampleは列挙順で最初に一致したCandidateとすること。同�
 - DivisionByZeroを分析分母に含めないこと。
 - Failure時にCatalogへアクセスできないこと。
 - Unity、乱数Source、時刻、表示文言を参照しないこと。
+
+### 5.4.3 Catalog準備
+
+ファイル：`MissionCatalogPreparer.cs`、`MissionCatalogPreparationResult.cs`（`Ccc.Core` / `Ccc.Core.Logic`）
+
+```csharp
+public enum MissionCatalogPreparationFailureKind
+{
+   None = 0,
+   InvalidConfiguration,
+   CatalogBuildFailed
+}
+
+public sealed class MissionCatalogPreparationResult
+{
+   public bool IsSuccess { get; }
+   public MissionCatalogPreparationFailureKind FailureKind { get; }
+   public string FailureMessage { get; }
+   public MissionCatalog Catalog { get; }
+   public IReadOnlyList<ExpressionCandidate> ExpressionCandidates { get; }
+
+   public static MissionCatalogPreparationResult Success(
+       MissionCatalog catalog,
+       IReadOnlyList<ExpressionCandidate> expressionCandidates);
+   public static MissionCatalogPreparationResult Failure(
+       MissionCatalogPreparationFailureKind failureKind,
+       string failureMessage);
+}
+
+public static class MissionCatalogPreparer
+{
+   public static MissionCatalogPreparationResult Prepare(
+       GameplayConfig config,
+       MissionCatalogPreparationSettings settings);
+}
+```
+
+`Prepare`は次の順に処理すること。Session開始とシミュレーションなど、Catalogを必要とする呼び出し元はこの処理を共有し、個別に構築手順を実装しないこと。
+
+- 1. `config`／`settings`がnullなら`ArgumentNullException`。
+- 2. `ExpressionCandidateGenerator.Generate(config.MinimumNumber, config.MaximumNumber)`で候補式を列挙する。例外は`InvalidConfiguration`とする。
+- 3. `Automatic`は`MissionParameterCandidateGenerator.Generate`で候補を生成し、失敗Resultは`InvalidConfiguration`とする。`PresetDebug`はPreset候補のうち、生成規則が存在して有効で、Negated候補は`GeneratesNegated`の規則だけを残す。未定義の取得経路、および候補準備中の例外は`InvalidConfiguration`とする。
+- 4. `MissionCatalogBuilder.Build`でCatalogを構築する。例外と失敗Resultは`CatalogBuildFailed`とする。
+- 5. 成功時はCatalogと、手順2の候補式一覧を返す。
+
+Result契約は`MissionCatalogBuildResult`に準じる。失敗Resultの`Catalog`／`ExpressionCandidates`アクセスは`InvalidOperationException`、`Failure`へ`None`を渡した場合は`ArgumentException`とすること。
+
+受け入れ条件：
+
+- Preset候補のうち無効Kind、および`GeneratesNegated`でないKindのNegated候補を除外すること。
+- 有効な候補が残らない場合は`CatalogBuildFailed`を返すこと。
+- 成功時の`ExpressionCandidates`がCatalog構築に使った候補式一覧と一致すること。
 
 ### 5.5 Index Selector
 
@@ -1156,18 +1210,24 @@ Candidateの順序はCatalog構築時に`Tier -> MissionKind -> ParameterA -> Pa
 
 `FullMissionDrawStrategy`は同じinterfaceを実装し、本番設定で使用すること。初回は現在式を評価せず、2問目以降はControllerが`ExpressionInput.Current`と直前MissionをContextへ渡すこと。解放済み候補を現在式で達成できる群と達成できない群へ分け、両群が存在する場合は`CurrentExpressionSatisfiedMissionSelectionRatio`の直接確率で一方を選ぶこと。乱数sampleが比率未満なら達成できる群、以上なら達成できない群とする。片方の群しか存在しない場合、および比率0/1で選択先が確定する場合は乱数を消費しないこと。その後、Tier、肯定／Negated、直前Mission、Kind、目標適合率上位候補の順に選定すること。共通のTier・Kind・比率・乱数選定は`MissionDrawSelectionModule`へ集約し、Simple版と共有可能な境界に保つこと。
 
+`FullMissionDrawStrategy`は抽選成功時、`IDiagnosticsReporter<MissionDrawTrace>.IsEnabled`がtrueの場合だけ`MissionDrawTrace`を1回報告すること。Traceには各段階（極性設定による有効候補、Tier解放、現在式の達成群／未達成群、Tier、極性、直前Mission除外、Kind）の候補数と選ばれた値、選択したKindの全候補を目標適合率との差で順位付けした一覧、実際のPool範囲、選出候補を含めること。Strategyは診断の整形、出力件数、出力先を扱わないこと。診断の報告有無は抽選結果、Poolの大きさ、乱数消費を変えないこと。出力側の構成は [CCC Log・診断出力クラス設計](./infrastructure/logging.md) を参照すること。
+
 #### DI
 
-`UnityRandomSource`と製品用StrategyはGameplay Scopeの`Scoped`とする。Strategyより先にRandomを登録すること。
+`UnityRandomSource`、`IDiagnosticsReporter<MissionDrawTrace>`、製品用StrategyはGameplay Scopeの`Scoped`とする。Strategyより先にRandomと診断Reporterを登録すること。診断Reporterの組み立ては`RegisterMissionDrawDiagnostics`へ集約すること。
 
 ```csharp
 builder.Register<IRandomSource, UnityRandomSource>(
    Lifetime.Scoped);
+builder.Register<DiagnosticsSessionDescriptor>(
+   resolver => CreateDiagnosticsSessionDescriptor(resolver),
+   Lifetime.Scoped);
+builder.RegisterMissionDrawDiagnostics();
 builder.Register<IMissionDrawStrategy, FullMissionDrawStrategy>(
    Lifetime.Scoped);
 ```
 
-開発確認時だけ2行目を`FixedMissionDrawStrategy`へ差し替えること。同時に複数Strategyを登録しないこと。
+開発確認時だけStrategy登録を`FixedMissionDrawStrategy`へ差し替えること。同時に複数Strategyを登録しないこと。
 
 ### 7.5 Timerのデータフロー
 
@@ -1316,8 +1376,8 @@ constructor引数はnullを拒否すること。Controllerは入力ストリー�
 
 - 1. Dispose済みなら`ObjectDisposedException`。
 - 2. Playing／Transitioning中なら`SessionAlreadyRunning`の失敗Resultを返し、現在Sessionを変更しない。
-- 3. constructorで注入したConfigとRequestからParameter候補を取得する。
-- 4. ExpressionCandidate列挙、Catalog構築、Section 1のDrawを順に実行する。
+- 3. constructorで注入したConfigとRequestの準備設定を`MissionCatalogPreparer.Prepare`へ渡す。準備失敗の`InvalidConfiguration`／`CatalogBuildFailed`は同名の`GameplayFlowFailureKind`へ変換する。
+- 4. 準備したCatalogでSection 1のDrawを実行する。
 - 5. 途中失敗ならTimerを`StopAll()`し、Failuresへ1件発行して同じFailureをStartResultへ返す。
 - 6. 成功ならExpressionInputを初期式へResetし、Context、MissionId 1、Section 1、初期LifeのPlaying Stateを保持する。
 - 7. States、Expressionsの順に初期値を各1件発行する。
@@ -1710,8 +1770,8 @@ public sealed class GameplayEntryPoint :
 
 - プロダクション用のアセンブリ（asmdef）が `Ccc.Core`、`Ccc.Presentation`、`Ccc.Infrastructure`、`Ccc.Bootstrap` の4つに正しく分割・整理されていること。
 - すべてのクラスおよびインターフェースの所属アセンブリおよび名前空間が一意かつ明確に決定できること。
-- Core 層のコードが Unity API、R3、VContainer、外部副作用（時間・乱数等）に直接依存していないこと。
-- `Ccc.Core`の外部package参照がR3であること。
+- `Ccc.Core.Model`と`Ccc.Core.Logic`が Unity API、R3、VContainer、Logger、外部副作用（時間・乱数等）に直接依存していないこと。
+- `Ccc.Core`の外部package参照がR3と`Microsoft.Extensions.Logging.Abstractions`に限定されていること。
 - R3の使用箇所が`Ccc.Core.UseCases`であること。
 - ReducerのSession遷移が提出、時間切れ、Feedback完了、Mission提示であること。
 - 式編集が`ExpressionInput`で完結し、Mission提示後も現在式を保持すること。

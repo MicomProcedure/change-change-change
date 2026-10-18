@@ -1,4 +1,5 @@
 using System;
+using Ccc.Core.Model;
 
 namespace Ccc.Presentation.Navigation
 {

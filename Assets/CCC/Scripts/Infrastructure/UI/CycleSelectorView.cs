@@ -31,12 +31,10 @@ namespace Ccc.Infrastructure.UI
         /// <summary>
         ///     変更要求のイベント。
         /// </summary>
-        public Observable<Unit> ChangeRequested { get; private set; }
+        public Observable<Unit> ChangeRequested => _changeRequestedSubject;
 
         private void Awake()
         {
-            ChangeRequested = _changeRequestedSubject;
-
             if (changeInputViews == null)
             {
                 return;

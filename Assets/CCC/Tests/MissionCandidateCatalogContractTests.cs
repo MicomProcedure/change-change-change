@@ -102,7 +102,7 @@ namespace Ccc.Tests
                 Rational.FromSingle(0.25f));
 
             Assert.That(buildResult.IsSuccess, Is.True);
-            Assert.That(buildResult.Catalog.Candidates, Has.Count.EqualTo(1));
+            Assert.That(buildResult.Catalog.Candidates.Count, Is.EqualTo(1));
         }
 
         /// <summary>

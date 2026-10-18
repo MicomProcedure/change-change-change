@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using Ccc.Core.Model;
 using Ccc.Core.Logic;
 using Ccc.Core.UseCases;
+using Ccc.Bootstrap.Log;
 using Ccc.Infrastructure.Assets;
+using Ccc.Infrastructure.Logging;
 using Ccc.Infrastructure.Random;
 using Ccc.Infrastructure.Time;
 using Ccc.Infrastructure.Navigation;
@@ -68,6 +70,10 @@ namespace Ccc.Bootstrap
                     .CreateRuntimeConfig(),
                 Lifetime.Scoped);
             builder.Register<IRandomSource, UnityRandomSource>(Lifetime.Scoped);
+            builder.Register<DiagnosticsSessionDescriptor>(
+                resolver => CreateDiagnosticsSessionDescriptor(resolver),
+                Lifetime.Scoped);
+            builder.RegisterMissionDrawDiagnostics();
             builder.Register<IMissionDrawStrategy, FullMissionDrawStrategy>(Lifetime.Scoped);
             builder.Register<ISectionTimer, UniTaskSectionTimer>(Lifetime.Scoped);
             builder.Register<ExpressionInput>(Lifetime.Scoped);
@@ -127,7 +133,20 @@ namespace Ccc.Bootstrap
                     $"GameMode.{request.GameMode} and GameDifficulty.{request.Difficulty}.");
             }
 
+            Debug.Log($"[GameplayLifetimeScope] Selected entry: {entry.DisplayName}");
+
             return new GameplayStartContext(request, entry);
+        }
+
+        private static DiagnosticsSessionDescriptor CreateDiagnosticsSessionDescriptor(IObjectResolver resolver)
+        {
+            GameplayConfigEntry entry = resolver.Resolve<GameplayConfigEntry>();
+            LogSettingsAsset logSettings = resolver.Resolve<LogSettingsAsset>();
+            return new DiagnosticsSessionDescriptor(
+                logSettings.FormatTimestamp(DateTime.Now),
+                entry.DisplayName,
+                entry.GameMode,
+                entry.Difficulty);
         }
     }
 }

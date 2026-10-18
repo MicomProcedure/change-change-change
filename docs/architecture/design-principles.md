@@ -16,6 +16,7 @@ flowchart LR
 - 矢印は参照可能な依存方向（依存先）を示す。
 - 外側に位置するアセンブリは、より内側に位置する必要なアセンブリを直接参照できるが、**逆方向（内側から外側）の参照は厳禁**とする。
 - プロダクションコードにおけるアセンブリ（asmdef）は、`Ccc.Core`、`Ccc.Presentation`、`Ccc.Infrastructure`、`Ccc.Bootstrap` の4つで構成すること。
+- 開発ツールは、製品アセンブリを参照するEditor専用アセンブリ（例: `Ccc.Simulation`、`Ccc.Editor.Simulation`）に分離し、製品アセンブリから参照しないこと。詳細は [CCC_asmdef](./assembly-boundaries.md) を参照すること。
 
 ---
 

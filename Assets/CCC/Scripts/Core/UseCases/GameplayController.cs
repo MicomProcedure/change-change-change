@@ -26,6 +26,7 @@ namespace Ccc.Core.UseCases
 
         private GameplaySessionContext _sessionContext;
         private GameplayState _currentState;
+        private SectionTimerSnapshot _latestTimerSnapshot;
         private bool _isDisposed;
 
         /// <summary>
@@ -118,88 +119,20 @@ namespace Ccc.Core.UseCases
             _sectionTimer.StopAll();
             _sessionContext = null;
             _currentState = null;
+            _latestTimerSnapshot = default;
 
-            IReadOnlyList<ExpressionCandidate> expressionCandidates;
-            try
-            {
-                expressionCandidates = ExpressionCandidateGenerator.Generate(
-                    _config.MinimumNumber,
-                    _config.MaximumNumber);
-            }
-            catch (Exception exception)
+            MissionCatalogPreparationResult preparationResult = MissionCatalogPreparer.Prepare(
+                _config,
+                request.CatalogPreparationSettings);
+            if (!preparationResult.IsSuccess)
             {
                 return FailStart(
-                    GameplayFlowFailureKind.InvalidConfiguration,
-                    $"Expression candidate generation failed: {exception.Message}");
-            }
-
-            IReadOnlyList<MissionParameterCandidate> missionParameterCandidates;
-            MissionCatalogPreparationSettings preparationSettings =
-                request.CatalogPreparationSettings;
-            try
-            {
-                switch (preparationSettings.SourceMode)
-                {
-                    case MissionParameterSourceMode.Automatic:
-                        MissionParameterGenerationResult generationResult =
-                            MissionParameterCandidateGenerator.Generate(
-                                expressionCandidates,
-                                preparationSettings.GenerationSettings);
-                        if (!generationResult.IsSuccess)
-                        {
-                            return FailStart(
-                                GameplayFlowFailureKind.InvalidConfiguration,
-                                generationResult.FailureMessage);
-                        }
-
-                        missionParameterCandidates = generationResult.Candidates;
-                        break;
-
-                    case MissionParameterSourceMode.PresetDebug:
-                        missionParameterCandidates = FilterEnabledPresetCandidates(
-                            preparationSettings.PresetCandidates,
-                            preparationSettings.GenerationSettings);
-                        break;
-
-                    default:
-                        return FailStart(
-                            GameplayFlowFailureKind.InvalidConfiguration,
-                            $"Undefined mission parameter source mode: {preparationSettings.SourceMode}.");
-                }
-
-            }
-            catch (Exception exception)
-            {
-                return FailStart(
-                    GameplayFlowFailureKind.InvalidConfiguration,
-                    $"Mission parameter preparation failed: {exception.Message}");
-            }
-
-            MissionCatalogBuildResult catalogBuildResult;
-            try
-            {
-                catalogBuildResult = MissionCatalogBuilder.Build(
-                    expressionCandidates,
-                    missionParameterCandidates,
-                    preparationSettings.EvaluationPolicy,
-                    preparationSettings.GenerationSettings.BetweenTierTwoThreshold);
-            }
-            catch (Exception exception)
-            {
-                return FailStart(
-                    GameplayFlowFailureKind.CatalogBuildFailed,
-                    $"Mission catalog build failed: {exception.Message}");
-            }
-
-            if (!catalogBuildResult.IsSuccess)
-            {
-                return FailStart(
-                    GameplayFlowFailureKind.CatalogBuildFailed,
-                    catalogBuildResult.FailureMessage);
+                    ConvertPreparationFailureKind(preparationResult.FailureKind),
+                    preparationResult.FailureMessage);
             }
 
             GameplaySessionContext sessionContext =
-                new GameplaySessionContext(_config, catalogBuildResult.Catalog);
+                new GameplaySessionContext(_config, preparationResult.Catalog);
             MissionDrawResult drawResult;
             try
             {
@@ -289,7 +222,10 @@ namespace Ccc.Core.UseCases
                 return;
             }
 
-            ProcessCommand(new SubmitCommand(missionId, _expressionInput.Current));
+            TimeSpan remainingTime = _latestTimerSnapshot.MissionId == missionId
+                ? _latestTimerSnapshot.RemainingTime
+                : TimeSpan.Zero;
+            ProcessCommand(new SubmitCommand(missionId, _expressionInput.Current, remainingTime));
         }
 
         /// <summary>
@@ -415,6 +351,7 @@ namespace Ccc.Core.UseCases
         {
             if (!_isDisposed)
             {
+                _latestTimerSnapshot = snapshot;
                 _timerSnapshotsSubject.OnNext(snapshot);
             }
         }
@@ -505,25 +442,20 @@ namespace Ccc.Core.UseCases
                 string.IsNullOrWhiteSpace(message) ? "Gameplay flow failed." : message);
         }
 
-        private static IReadOnlyList<MissionParameterCandidate> FilterEnabledPresetCandidates(
-            IReadOnlyList<MissionParameterCandidate> presetCandidates,
-            MissionParameterGenerationSettings generationSettings)
+        private static GameplayFlowFailureKind ConvertPreparationFailureKind(
+            MissionCatalogPreparationFailureKind failureKind)
         {
-            var enabledCandidates = new List<MissionParameterCandidate>();
-            for (int index = 0; index < presetCandidates.Count; index++)
+            switch (failureKind)
             {
-                MissionParameterCandidate candidate = presetCandidates[index];
-                    if (generationSettings.TryGetRule(
-                        candidate.Condition.Kind,
-                        out MissionKindGenerationRule rule) &&
-                    rule.IsEnabled &&
-                    (!candidate.Condition.IsNegated || rule.GeneratesNegated))
-                {
-                    enabledCandidates.Add(candidate);
-                }
-            }
+                case MissionCatalogPreparationFailureKind.InvalidConfiguration:
+                    return GameplayFlowFailureKind.InvalidConfiguration;
 
-            return enabledCandidates.ToArray();
+                case MissionCatalogPreparationFailureKind.CatalogBuildFailed:
+                    return GameplayFlowFailureKind.CatalogBuildFailed;
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(failureKind), failureKind, null);
+            }
         }
 
         private void ThrowIfDisposed()

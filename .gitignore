@@ -82,6 +82,7 @@ Thumbs.db
 *~
 
 # Logs
-*.log 
+/[Ll]ogs/
+*.log
 .utmp
 lib_burst_generated.txt
