@@ -22,7 +22,7 @@ namespace Ccc.Infrastructure.Assets
         private const float DefaultReductionPerSectionSeconds = 0.5f;
         private const float DefaultMinimumDurationSeconds = 3f;
         private const float DefaultBonusRatio = 0f;
-        private const float DefaultMaximumBonusRatio = 1f;
+        private const float DefaultMaximumBonusSeconds = DefaultInitialDurationSeconds;
         private const float DefaultManualSubmitBonusSeconds = 0f;
         private const float DefaultMinimumExpressionMatchRatio = 0.10f;
         private const float DefaultMaximumExpressionMatchRatio = 0.60f;
@@ -64,7 +64,7 @@ namespace Ccc.Infrastructure.Assets
         private float bonusRatio = DefaultBonusRatio;
 
         [SerializeField]
-        private float maximumBonusRatio = DefaultMaximumBonusRatio;
+        private float maximumBonusSeconds = DefaultMaximumBonusSeconds;
 
         [SerializeField]
         private float manualSubmitBonusSeconds = DefaultManualSubmitBonusSeconds;
@@ -215,7 +215,7 @@ namespace Ccc.Infrastructure.Assets
                 TimeSpan.FromSeconds(reductionPerSectionSeconds),
                 TimeSpan.FromSeconds(minimumDurationSeconds),
                 bonusRatio,
-                maximumBonusRatio,
+                TimeSpan.FromSeconds(maximumBonusSeconds),
                 isBonusCarryOverOnSuccessEnabled,
                 isBonusCarryOverOnFailureEnabled,
                 TimeSpan.FromSeconds(manualSubmitBonusSeconds)),
@@ -270,9 +270,9 @@ namespace Ccc.Infrastructure.Assets
                 errors.Add("Bonus ratio must be finite and zero or positive.");
             }
 
-            if (!IsFinite(maximumBonusRatio) || maximumBonusRatio < 0f)
+            if (!IsFinite(maximumBonusSeconds) || maximumBonusSeconds < 0f)
             {
-                errors.Add("Maximum bonus ratio must be finite and zero or positive.");
+                errors.Add("Maximum bonus seconds must be finite and zero or positive.");
             }
 
             if (!IsFinite(manualSubmitBonusSeconds) || manualSubmitBonusSeconds < 0f)

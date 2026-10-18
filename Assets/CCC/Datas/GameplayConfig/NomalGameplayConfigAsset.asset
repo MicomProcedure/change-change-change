@@ -22,7 +22,7 @@ MonoBehaviour:
   reductionPerSectionSeconds: 0.3
   minimumDurationSeconds: 4
   bonusRatio: 0.5
-  maximumBonusRatio: 1
+  maximumBonusSeconds: 2
   manualSubmitBonusSeconds: 0.5
   isBonusCarryOverOnSuccessEnabled: 0
   isBonusCarryOverOnFailureEnabled: 0
