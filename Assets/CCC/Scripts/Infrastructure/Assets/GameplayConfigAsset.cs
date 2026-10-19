@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Ccc.Core.Model;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Ccc.Infrastructure.Assets
 {
@@ -20,6 +21,9 @@ namespace Ccc.Infrastructure.Assets
         private const float DefaultInitialDurationSeconds = 10f;
         private const float DefaultReductionPerSectionSeconds = 0.5f;
         private const float DefaultMinimumDurationSeconds = 3f;
+        private const float DefaultBonusRatio = 0f;
+        private const float DefaultMaximumBonusSeconds = DefaultInitialDurationSeconds;
+        private const float DefaultManualSubmitBonusSeconds = 0f;
         private const float DefaultMinimumExpressionMatchRatio = 0.10f;
         private const float DefaultMaximumExpressionMatchRatio = 0.60f;
         private const float DefaultCurrentTierDrawWeight = 0.60f;
@@ -55,6 +59,21 @@ namespace Ccc.Infrastructure.Assets
 
         [SerializeField]
         private float minimumDurationSeconds = DefaultMinimumDurationSeconds;
+
+        [SerializeField]
+        private float bonusRatio = DefaultBonusRatio;
+
+        [SerializeField]
+        private float maximumBonusSeconds = DefaultMaximumBonusSeconds;
+
+        [SerializeField]
+        private float manualSubmitBonusSeconds = DefaultManualSubmitBonusSeconds;
+
+        [SerializeField, FormerlySerializedAs("isBonusCarryOverEnabled")]
+        private bool isBonusCarryOverOnSuccessEnabled;
+
+        [SerializeField, FormerlySerializedAs("shouldKeepBonusOnFailure")]
+        private bool isBonusCarryOverOnFailureEnabled;
 
         [SerializeField]
         private List<int> tierStartSections = new List<int> { 1, 4, 8, 12 };
@@ -192,9 +211,14 @@ namespace Ccc.Infrastructure.Assets
                 new Expression(initialLeft, initialOperator, initialRight),
                 initialLife,
                 new TimerConfig(
-                    TimeSpan.FromSeconds(initialDurationSeconds),
-                    TimeSpan.FromSeconds(reductionPerSectionSeconds),
-                    TimeSpan.FromSeconds(minimumDurationSeconds)),
+                TimeSpan.FromSeconds(initialDurationSeconds),
+                TimeSpan.FromSeconds(reductionPerSectionSeconds),
+                TimeSpan.FromSeconds(minimumDurationSeconds),
+                bonusRatio,
+                TimeSpan.FromSeconds(maximumBonusSeconds),
+                isBonusCarryOverOnSuccessEnabled,
+                isBonusCarryOverOnFailureEnabled,
+                TimeSpan.FromSeconds(manualSubmitBonusSeconds)),
                 new TierProgression(tierStartSections),
                 showCurrentAnswer,
                 minimumExpressionMatchRatio,
@@ -239,6 +263,21 @@ namespace Ccc.Infrastructure.Assets
                 minimumDurationSeconds > initialDurationSeconds)
             {
                 errors.Add("Minimum duration must not exceed initial duration.");
+            }
+
+            if (!IsFinite(bonusRatio) || bonusRatio < 0f)
+            {
+                errors.Add("Bonus ratio must be finite and zero or positive.");
+            }
+
+            if (!IsFinite(maximumBonusSeconds) || maximumBonusSeconds < 0f)
+            {
+                errors.Add("Maximum bonus seconds must be finite and zero or positive.");
+            }
+
+            if (!IsFinite(manualSubmitBonusSeconds) || manualSubmitBonusSeconds < 0f)
+            {
+                errors.Add("Manual submit bonus seconds must be finite and zero or positive.");
             }
         }
 
