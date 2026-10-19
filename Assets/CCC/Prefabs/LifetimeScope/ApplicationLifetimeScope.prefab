@@ -50,7 +50,7 @@ MonoBehaviour:
   catalog: {fileID: 11400000, guid: a73fcf88ee29d4728ab7aa93c62d89db, type: 2}
   bgmSource: {fileID: 6019000000000000006}
   seSource: {fileID: 6019000000000000009}
-  loopingSeSource: {fileID: 6019000000000000012}
+  loopingSESource: {fileID: 6019000000000000012}
   volumeLevelTable: {fileID: 11400000, guid: 6253f93e32b7b4cb0b61b4f15d3974db, type: 2}
 --- !u!1 &6019000000000000004
 GameObject:
@@ -489,6 +489,6 @@ MonoBehaviour:
   autoRun: 1
   autoInjectGameObjects: []
   audioPlayer: {fileID: 6019000000000000003}
-  isDebugMode: 1
+  isDebugMode: 0
   startingTitleScreenState: 1
   logSettingsAsset: {fileID: 11400000, guid: dcd72eb398ccbd24c91c2b4b734ee4ee, type: 2}
