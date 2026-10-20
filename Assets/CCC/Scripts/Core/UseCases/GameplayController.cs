@@ -26,6 +26,7 @@ namespace Ccc.Core.UseCases
 
         private GameplaySessionContext _sessionContext;
         private GameplayState _currentState;
+        private SectionTimerSnapshot _latestTimerSnapshot;
         private bool _isDisposed;
 
         /// <summary>
@@ -118,6 +119,7 @@ namespace Ccc.Core.UseCases
             _sectionTimer.StopAll();
             _sessionContext = null;
             _currentState = null;
+            _latestTimerSnapshot = default;
 
             MissionCatalogPreparationResult preparationResult = MissionCatalogPreparer.Prepare(
                 _config,
@@ -220,7 +222,10 @@ namespace Ccc.Core.UseCases
                 return;
             }
 
-            ProcessCommand(new SubmitCommand(missionId, _expressionInput.Current));
+            TimeSpan remainingTime = _latestTimerSnapshot.MissionId == missionId
+                ? _latestTimerSnapshot.RemainingTime
+                : TimeSpan.Zero;
+            ProcessCommand(new SubmitCommand(missionId, _expressionInput.Current, remainingTime));
         }
 
         /// <summary>
@@ -346,6 +351,7 @@ namespace Ccc.Core.UseCases
         {
             if (!_isDisposed)
             {
+                _latestTimerSnapshot = snapshot;
                 _timerSnapshotsSubject.OnNext(snapshot);
             }
         }
