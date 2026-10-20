@@ -17,7 +17,7 @@ namespace Ccc.Editor.Simulation
         private const string SeedLabel = "_seed";
 
         /// <summary>
-        /// 設定を検証してシミュレーションを実行し、draws表とcandidates表のCSVを出力します。
+        /// 設定を検証してシミュレーションを実行し、catalog表、draws表、candidates表のCSVを出力します。
         /// </summary>
         /// <param name="settings">シミュレーション設定。</param>
         /// <returns>抽選回数と失敗内訳、およびCSVの出力先ディレクトリ。</returns>
@@ -48,6 +48,10 @@ namespace Ccc.Editor.Simulation
                 entry.GameMode,
                 entry.Difficulty);
             string outputDirectoryPath = logSettings.ResolveCategoryDirectoryPath(settings.OutputDirectoryName);
+            using (var catalogReporter = new CsvDiagnosticsReporter<MissionCatalog>(
+                       new MissionCatalogCsvFormatter(),
+                       session,
+                       outputDirectoryPath))
             using (var reporter = new CsvDiagnosticsReporter<MissionDrawTrace>(
                        new MissionDrawTraceCsvFormatter(settings.CsvCandidateCount),
                        session,
@@ -58,6 +62,7 @@ namespace Ccc.Editor.Simulation
                     preparationSettings,
                     settings.Seed,
                     settings.CreateScenario,
+                    catalogReporter,
                     reporter);
                 return (summary, outputDirectoryPath);
             }

@@ -51,6 +51,20 @@ namespace Ccc.Tests
         }
 
         /// <summary>
+        /// 肯定のExact候補、反転のExact候補、2パラメータのBetween候補をこの順に持つCatalogを生成します。
+        /// </summary>
+        /// <returns>テスト用のMissionCatalog。</returns>
+        internal static MissionCatalog CreateCatalog()
+        {
+            return new MissionCatalog(new[]
+            {
+                CreateCandidate(MissionCondition.Create(MissionKind.Exact, 1), matchCount: 2),
+                CreateCandidate(MissionCondition.Create(MissionKind.Exact, 2, isNegated: true), matchCount: 7),
+                CreateCandidate(MissionCondition.Between(3, 4), matchCount: 5)
+            });
+        }
+
+        /// <summary>
         /// テスト用のSession識別情報を生成します。
         /// </summary>
         /// <returns>テスト用のSession識別情報。</returns>

@@ -15,12 +15,13 @@ namespace Ccc.Simulation
         private const int ScenarioSeedSalt = 0x5DEECE6;
 
         /// <summary>
-        /// seedから抽選用とシナリオ用の乱数を作り、シナリオが終了するまで抽選して診断Reporterへ報告します。
+        /// seedから抽選用とシナリオ用の乱数を作り、準備したCatalogと、シナリオが終了するまでの各抽選を診断Reporterへ報告します。
         /// </summary>
         /// <param name="config">抽選に使うGameplay設定。</param>
         /// <param name="preparationSettings">MissionCatalog準備設定。</param>
         /// <param name="seed">抽選用とシナリオ用の乱数を決めるseed。同じseedと入力からは同じ結果を再現します。</param>
         /// <param name="createScenario">準備済み環境からシナリオを生成する関数。</param>
+        /// <param name="catalogReporter">準備したMissionCatalogを抽選前に1回受け取る診断Reporter。</param>
         /// <param name="diagnosticsReporter">各抽選のTraceを受け取る診断Reporter。</param>
         /// <returns>抽選回数と失敗内訳。</returns>
         /// <exception cref="ArgumentNullException">引数がnullの場合。</exception>
@@ -30,11 +31,17 @@ namespace Ccc.Simulation
             MissionCatalogPreparationSettings preparationSettings,
             int seed,
             Func<MissionDrawScenarioEnvironment, IMissionDrawScenario> createScenario,
+            IDiagnosticsReporter<MissionCatalog> catalogReporter,
             IDiagnosticsReporter<MissionDrawTrace> diagnosticsReporter)
         {
             if (createScenario == null)
             {
                 throw new ArgumentNullException(nameof(createScenario));
+            }
+
+            if (catalogReporter == null)
+            {
+                throw new ArgumentNullException(nameof(catalogReporter));
             }
 
             if (diagnosticsReporter == null)
@@ -49,6 +56,11 @@ namespace Ccc.Simulation
                 throw new InvalidOperationException(
                     $"Mission catalog preparation failed ({preparationResult.FailureKind}): " +
                     preparationResult.FailureMessage);
+            }
+
+            if (catalogReporter.IsEnabled)
+            {
+                catalogReporter.Report(preparationResult.Catalog);
             }
 
             var environment = new MissionDrawScenarioEnvironment(
