@@ -9,7 +9,7 @@ EditorBuildSettings:
     path: Assets/CCC/Scenes/TitleScene.unity
     guid: 8b606f0fa9abbbd4db693cc82f024c15
   - enabled: 1
-    path: Assets/CCC/Scenes/GameScene.unity
+    path: Assets/CCC/Scenes/GameSceneForMobile.unity
     guid: 0e771c8306c4546f68cdb1302dc18c87
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0
