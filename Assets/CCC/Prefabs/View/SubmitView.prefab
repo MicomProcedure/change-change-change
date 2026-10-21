@@ -10,7 +10,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4671000245763610013, guid: 25602ee4d68824975a269c9fbf826184, type: 3}
       propertyPath: m_Name
-      value: SubmitView Variant
+      value: SubmitView
       objectReference: {fileID: 0}
     - target: {fileID: 6273867004704247428, guid: 25602ee4d68824975a269c9fbf826184, type: 3}
       propertyPath: m_Pivot.x
@@ -126,6 +126,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 5300746591074076080}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Script: {fileID: 11500000, guid: 9b5b5f36e008e0d46a6ec137278b90cc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
