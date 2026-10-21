@@ -26,14 +26,14 @@ MonoBehaviour:
   manualSubmitBonusSeconds: 0.5
   isBonusCarryOverOnSuccessEnabled: 0
   isBonusCarryOverOnFailureEnabled: 0
-  tierStartSections: 01000000050000000a00000014000000
+  tierStartSections: 01000000050000000a0000000f00000017000000
   showCurrentAnswer: 1
   minimumExpressionMatchRatio: 0.05
-  maximumExpressionMatchRatio: 0.6
+  maximumExpressionMatchRatio: 0.8
   minimumExpressionMatchCount: 2
   zeroAndPrimeMinimumExpressionMatchCount: 1
-  currentTierDrawWeight: 0.4
-  lowerTierDrawWeight: 0.6
+  currentTierDrawWeight: 0.3
+  lowerTierDrawWeight: 0.7
   currentExpressionSatisfiedMissionSelectionRatio: 0.1
   targetExpressionMatchRatio: 0.2
   negatedMissionSelectionWeight: 0.5
