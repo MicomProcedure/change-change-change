@@ -143,6 +143,37 @@ namespace Ccc.Infrastructure.Navigation
         }
 
         /// <summary>
+        /// StageからTutorialへ遷移します。
+        /// </summary>
+        public void OpenTutorial()
+        {
+            ChangeScreen(
+                TitleScreenState.Stage,
+                TitleScreenState.Tutorial);
+        }
+
+        /// <summary>
+        /// TutorialからStageへ戻ります。
+        /// </summary>
+        public void CloseTutorial()
+        {
+            ChangeScreen(
+                TitleScreenState.Tutorial,
+                TitleScreenState.Stage);
+        }
+
+        /// <summary>
+        /// StageからMainMenuへ戻ります。
+        /// </summary>
+        public void CloseStage()
+        {
+            ChangeScreen(
+                TitleScreenState.Stage,
+                TitleScreenState.MainMenu);
+        }
+
+
+        /// <summary>
         /// 選択中の難易度を宣言順（Easy → Normal → Hard → Easy）に切り替えます。
         /// </summary>
         public void CycleDifficulty()

@@ -70,14 +70,29 @@ namespace Ccc.Bootstrap
 
         private void HandleScreenChanged(TitleScreenState currentScreen)
         {
-            if ((_previousScreen == TitleScreenState.OptionMenu ||
-                 _previousScreen == TitleScreenState.Credit) &&
-                currentScreen == TitleScreenState.MainMenu)
+            if (IsCancelTransition(_previousScreen, currentScreen))
             {
                 _audio.PlaySE(AudioKey.SECancelClick);
             }
 
             _previousScreen = currentScreen;
+        }
+
+        private static bool IsCancelTransition(
+            TitleScreenState previousScreen,
+            TitleScreenState currentScreen)
+        {
+            bool isReturnToMainMenu =
+                (previousScreen == TitleScreenState.OptionMenu ||
+                 previousScreen == TitleScreenState.Credit ||
+                 previousScreen == TitleScreenState.Stage) &&
+                currentScreen == TitleScreenState.MainMenu;
+
+            bool isReturnToStage =
+                previousScreen == TitleScreenState.Tutorial &&
+                currentScreen == TitleScreenState.Stage;
+
+            return isReturnToMainMenu || isReturnToStage;
         }
     }
 }
