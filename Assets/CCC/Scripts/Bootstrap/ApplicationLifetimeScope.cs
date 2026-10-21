@@ -1,13 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Ccc.Bootstrap.Log;
 using Ccc.Infrastructure.Audio;
 using Ccc.Infrastructure.Logging;
+using Ccc.Infrastructure.Platform;
 using Ccc.Presentation.Audio;
 using Ccc.Infrastructure.Navigation;
 using Ccc.Presentation;
 using Ccc.Presentation.Navigation;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using VContainer;
 using VContainer.Unity;
 using Microsoft.Extensions.Logging;
@@ -23,6 +26,9 @@ namespace Ccc.Bootstrap
         [SerializeField] private bool isDebugMode;
         [SerializeField] private TitleScreenState startingTitleScreenState = TitleScreenState.MainMenu;
         [SerializeField] private LogSettingsAsset logSettingsAsset;
+        [SerializeField] private SceneCatalogAsset sceneCatalogAsset;
+        [Tooltip("Editor実行時にのみ適用するプラットフォーム。Autoは起動時のSceneから判定し、特定できなければMobileとして扱う。")]
+        [SerializeField] private PlayPlatformOverride editorPlayPlatformOverride = PlayPlatformOverride.Auto;
 
         /// <summary>
         /// Application lifetimeのAudio出力とLog構成を登録します。
@@ -31,6 +37,8 @@ namespace Ccc.Bootstrap
         protected override void Configure(IContainerBuilder builder)
         {
             builder.RegisterInstance<IRuntimeMode>(new RuntimeMode(isDebugMode));
+            RegisterSceneCatalog(builder);
+            RegisterPlayPlatform(builder);
 
             if (audioPlayer != null)
             {
@@ -54,6 +62,42 @@ namespace Ccc.Bootstrap
             RegisterLogging(builder);
 
             builder.RegisterEntryPoint<ApplicationEntryPoint>();
+        }
+
+        private void RegisterSceneCatalog(IContainerBuilder builder)
+        {
+            if (sceneCatalogAsset == null)
+            {
+                throw new InvalidOperationException(
+                    "ApplicationLifetimeScope requires a SceneCatalogAsset reference.");
+            }
+
+            IReadOnlyList<string> errors = sceneCatalogAsset.Validate()
+                .Concat(sceneCatalogAsset.ValidateBuildInclusion())
+                .ToArray();
+            if (errors.Count > 0)
+            {
+                throw new InvalidOperationException(
+                    "Scene catalog validation failed: " + string.Join(" | ", errors));
+            }
+
+            builder.RegisterInstance(sceneCatalogAsset);
+        }
+
+        private void RegisterPlayPlatform(IContainerBuilder builder)
+        {
+            string startupSceneName = SceneManager.GetActiveScene().name;
+            PlayPlatform? startupScenePlatform =
+                sceneCatalogAsset.TryGetUniquePlayPlatform(startupSceneName, out PlayPlatform scenePlatform)
+                    ? scenePlatform
+                    : (PlayPlatform?)null;
+
+            builder.RegisterInstance<IPlayPlatformMode>(new PlayPlatformMode(
+                PlayPlatformResolver.Resolve(
+                    editorPlayPlatformOverride,
+                    Application.isEditor,
+                    Application.platform,
+                    startupScenePlatform)));
         }
 
         private void RegisterLogging(IContainerBuilder builder)

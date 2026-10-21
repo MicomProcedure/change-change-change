@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using VContainer;
 using VContainer.Unity;
+using Ccc.Presentation;
 using Ccc.Presentation.Navigation;
 
 namespace Ccc.Infrastructure.Navigation
@@ -19,7 +20,25 @@ namespace Ccc.Infrastructure.Navigation
         private const string LoadFailedErrorMessage =
             "Sceneの読み込みに失敗しました。";
 
+        private readonly SceneCatalogAsset _sceneCatalogAsset;
+        private readonly IPlayPlatformMode _playPlatformMode;
         private bool _isLoading;
+
+        /// <summary>
+        /// SceneNavigatorを生成します。
+        /// </summary>
+        /// <param name="sceneCatalogAsset">画面の種類とプラットフォームからScene名を解決するCatalog。</param>
+        /// <param name="playPlatformMode">プレイ環境のプラットフォーム。</param>
+        /// <exception cref="ArgumentNullException">引数がnullの場合。</exception>
+        public SceneNavigator(
+            SceneCatalogAsset sceneCatalogAsset,
+            IPlayPlatformMode playPlatformMode)
+        {
+            _sceneCatalogAsset = sceneCatalogAsset != null
+                ? sceneCatalogAsset
+                : throw new ArgumentNullException(nameof(sceneCatalogAsset));
+            _playPlatformMode = playPlatformMode ?? throw new ArgumentNullException(nameof(playPlatformMode));
+        }
 
         /// <summary>
         /// Sceneをロード中かどうかを取得します。
@@ -30,25 +49,30 @@ namespace Ccc.Infrastructure.Navigation
         }
 
         /// <summary>
-        /// Gameplay用のGameSceneをロードします。
+        /// プラットフォームに対応するGameplay用Sceneをロードします。
         /// </summary>
         /// <param name="request">Gameplay開始Requestです。</param>
         /// <returns>Scene遷移結果です。</returns>
         public UniTask<SceneNavigationResult> LoadGameplayAsync(
             GameplayNavigationRequest request)
         {
-            return LoadSceneAsync(SceneNames.Game, request);
+            return LoadSceneAsync(ResolveSceneName(SceneKind.Gameplay), request);
         }
 
         /// <summary>
-        /// Title用のTitleSceneをロードします。
+        /// プラットフォームに対応するTitle用Sceneをロードします。
         /// </summary>
         /// <param name="request">TitleScene開始Requestです。</param>
         /// <returns>Scene遷移結果です。</returns>
         public UniTask<SceneNavigationResult> LoadTitleAsync(
             TitleStartRequest request)
         {
-            return LoadSceneAsync(SceneNames.Title, request);
+            return LoadSceneAsync(ResolveSceneName(SceneKind.Title), request);
+        }
+
+        private string ResolveSceneName(SceneKind sceneKind)
+        {
+            return _sceneCatalogAsset.GetSceneName(sceneKind, _playPlatformMode.Platform);
         }
 
         private async UniTask<SceneNavigationResult> LoadSceneAsync<TRequest>(
@@ -132,14 +156,5 @@ namespace Ccc.Infrastructure.Navigation
                 LoadFailedErrorMessage,
                 cause);
         }
-    }
-
-    /// <summary>
-    /// Scene名を一元管理します。
-    /// </summary>
-    internal static class SceneNames
-    {
-        internal const string Title = "TitleScene";
-        internal const string Game = "GameScene";
     }
 }

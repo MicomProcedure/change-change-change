@@ -11,5 +11,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/CCC/Scenes/GameSceneForMobile.unity
     guid: 0e771c8306c4546f68cdb1302dc18c87
+  - enabled: 1
+    path: Assets/CCC/Scenes/GameSceneForPC.unity
+    guid: d7c5112bf203aa94fb2817e4b4f1b84c
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0
