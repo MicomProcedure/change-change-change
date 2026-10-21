@@ -143,11 +143,6 @@ namespace Ccc.Core.Model
 
         private static void ValidateNumberRange(int minimumNumber, int maximumNumber)
         {
-            if (minimumNumber <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(minimumNumber), minimumNumber, null);
-            }
-
             if (maximumNumber < minimumNumber)
             {
                 throw new ArgumentOutOfRangeException(nameof(maximumNumber), maximumNumber, null);

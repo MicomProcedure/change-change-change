@@ -45,7 +45,6 @@ namespace Ccc.Core.UseCases
                         catalogCandidates,
                         context.Section,
                         context.SessionContext.Config,
-                        shouldSelectSpecificLowerTierWhenCurrentTierIsUnavailable: false,
                         out var selectedTierCandidates,
                         out string tierFailure))
                 {

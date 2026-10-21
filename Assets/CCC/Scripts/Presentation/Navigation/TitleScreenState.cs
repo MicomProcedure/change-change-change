@@ -18,6 +18,10 @@ namespace Ccc.Presentation.Navigation
         OptionMenu,
 
         /// <summary>クレジット画面です。</summary>
-        Credit
+        Credit,
+
+        /// <summary>チュートリアル画像を表示する画面です。</summary>
+        Tutorial
+
     }
 }
