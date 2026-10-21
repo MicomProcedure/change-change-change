@@ -126,7 +126,7 @@ namespace Ccc.Bootstrap
             CancellationToken destroyCancellationToken = viewBehaviour == null
                 ? CancellationToken.None
                 : viewBehaviour.destroyCancellationToken;
-            _audio.PlayBgm(AudioKey.BgmGameplayNormal);
+            _audio.PlayBgm(configEntry.GameplayBgmKey);
             _startupCancellationSource =
                 CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
             StartGameplayAsync(preparationSettings, _startupCancellationSource.Token)
