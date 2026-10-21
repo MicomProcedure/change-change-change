@@ -102,7 +102,7 @@ Gameplay 開始時、選択されたゲームモードと `GameDifficulty` か�
 ## 本実装版: Session中の抽選アルゴリズム
 
 1. `NegatedMissionSelectionWeight == 0`の場合はNegated候補を抽選対象から完全に除外すること。続いて現在Tier以下の解放済み候補を確定すること。Session初回は`CurrentExpression`を評価せず、そのまま手順2へ進むこと。2問目以降は解放済み候補を、現在式で達成できる候補群と達成できない候補群に分けること。両群に候補がある場合は`[0, 1)`の乱数sampleが`CurrentExpressionSatisfiedMissionSelectionRatio`未満なら達成できる候補群を、以上なら達成できない候補群を選ぶこと。片方の群だけに候補がある場合は、その群を乱数消費なしで選ぶこと。比率`0`は両群がある限り達成できない候補群、比率`1`は達成できる候補群を乱数消費なしで選ぶこと。
-2. 現在 Tier と下位 Tier を重み `0.60` / `0.40` で決定すること。
+2. 現在 Tier と下位 Tier を重み `0.60` / `0.40` で決定すること。下位 Tier が選ばれた場合は、全下位 Tier の候補を1つの候補群とし、下位 Tier 間の抽選は行わないこと。
 3. 肯定 Mission（基準重み `1.00`）と `NegatedMission`（相対重み `NegatedMissionSelectionWeight` 例: `0.60`）のいずれかを選択すること。
 4. 直前の出題と同一の Kind かつ同一パラメータの候補を除外すること（代替候補が存在する場合）。
 5. 残った Kind の中から一様抽選すること。

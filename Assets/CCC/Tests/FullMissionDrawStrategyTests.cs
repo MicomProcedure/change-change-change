@@ -341,25 +341,75 @@ namespace Ccc.Tests
         }
 
         /// <summary>
-        /// 現在Tierに候補がない場合は候補が存在する下位TierをTier昇順の母集団から一様抽選することを検証します。
+        /// 現在Tierに候補がない場合は全下位Tierの候補を1つの候補群とし、Kindを一様抽選することを検証します。
         /// </summary>
         [Test]
-        public void Draw_WhenCurrentTierHasNoCandidate_ShouldSelectAvailableLowerTierUniformly()
+        public void Draw_WhenCurrentTierHasNoCandidate_ShouldSelectKindUniformlyAcrossAllLowerTiers()
         {
-            var randomSource = new SequenceRandomSource(0.99d);
+            var randomSource = new SequenceRandomSource(0.40d);
             var strategy = CreateStrategy(randomSource);
             var candidates = new[]
             {
                 CreateCandidate(MissionCondition.Create(MissionKind.Even), tier: 1),
-                CreateCandidate(MissionCondition.Create(MissionKind.Odd), tier: 2)
+                CreateCandidate(MissionCondition.Create(MissionKind.Odd), tier: 2),
+                CreateCandidate(MissionCondition.Create(MissionKind.Exact, 1), tier: 2)
             };
 
             MissionDrawResult result = strategy.Draw(
                 MissionDrawContext.CreateForInitialMission(CreateSessionContext(candidates), 8));
 
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Candidate.Tier, Is.EqualTo(2));
-            Assert.That(randomSource.ConsumedSamples, Is.EqualTo(new[] { 0.99d }));
+            Assert.That(result.Candidate.Condition.Kind, Is.EqualTo(MissionKind.Odd));
+            Assert.That(randomSource.ConsumedSamples, Is.EqualTo(new[] { 0.40d }));
+        }
+
+        /// <summary>
+        /// 重み抽選で下位Tierが選ばれた場合は全下位Tierの候補を1つの候補群とし、Kindを一様抽選することを検証します。
+        /// </summary>
+        [Test]
+        public void Draw_WhenLowerTierIsSelected_ShouldSelectKindUniformlyAcrossAllLowerTiers()
+        {
+            var randomSource = new SequenceRandomSource(0.70d, 0.99d);
+            var strategy = CreateStrategy(randomSource);
+            var candidates = new[]
+            {
+                CreateCandidate(MissionCondition.Create(MissionKind.Even), tier: 2),
+                CreateCandidate(MissionCondition.Create(MissionKind.Odd), tier: 1),
+                CreateCandidate(MissionCondition.Create(MissionKind.Exact, 1), tier: 3)
+            };
+
+            MissionDrawResult result = strategy.Draw(
+                MissionDrawContext.CreateForInitialMission(CreateSessionContext(candidates), 8));
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Candidate.Condition.Kind, Is.EqualTo(MissionKind.Odd));
+            Assert.That(result.Candidate.Tier, Is.EqualTo(1));
+            Assert.That(randomSource.ConsumedSamples, Is.EqualTo(new[] { 0.70d, 0.99d }));
+        }
+
+        /// <summary>
+        /// 下位Tierが選ばれた場合、TraceのSelectedTierに最終的に選出された候補のTierを記録することを検証します。
+        /// </summary>
+        [Test]
+        public void Draw_WhenLowerTierIsSelected_ShouldReportSelectedCandidateTier()
+        {
+            var randomSource = new SequenceRandomSource(0.70d, 0.99d);
+            var reporter = new RecordingDiagnosticsReporter(isEnabled: true);
+            var strategy = CreateStrategy(randomSource, reporter);
+            var candidates = new[]
+            {
+                CreateCandidate(MissionCondition.Create(MissionKind.Even), tier: 2),
+                CreateCandidate(MissionCondition.Create(MissionKind.Odd), tier: 1),
+                CreateCandidate(MissionCondition.Create(MissionKind.Exact, 1), tier: 3)
+            };
+
+            MissionDrawResult result = strategy.Draw(
+                MissionDrawContext.CreateForInitialMission(CreateSessionContext(candidates), 8));
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(reporter.Traces, Has.Count.EqualTo(1));
+            Assert.That(reporter.Traces[0].SelectedTier, Is.EqualTo(1));
+            Assert.That(reporter.Traces[0].TierStageCandidateCount, Is.EqualTo(2));
         }
 
         /// <summary>
@@ -909,7 +959,6 @@ namespace Ccc.Tests
                 satisfiedCandidateCount: 0,
                 unmatchedCandidateCount: 0,
                 selectedExpressionGroup: CurrentExpressionCandidateGroup.AllUnlocked,
-                selectedTier: 1,
                 tierStageCandidateCount: 2,
                 isNegatedPolaritySelected: false,
                 polarityStageCandidateCount: 2,
