@@ -103,5 +103,26 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2408654353464156456, guid: 8633dad9c22884cb49c8c28aaa932cf0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8354260583292259410}
   m_SourcePrefab: {fileID: 100100000, guid: 8633dad9c22884cb49c8c28aaa932cf0, type: 3}
+--- !u!1 &4751660345147651626 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2408654353464156456, guid: 8633dad9c22884cb49c8c28aaa932cf0, type: 3}
+  m_PrefabInstance: {fileID: 6961452008393414402}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8354260583292259410
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4751660345147651626}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d3dd4cb4fd36a94bb75c76b5dfedfcc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.UI.KeyPressInputView
+  _pressAction: {fileID: -3592869251485539539, guid: 33dd9f1cc32c4ff478e64eeb51901b73, type: 3}

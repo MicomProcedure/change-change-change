@@ -195,8 +195,29 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2519505824343390606, guid: 6bc25f54353054e1b8ed4bb391e7e6a8, type: 3}
       insertIndex: 1
       addedObject: {fileID: 5452854729978981127}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1250864874777121549, guid: 6bc25f54353054e1b8ed4bb391e7e6a8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7949399408966689892}
   m_SourcePrefab: {fileID: 100100000, guid: 6bc25f54353054e1b8ed4bb391e7e6a8, type: 3}
+--- !u!1 &6503751516066172878 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1250864874777121549, guid: 6bc25f54353054e1b8ed4bb391e7e6a8, type: 3}
+  m_PrefabInstance: {fileID: 5411639492678442179}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7949399408966689892
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6503751516066172878}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d3dd4cb4fd36a94bb75c76b5dfedfcc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.UI.KeyPressInputView
+  _pressAction: {fileID: -2701221698942415610, guid: 33dd9f1cc32c4ff478e64eeb51901b73, type: 3}
 --- !u!224 &7632779210856146253 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2519505824343390606, guid: 6bc25f54353054e1b8ed4bb391e7e6a8, type: 3}
