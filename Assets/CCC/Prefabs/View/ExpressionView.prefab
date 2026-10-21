@@ -893,10 +893,6 @@ PrefabInstance:
       propertyPath: m_LocalScale.z
       value: 1.0151507
       objectReference: {fileID: 0}
-    - target: {fileID: 8923827520536609849, guid: 105f4d4be0de147b5b6330cefeee9360, type: 3}
-      propertyPath: m_fontSize
-      value: 70.65
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

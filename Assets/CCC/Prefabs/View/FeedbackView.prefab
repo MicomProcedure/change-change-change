@@ -51,12 +51,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0de771cd67da24a8d8a6ed36ab5b4abb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.Gameplay.DotweenFeedbackView
-  _feedbackText: {fileID: 0}
-  _canvasGroup: {fileID: 0}
+  _feedbackText: {fileID: 4358778675201186479}
+  _canvasGroup: {fileID: 740869597842250399}
   _correctCircle: {fileID: 0}
   _peke: {fileID: 0}
-  _correctCircleDurationSeconds: 0
-  _pekeDurationSeconds: 0
+  _correctCircleDurationSeconds: 0.8
+  _pekeDurationSeconds: 0.8
   _fadeInDurationSeconds: 0
   _visibleDurationSeconds: 0
   _fadeOutDurationSeconds: 0
@@ -216,7 +216,7 @@ MonoBehaviour:
       m_Calls: []
   m_text: Feedback Text
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 75c74dadd18a6467d9a7ede18802e7e1, type: 2}
   m_sharedMaterial: {fileID: 7471423630345285130, guid: 75c74dadd18a6467d9a7ede18802e7e1, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
