@@ -335,7 +335,9 @@ namespace Ccc.Infrastructure.Navigation
             selectorView.Render(
                 new CycleSelectorStateDto(
                     volumeLevel.ToString(),
-                    !_model.IsBusy.CurrentValue));
+                    !_model.IsBusy.CurrentValue,
+                    volumeLevel - OptionVolumeLevels.Min,
+                    OptionVolumeLevels.Count));
         }
 
         private void RenderErrorMessage(string errorMessage)
