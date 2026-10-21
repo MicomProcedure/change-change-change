@@ -21,9 +21,14 @@ MonoBehaviour:
   initialDurationSeconds: 10
   reductionPerSectionSeconds: 0.3
   minimumDurationSeconds: 4
+  bonusRatio: 0.5
+  maximumBonusSeconds: 2
+  manualSubmitBonusSeconds: 0.5
+  isBonusCarryOverOnSuccessEnabled: 0
+  isBonusCarryOverOnFailureEnabled: 0
   tierStartSections: 01000000050000000a0000000f000000
   showCurrentAnswer: 0
-  minimumExpressionMatchRatio: 0.01
+  minimumExpressionMatchRatio: 0.05
   maximumExpressionMatchRatio: 0.6
   minimumExpressionMatchCount: 2
   zeroAndPrimeMinimumExpressionMatchCount: 1
