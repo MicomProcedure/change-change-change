@@ -26,7 +26,7 @@ MonoBehaviour:
   manualSubmitBonusSeconds: 0.5
   isBonusCarryOverOnSuccessEnabled: 0
   isBonusCarryOverOnFailureEnabled: 0
-  tierStartSections: 01000000050000000a0000000f000000
+  tierStartSections: 0100000003000000060000000a000000
   showCurrentAnswer: 0
   minimumExpressionMatchRatio: 0.01
   maximumExpressionMatchRatio: 0.6

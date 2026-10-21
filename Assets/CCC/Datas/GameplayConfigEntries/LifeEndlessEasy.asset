@@ -15,8 +15,8 @@ MonoBehaviour:
   displayName: Life-Endless Easy
   gameMode: 0
   difficulty: 0
-  gameplayConfigAsset: {fileID: 11400000, guid: 25081134d817a4299ae7d9065497d583, type: 2}
+  gameplayConfigAsset: {fileID: 11400000, guid: 8655dad8aefdb7f41a7debae2ceb4975, type: 2}
   missionParameterSourceMode: 0
-  missionParameterGenerationProfileAsset: {fileID: 11400000, guid: c67ec2046f8a447db0f07017e360216d, type: 2}
+  missionParameterGenerationProfileAsset: {fileID: 11400000, guid: cde98315fd8d49b42a2da5e9e451b44d, type: 2}
   missionPresetAsset: {fileID: 0}
   missionTextAsset: {fileID: 11400000, guid: b1014d3a149b1417982fbb0cda8c7830, type: 2}
