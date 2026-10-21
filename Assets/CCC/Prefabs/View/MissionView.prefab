@@ -49,7 +49,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a081f63fa68124700a32258c9fd2648e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.Gameplay.MissionView
-  _sectionText: {fileID: 6262548278640108661}
+  _scoreText: {fileID: 6262548278640108661}
   _missionText: {fileID: 3887685224056217541}
 --- !u!1 &4187996788127812712
 GameObject:
@@ -253,7 +253,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Score Text
+  m_text: 0
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 75c74dadd18a6467d9a7ede18802e7e1, type: 2}
   m_sharedMaterial: {fileID: 7471423630345285130, guid: 75c74dadd18a6467d9a7ede18802e7e1, type: 2}
