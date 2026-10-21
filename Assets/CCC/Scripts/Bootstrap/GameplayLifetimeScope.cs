@@ -77,6 +77,7 @@ namespace Ccc.Bootstrap
             builder.Register<IMissionDrawStrategy, FullMissionDrawStrategy>(Lifetime.Scoped);
             builder.Register<ISectionTimer, UniTaskSectionTimer>(Lifetime.Scoped);
             builder.Register<ExpressionInput>(Lifetime.Scoped);
+            builder.RegisterLogger<GameplayController>(Lifetime.Scoped);
             builder.Register<IGameplayFlow, GameplayController>(Lifetime.Scoped);
             builder.Register<RationalDecimalFormatter>(Lifetime.Scoped);
             builder.Register<MissionTextFormatter>(Lifetime.Scoped);
@@ -94,6 +95,7 @@ namespace Ccc.Bootstrap
 
             builder.RegisterComponentInHierarchy<GameplayView>()
                 .As<IGameplayView, IGameplayCountdownView>();
+            builder.RegisterLogger<GameplayEntryPoint>(Lifetime.Scoped);
             builder.RegisterEntryPoint<GameplayEntryPoint>();
         }
 

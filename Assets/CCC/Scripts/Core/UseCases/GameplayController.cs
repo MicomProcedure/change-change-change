@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Ccc.Core.Logic;
 using Ccc.Core.Model;
+using Microsoft.Extensions.Logging;
 using R3;
 
 namespace Ccc.Core.UseCases
@@ -15,6 +16,7 @@ namespace Ccc.Core.UseCases
         private readonly ExpressionInput _expressionInput;
         private readonly ISectionTimer _sectionTimer;
         private readonly IMissionDrawStrategy _missionDrawStrategy;
+        private readonly ILogger<GameplayController> _logger;
         private readonly Subject<GameplayState> _statesSubject;
         private readonly Subject<Expression> _expressionsSubject;
         private readonly Subject<GameplayEvent> _eventsSubject;
@@ -61,17 +63,20 @@ namespace Ccc.Core.UseCases
         /// <param name="expressionInput">提出式の入力所有者。</param>
         /// <param name="sectionTimer">SectionTimer。</param>
         /// <param name="missionDrawStrategy">Mission抽選Strategy。</param>
+        /// <param name="logger">Gameplayフロー失敗を記録するLogger。</param>
         /// <exception cref="ArgumentNullException">依存のいずれかがnullの場合。</exception>
         public GameplayController(
             GameplayConfig config,
             ExpressionInput expressionInput,
             ISectionTimer sectionTimer,
-            IMissionDrawStrategy missionDrawStrategy)
+            IMissionDrawStrategy missionDrawStrategy,
+            ILogger<GameplayController> logger)
         {
             _config = config ?? throw new ArgumentNullException(nameof(config));
             _expressionInput = expressionInput ?? throw new ArgumentNullException(nameof(expressionInput));
             _sectionTimer = sectionTimer ?? throw new ArgumentNullException(nameof(sectionTimer));
             _missionDrawStrategy = missionDrawStrategy ?? throw new ArgumentNullException(nameof(missionDrawStrategy));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             _statesSubject = new Subject<GameplayState>();
             _expressionsSubject = new Subject<Expression>();
@@ -109,10 +114,9 @@ namespace Ccc.Core.UseCases
                 (_currentState.Status == GameplayStatus.Playing ||
                  _currentState.Status == GameplayStatus.Transitioning))
             {
-                GameplayFlowFailure failure = CreateFailure(
+                GameplayFlowFailure failure = ReportFailure(
                     GameplayFlowFailureKind.SessionAlreadyRunning,
                     "A Gameplay session is already running.");
-                _failuresSubject.OnNext(failure);
                 return GameplayStartResult.FailureResult(failure);
             }
 
@@ -424,15 +428,25 @@ namespace Ccc.Core.UseCases
             _sectionTimer.StopAll();
             _sessionContext = null;
             _currentState = null;
-            GameplayFlowFailure failure = CreateFailure(kind, message);
-            _failuresSubject.OnNext(failure);
+            GameplayFlowFailure failure = ReportFailure(kind, message);
             return GameplayStartResult.FailureResult(failure);
         }
 
         private void PublishFailure(GameplayFlowFailureKind kind, string message)
         {
             _sectionTimer.StopAll();
-            _failuresSubject.OnNext(CreateFailure(kind, message));
+            ReportFailure(kind, message);
+        }
+
+        private GameplayFlowFailure ReportFailure(GameplayFlowFailureKind kind, string message)
+        {
+            GameplayFlowFailure failure = CreateFailure(kind, message);
+            _logger.LogError(
+                "Gameplay flow failed ({FailureKind}): {FailureMessage}",
+                failure.Kind,
+                failure.Message);
+            _failuresSubject.OnNext(failure);
+            return failure;
         }
 
         private static GameplayFlowFailure CreateFailure(GameplayFlowFailureKind kind, string message)

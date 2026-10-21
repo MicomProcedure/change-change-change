@@ -7,6 +7,7 @@ using Ccc.Infrastructure.Assets;
 using Ccc.Presentation;
 using Ccc.Presentation.Audio;
 using Cysharp.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using UnityEngine;
 using VContainer.Unity;
 using NavigationGameplayStartRequest = Ccc.Presentation.Navigation.GameplayNavigationRequest;
@@ -31,6 +32,7 @@ namespace Ccc.Bootstrap
         private readonly IGameplayCountdownView _countdownView;
         private readonly IAudioPlayer _audio;
         private readonly IRuntimeMode _runtimeMode;
+        private readonly ILogger<GameplayEntryPoint> _logger;
         private CancellationTokenSource _startupCancellationSource;
         private bool _isStarted;
         private bool _isDisposed;
@@ -46,6 +48,7 @@ namespace Ccc.Bootstrap
         /// <param name="countdownView">Gameplay開始前のCountdown View。</param>
         /// <param name="audio">Audio再生ポート。</param>
         /// <param name="runtimeMode">アプリケーションの実行モード。</param>
+        /// <param name="logger">起動失敗を記録するLogger。</param>
         /// <exception cref="ArgumentNullException">依存のいずれかがnullの場合。</exception>
         public GameplayEntryPoint(
             GameplayStartContext startContext,
@@ -55,7 +58,8 @@ namespace Ccc.Bootstrap
             IGameplayView view,
             IGameplayCountdownView countdownView,
             IAudioPlayer audio,
-            IRuntimeMode runtimeMode)
+            IRuntimeMode runtimeMode,
+            ILogger<GameplayEntryPoint> logger)
         {
             _startContext = startContext ?? throw new ArgumentNullException(nameof(startContext));
             _config = config ?? throw new ArgumentNullException(nameof(config));
@@ -65,6 +69,7 @@ namespace Ccc.Bootstrap
             _countdownView = countdownView ?? throw new ArgumentNullException(nameof(countdownView));
             _audio = audio ?? throw new ArgumentNullException(nameof(audio));
             _runtimeMode = runtimeMode ?? throw new ArgumentNullException(nameof(runtimeMode));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
@@ -110,6 +115,9 @@ namespace Ccc.Bootstrap
 
             if (validationErrors.Count > 0)
             {
+                _logger.LogError(
+                    "Gameplay configuration validation failed: {ValidationErrors}",
+                    string.Join(" | ", validationErrors));
                 _view.ShowConfigurationError(validationErrors);
                 return;
             }
@@ -299,6 +307,7 @@ namespace Ccc.Bootstrap
                 return;
             }
 
+            _logger.LogError(exception, "Gameplay startup failed.");
             _countdownView.HideCountdown();
             _countdownView.SetInputEnabled(false);
             _presenter.Dispose();

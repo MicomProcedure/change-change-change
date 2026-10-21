@@ -5,6 +5,7 @@ using System.Linq;
 using Ccc.Core.Logic;
 using Ccc.Core.Model;
 using Ccc.Core.UseCases;
+using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
 using R3;
 
@@ -657,7 +658,8 @@ namespace Ccc.Tests
                 config,
                 new ExpressionInput(config),
                 timer,
-                CreateStrategy(randomSource));
+                CreateStrategy(randomSource),
+                NullLogger<GameplayController>.Instance);
             using IDisposable subscription = controller.States.Subscribe(states.Add);
             MissionParameterCandidate[] candidates =
             {
@@ -699,7 +701,8 @@ namespace Ccc.Tests
                 config,
                 expressionInput,
                 timer,
-                recordingStrategy);
+                recordingStrategy,
+                NullLogger<GameplayController>.Instance);
             MissionParameterCandidate[] candidates =
             {
                 new MissionParameterCandidate(candidate.Condition)
