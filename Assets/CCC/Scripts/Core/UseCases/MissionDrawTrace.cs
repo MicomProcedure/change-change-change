@@ -66,9 +66,10 @@ namespace Ccc.Core.UseCases
         };
 
         /// <summary>
-        /// Tier段階で選ばれたTierを取得します。
+        /// 最終的に選出された候補のTierを取得します。
+        /// 下位Tierが選ばれた場合は複数Tierの候補群から選出されるため、選出候補のTierを記録します。
         /// </summary>
-        public int SelectedTier { get; }
+        public int SelectedTier => SelectedCandidate.Tier;
 
         /// <summary>
         /// Tier段階で選ばれた候補数を取得します。
@@ -127,7 +128,6 @@ namespace Ccc.Core.UseCases
         /// <param name="satisfiedCandidateCount">現在式で達成できる候補数。</param>
         /// <param name="unmatchedCandidateCount">現在式で達成できない候補数。</param>
         /// <param name="selectedExpressionGroup">現在式段階で選ばれた候補群。</param>
-        /// <param name="selectedTier">Tier段階で選ばれたTier。</param>
         /// <param name="tierStageCandidateCount">Tier段階で選ばれた候補数。</param>
         /// <param name="isNegatedPolaritySelected">極性段階でNegated候補群が選ばれたかどうか。</param>
         /// <param name="polarityStageCandidateCount">極性段階で選ばれた候補数。</param>
@@ -149,7 +149,6 @@ namespace Ccc.Core.UseCases
             int satisfiedCandidateCount,
             int unmatchedCandidateCount,
             CurrentExpressionCandidateGroup selectedExpressionGroup,
-            int selectedTier,
             int tierStageCandidateCount,
             bool isNegatedPolaritySelected,
             int polarityStageCandidateCount,
@@ -183,7 +182,6 @@ namespace Ccc.Core.UseCases
             IsInitialDraw = isInitialDraw;
             CurrentTier = currentTier;
             SelectedExpressionGroup = selectedExpressionGroup;
-            SelectedTier = selectedTier;
             IsNegatedPolaritySelected = isNegatedPolaritySelected;
             SelectedKind = selectedKind;
             PoolSize = poolSize;

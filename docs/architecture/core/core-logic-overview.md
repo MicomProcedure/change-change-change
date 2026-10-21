@@ -460,12 +460,10 @@ IMissionDrawStrategy ..> MissionCandidate : result
 flowchart TD
     Start[CatalogとSection]
     Tier[TierResolverでCurrent Tier導出]
-    Bucket[候補のあるCurrent／Lower Bucketを作る]
+    Bucket[候補のあるCurrent／Lower Bucketを作る・Lowerは全下位Tierを1つの候補群とする]
     Range{CurrentとLowerの両方があるか}
     Weighted[重み付き選択]
     OneRange[候補がある側を選択・乱数消費なし]
-    LowerTier{Lower内Tierが複数か}
-    PickLower[下位Tierを一様選択]
     Kind{Kindが複数か}
     PickKind[Kindを一様選択]
     Candidate{同Kind Candidateが複数か}
@@ -473,10 +471,8 @@ flowchart TD
     Result[MissionCandidate]
 
     Start --> Tier --> Bucket --> Range
-    Range -->|はい| Weighted --> LowerTier
-    Range -->|いいえ| OneRange --> LowerTier
-    LowerTier -->|はい| PickLower --> Kind
-    LowerTier -->|いいえ| Kind
+    Range -->|はい| Weighted --> Kind
+    Range -->|いいえ| OneRange --> Kind
     Kind -->|はい| PickKind --> Candidate
     Kind -->|いいえ| Candidate
     Candidate -->|はい| PickCandidate --> Result

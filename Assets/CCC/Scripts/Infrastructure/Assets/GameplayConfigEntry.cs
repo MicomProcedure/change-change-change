@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Ccc.Core.Model;
+using Ccc.Presentation.Audio;
 using Ccc.Presentation.Navigation;
 using UnityEngine;
 
@@ -12,6 +13,8 @@ namespace Ccc.Infrastructure.Assets
     [CreateAssetMenu(menuName = "CCC/Gameplay Config Entry")]
     public sealed class GameplayConfigEntry : ScriptableObject
     {
+        private const AudioKey DefaultGameplayBgmKey = AudioKey.BgmGameplayNormal;
+
         [SerializeField]
         private string displayName;
 
@@ -36,6 +39,9 @@ namespace Ccc.Infrastructure.Assets
 
         [SerializeField]
         private MissionTextAsset missionTextAsset;
+
+        [SerializeField]
+        private AudioKey gameplayBgmKey = DefaultGameplayBgmKey;
 
         /// <summary>
         /// Inspectorやデバッグログで使用する表示名を取得します。
@@ -103,6 +109,14 @@ namespace Ccc.Infrastructure.Assets
         }
 
         /// <summary>
+        /// Gameplay中に再生するBGMのAudioKeyを取得します。
+        /// </summary>
+        public AudioKey GameplayBgmKey
+        {
+            get { return gameplayBgmKey; }
+        }
+
+        /// <summary>
         /// Entryの必須設定を検証し、検出されたエラー一覧を返します。
         /// </summary>
         /// <returns>検出された検証エラー一覧。</returns>
@@ -141,6 +155,12 @@ namespace Ccc.Infrastructure.Assets
                 missionPresetAsset == null)
             {
                 errors.Add("PresetDebug requires a Mission preset asset.");
+            }
+
+            if (!Enum.IsDefined(typeof(AudioKey), gameplayBgmKey) ||
+                gameplayBgmKey == AudioKey.None)
+            {
+                errors.Add($"Gameplay BGM key is not configured: {gameplayBgmKey}.");
             }
 
             return errors;
