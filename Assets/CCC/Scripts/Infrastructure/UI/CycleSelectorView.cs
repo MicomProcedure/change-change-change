@@ -15,7 +15,7 @@ namespace Ccc.Infrastructure.UI
     public sealed class CycleSelectorView : MonoBehaviour
     {
         [SerializeField] private TextMeshProUGUI valueText;
-        [SerializeField] private List<PointerDownInputView> changeInputViews = new();
+        [SerializeField] private List<PressInputView> changeInputViews = new();
         [Tooltip("入力受付可否の視覚的なフィードバックをCanvasGroupで設定する場合はこちらを利用。")]
         [SerializeField] private CanvasGroup interactionCanvasGroup;
         [SerializeField] private Graphic disabledGraphic;
@@ -42,7 +42,7 @@ namespace Ccc.Infrastructure.UI
 
             for (int index = 0; index < changeInputViews.Count; index++)
             {
-                PointerDownInputView changeInputView = changeInputViews[index];
+                PressInputView changeInputView = changeInputViews[index];
                 if (changeInputView == null)
                 {
                     continue;
@@ -108,7 +108,7 @@ namespace Ccc.Infrastructure.UI
             {
                 for (int index = 0; index < changeInputViews.Count; index++)
                 {
-                    PointerDownInputView changeInputView = changeInputViews[index];
+                    PressInputView changeInputView = changeInputViews[index];
                     if (changeInputView != null)
                     {
                         changeInputView.SetInteractable(state.IsInteractable);
@@ -137,7 +137,7 @@ namespace Ccc.Infrastructure.UI
             {
                 for (int index = 0; index < changeInputViews.Count; index++)
                 {
-                    PointerDownInputView changeInputView = changeInputViews[index];
+                    PressInputView changeInputView = changeInputViews[index];
                     if (changeInputView != null)
                     {
                         changeInputView.SetInteractable(isEnabled);
