@@ -18,6 +18,7 @@ namespace Ccc.Infrastructure.Gameplay
         [SerializeField] private CycleSelectorView _operatorView;
         [SerializeField] private CycleSelectorView _rightNumberView;
         [SerializeField] private TMP_Text _answerText;
+        [SerializeField] private TextBounceAnimator _answerBounceAnimator;
 
         private readonly List<IDisposable> _inputSubscriptions = new List<IDisposable>();
         private Subject<GameplayInput> _inputsSubject;
@@ -41,6 +42,7 @@ namespace Ccc.Infrastructure.Gameplay
 
         /// <summary>
         /// 式と答えの表示を更新します。
+        /// 答えの表示文言が変わった場合は答えを跳ねさせます。
         /// </summary>
         /// <param name="leftText">式の左側。</param>
         /// <param name="operatorText">式の演算子。</param>
@@ -57,11 +59,7 @@ namespace Ccc.Infrastructure.Gameplay
             RenderSelector(_leftNumberView, leftText, isInteractable && _isInputEnabled);
             RenderSelector(_operatorView, operatorText, isInteractable && _isInputEnabled);
             RenderSelector(_rightNumberView, rightText, isInteractable && _isInputEnabled);
-
-            if (_answerText != null)
-            {
-                _answerText.text = answerText;
-            }
+            RenderAnswer(answerText);
         }
 
         /// <summary>
@@ -92,6 +90,21 @@ namespace Ccc.Infrastructure.Gameplay
 
             _inputSubscriptions.Add(selector.ChangeRequested.Subscribe(
                 _ => _inputsSubject.OnNext(new GameplayInput(inputKind))));
+        }
+
+        private void RenderAnswer(string answerText)
+        {
+            // Renderはタイマー更新ごとにも呼ばれるため、表示文言が変わった時だけ更新して跳ねさせる
+            if (_answerText == null || _answerText.text == answerText)
+            {
+                return;
+            }
+
+            _answerText.text = answerText;
+            if (_answerBounceAnimator != null)
+            {
+                _answerBounceAnimator.Play();
+            }
         }
 
         private static void RenderSelector(

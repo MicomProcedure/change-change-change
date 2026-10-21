@@ -47,6 +47,7 @@ GameObject:
   - component: {fileID: 2801697398796411485}
   - component: {fileID: 59268801449830048}
   - component: {fileID: 1973674385861515486}
+  - component: {fileID: 9080829973948632242}
   m_Layer: 5
   m_Name: AnserText
   m_TagString: Untagged
@@ -173,6 +174,23 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &9080829973948632242
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3865011414227722873}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8e730263936b6449a4a1c5e93c5e078, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.UI.TextBounceAnimator
+  _jumpHeight: 12
+  _riseDurationSeconds: 0.08
+  _riseEase: 6
+  _fallDurationSeconds: 0.25
+  _fallEase: 30
 --- !u!1 &5112306467013000186
 GameObject:
   m_ObjectHideFlags: 0
@@ -372,6 +390,7 @@ MonoBehaviour:
   _operatorView: {fileID: 4469120949953480113}
   _rightNumberView: {fileID: 1696348193414454650}
   _answerText: {fileID: 1973674385861515486}
+  _answerBounceAnimator: {fileID: 9080829973948632242}
 --- !u!225 &4262410078004578765
 CanvasGroup:
   m_ObjectHideFlags: 0
