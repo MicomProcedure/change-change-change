@@ -1520,9 +1520,9 @@ ViewはDTOをText、Gauge、interactable表現へ反映すること。`Rational`
 
 `RationalDecimalFormatter`は次を実装すること。
 
-- 小数点以下2桁。
-- 第3位以降が続く場合は丸めず切り捨て、`……`を付与。
-- 整数と有限小数は0で補う。
+- 小数点以下2桁で丸めず切り捨て、継続記号は付与しない。
+- 切り捨て後の小数部末尾の0と、小数部が0のときの小数点は表示しない。
+- 切り捨て後に0となる負数へ符号を付けない。
 - 0除算は`？`。
 
 `MissionTextFormatter`は`MissionCondition`と`IMissionTextSource`を受け取って日本語文言を生成するPresentation classとする。
