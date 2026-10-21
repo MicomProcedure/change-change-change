@@ -18,11 +18,11 @@ MonoBehaviour:
   initialOperator: 0
   initialRight: 1
   initialLife: 3
-  initialDurationSeconds: 12
+  initialDurationSeconds: 10
   reductionPerSectionSeconds: 0.3
-  minimumDurationSeconds: 5
+  minimumDurationSeconds: 4.5
   bonusRatio: 0.4
-  maximumBonusSeconds: 3
+  maximumBonusSeconds: 2
   manualSubmitBonusSeconds: 0.5
   isBonusCarryOverOnSuccessEnabled: 0
   isBonusCarryOverOnFailureEnabled: 0
