@@ -13,6 +13,8 @@ namespace Ccc.Bootstrap
         {
             builder.Register<OptionMenuModel>(Lifetime.Scoped);
             builder.Register<TitleScreenModel>(Lifetime.Scoped);
+            builder.Register<OptionVolumeAudioSynchronizer>(Lifetime.Scoped);
+            builder.Register<TitleScreenTransitionSoundPlayer>(Lifetime.Scoped);
             builder.RegisterComponentInHierarchy<TitleScreenView>();
             builder.RegisterEntryPoint<TitleEntryPoint>();
         }

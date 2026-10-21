@@ -24,6 +24,7 @@ namespace Ccc.Infrastructure.Navigation
         private readonly ReactiveProperty<bool> _isBusy;
         private readonly ReactiveProperty<string> _errorMessage;
         private readonly ReactiveProperty<GameDifficulty> _selectedDifficulty;
+        private readonly Subject<TitleScreenTransitionDirection> _screenTransitioned;
 
         private bool _isDisposed;
 
@@ -31,6 +32,12 @@ namespace Ccc.Infrastructure.Navigation
         /// 現在のTitleScene画面を取得します。
         /// </summary>
         public ReadOnlyReactiveProperty<TitleScreenState> CurrentScreen { get; }
+
+        /// <summary>
+        /// 受け付けた画面遷移の方向を、CurrentScreenの更新後に通知します。
+        /// 受け付けなかった遷移要求は通知しません。
+        /// </summary>
+        public Observable<TitleScreenTransitionDirection> ScreenTransitioned { get; }
 
         /// <summary>
         /// Gameplay開始処理中かどうかを取得します。
@@ -75,8 +82,10 @@ namespace Ccc.Infrastructure.Navigation
             _isBusy = new ReactiveProperty<bool>(false);
             _errorMessage = new ReactiveProperty<string>(string.Empty);
             _selectedDifficulty = new ReactiveProperty<GameDifficulty>(GameDifficulty.Normal);
+            _screenTransitioned = new Subject<TitleScreenTransitionDirection>();
 
             CurrentScreen = _currentScreen.ToReadOnlyReactiveProperty();
+            ScreenTransitioned = _screenTransitioned;
             IsBusy = _isBusy.ToReadOnlyReactiveProperty();
             ErrorMessage = _errorMessage.ToReadOnlyReactiveProperty();
             SelectedDifficulty = _selectedDifficulty.ToReadOnlyReactiveProperty();
@@ -89,7 +98,8 @@ namespace Ccc.Infrastructure.Navigation
         {
             ChangeScreen(
                 TitleScreenState.TitleScreen,
-                TitleScreenState.MainMenu);
+                TitleScreenState.MainMenu,
+                TitleScreenTransitionDirection.Forward);
         }
 
         /// <summary>
@@ -99,7 +109,8 @@ namespace Ccc.Infrastructure.Navigation
         {
             ChangeScreen(
                 TitleScreenState.MainMenu,
-                TitleScreenState.OptionMenu);
+                TitleScreenState.OptionMenu,
+                TitleScreenTransitionDirection.Forward);
         }
 
         /// <summary>
@@ -109,7 +120,8 @@ namespace Ccc.Infrastructure.Navigation
         {
             ChangeScreen(
                 TitleScreenState.MainMenu,
-                TitleScreenState.Stage);
+                TitleScreenState.Stage,
+                TitleScreenTransitionDirection.Forward);
         }
 
         /// <summary>
@@ -119,7 +131,8 @@ namespace Ccc.Infrastructure.Navigation
         {
             ChangeScreen(
                 TitleScreenState.OptionMenu,
-                TitleScreenState.MainMenu);
+                TitleScreenState.MainMenu,
+                TitleScreenTransitionDirection.Backward);
         }
 
         /// <summary>
@@ -129,7 +142,8 @@ namespace Ccc.Infrastructure.Navigation
         {
             ChangeScreen(
                 TitleScreenState.MainMenu,
-                TitleScreenState.Credit);
+                TitleScreenState.Credit,
+                TitleScreenTransitionDirection.Forward);
         }
 
         /// <summary>
@@ -139,7 +153,8 @@ namespace Ccc.Infrastructure.Navigation
         {
             ChangeScreen(
                 TitleScreenState.Credit,
-                TitleScreenState.MainMenu);
+                TitleScreenState.MainMenu,
+                TitleScreenTransitionDirection.Backward);
         }
 
         /// <summary>
@@ -149,7 +164,8 @@ namespace Ccc.Infrastructure.Navigation
         {
             ChangeScreen(
                 TitleScreenState.Stage,
-                TitleScreenState.Tutorial);
+                TitleScreenState.Tutorial,
+                TitleScreenTransitionDirection.Forward);
         }
 
         /// <summary>
@@ -159,7 +175,8 @@ namespace Ccc.Infrastructure.Navigation
         {
             ChangeScreen(
                 TitleScreenState.Tutorial,
-                TitleScreenState.Stage);
+                TitleScreenState.Stage,
+                TitleScreenTransitionDirection.Backward);
         }
 
         /// <summary>
@@ -169,9 +186,9 @@ namespace Ccc.Infrastructure.Navigation
         {
             ChangeScreen(
                 TitleScreenState.Stage,
-                TitleScreenState.MainMenu);
+                TitleScreenState.MainMenu,
+                TitleScreenTransitionDirection.Backward);
         }
-
 
         /// <summary>
         /// 選択中の難易度を宣言順（Easy → Normal → Hard → Easy）に切り替えます。
@@ -272,11 +289,13 @@ namespace Ccc.Infrastructure.Navigation
             _isBusy.Dispose();
             _errorMessage.Dispose();
             _selectedDifficulty.Dispose();
+            _screenTransitioned.Dispose();
         }
 
         private void ChangeScreen(
             TitleScreenState expectedCurrentScreen,
-            TitleScreenState nextScreen)
+            TitleScreenState nextScreen,
+            TitleScreenTransitionDirection direction)
         {
             if (_isDisposed ||
                 _isBusy.Value ||
@@ -287,6 +306,7 @@ namespace Ccc.Infrastructure.Navigation
 
             _errorMessage.Value = string.Empty;
             _currentScreen.Value = nextScreen;
+            _screenTransitioned.OnNext(direction);
         }
 
         private void ThrowIfDisposed()
