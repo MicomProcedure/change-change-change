@@ -40,6 +40,7 @@ Logと診断の責務を「何を記録するか（UseCase）」と「どう整�
 | `CompositeDiagnosticsReporter<TTrace>` / `SafeDiagnosticsReporter<TTrace>` / `LoggerDiagnosticsReporter<TTrace>` / `CsvDiagnosticsReporter<TTrace>` | `Ccc.Infrastructure` / `Ccc.Infrastructure.Logging` | 診断Reporter群 |
 | `IDiagnosticsTextFormatter<TTrace>` / `ICsvTraceFormatter<TTrace>` / `CsvTableDefinition` / `CsvLineFormatter` | `Ccc.Infrastructure` / `Ccc.Infrastructure.Logging` | 整形の契約とCSV行の変換 |
 | `MissionDrawTraceTextFormatter` / `MissionDrawTraceCsvFormatter` | `Ccc.Infrastructure` / `Ccc.Infrastructure.Logging` | Mission抽選Traceの整形 |
+| `MissionCatalogCsvFormatter` | `Ccc.Infrastructure` / `Ccc.Infrastructure.Logging` | MissionCatalog全候補のCSV整形 |
 | `LoggerFactoryComposer` / `LoggingRegistrationExtensions` / `MissionDrawDiagnosticsRegistrationExtensions` | `Ccc.Bootstrap` / `Ccc.Bootstrap.Log` | LoggerFactoryの構成と診断ReporterのDI登録 |
 
 配置ファイルは `Assets/CCC/Scripts/Core/UseCases/`、`Assets/CCC/Scripts/Infrastructure/Logging/`、`Assets/CCC/Scripts/Bootstrap/` とする。
@@ -122,6 +123,14 @@ public interface IDiagnosticsReporter<in TTrace>
 | `candidates` | 順位上位の候補1件（`CsvCandidateCount` 件まで） | SessionId、DrawIndex、Rank、Tier、Kind、ParameterA、ParameterB、IsNegated、MatchCount、EvaluatedCount、Ratio、Difference、IsInPool、IsSelected |
 
 `draws` と `candidates` は SessionId と DrawIndex で結合できること。`TierMinimumSections` はTier順の開始Sectionを `;` で連結すること。
+
+- `MissionCatalogCsvFormatter` は引数を受け取らず、MissionCatalogの全候補をCatalog内の順序で次の1表へ出力すること。書式は `MissionDrawTraceCsvFormatter` と同じとし、報告の通し番号は行に含めないこと。
+
+| 表（`FileSuffix`） | 1行の単位 | 列 |
+| --- | --- | --- |
+| `catalog` | Catalog候補1件 | SessionId、CatalogIndex（1始まり）、Tier、Kind、ParameterA、ParameterB、IsNegated、MatchCount、EvaluatedCount、Ratio |
+
+`catalog` は SessionId と、Kind・ParameterA・ParameterB・IsNegated の組で `draws` の選出候補（SelectedKind・SelectedParameterA・SelectedParameterB・SelectedPolarity）および `candidates` と結合できること。
 
 ---
 

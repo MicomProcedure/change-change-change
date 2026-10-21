@@ -247,20 +247,22 @@ namespace Ccc.Tests
         {
             GameplayConfig config = GameplayConfigDefaults.CreateNormal();
             MissionCatalogPreparationSettings settings = CreatePreparationSettings(config);
-            var firstReporter = new RecordingReporter();
-            var secondReporter = new RecordingReporter();
+            var firstReporter = new RecordingReporter<MissionDrawTrace>();
+            var secondReporter = new RecordingReporter<MissionDrawTrace>();
 
             MissionDrawSimulationSummary firstSummary = MissionDrawSimulation.Run(
                 config,
                 settings,
                 Seed,
                 environment => new SequentialFlowScenario(environment, sessionCount: 3, maximumSection: 4),
+                new RecordingReporter<MissionCatalog>(),
                 firstReporter);
             MissionDrawSimulation.Run(
                 config,
                 settings,
                 Seed,
                 environment => new SequentialFlowScenario(environment, sessionCount: 3, maximumSection: 4),
+                new RecordingReporter<MissionCatalog>(),
                 secondReporter);
 
             Assert.That(firstSummary.DrawCount, Is.EqualTo(12));
@@ -269,6 +271,31 @@ namespace Ccc.Tests
             Assert.That(
                 secondReporter.Traces.Select(trace => trace.SelectedCandidate.Condition),
                 Is.EqualTo(firstReporter.Traces.Select(trace => trace.SelectedCandidate.Condition)));
+        }
+
+        /// <summary>
+        /// 抽選に使ったMissionCatalogを1回だけCatalog Reporterへ報告し、全選出候補がそのCatalogに含まれることを検証します。
+        /// </summary>
+        [Test]
+        public void Run_ShouldReportPreparedCatalogOnce()
+        {
+            GameplayConfig config = GameplayConfigDefaults.CreateNormal();
+            var catalogReporter = new RecordingReporter<MissionCatalog>();
+            var drawReporter = new RecordingReporter<MissionDrawTrace>();
+
+            MissionDrawSimulation.Run(
+                config,
+                CreatePreparationSettings(config),
+                Seed,
+                environment => new SequentialFlowScenario(environment, sessionCount: 2, maximumSection: 3),
+                catalogReporter,
+                drawReporter);
+
+            Assert.That(catalogReporter.Traces, Has.Count.EqualTo(1));
+            Assert.That(drawReporter.Traces, Is.Not.Empty);
+            Assert.That(
+                drawReporter.Traces.Select(trace => trace.SelectedCandidate).Distinct(),
+                Is.SubsetOf(catalogReporter.Traces[0].Candidates));
         }
 
         /// <summary>
@@ -293,7 +320,8 @@ namespace Ccc.Tests
                 settings,
                 Seed,
                 environment => new SequentialFlowScenario(environment, sessionCount: 1, maximumSection: 1),
-                new RecordingReporter()));
+                new RecordingReporter<MissionCatalog>(),
+                new RecordingReporter<MissionDrawTrace>()));
         }
 
         private static MissionDrawScenarioEnvironment CreateEnvironment()
@@ -341,7 +369,7 @@ namespace Ccc.Tests
 
         private static FullMissionDrawStrategy CreateStrategy()
         {
-            return new FullMissionDrawStrategy(new SimulationRandom(Seed), new RecordingReporter());
+            return new FullMissionDrawStrategy(new SimulationRandom(Seed), new RecordingReporter<MissionDrawTrace>());
         }
 
         private static List<(MissionDrawContext Context, MissionDrawResult Result)> DrawAll(IMissionDrawScenario scenario)
@@ -362,9 +390,9 @@ namespace Ccc.Tests
             return draws;
         }
 
-        private sealed class RecordingReporter : IDiagnosticsReporter<MissionDrawTrace>
+        private sealed class RecordingReporter<TTrace> : IDiagnosticsReporter<TTrace>
         {
-            private readonly List<MissionDrawTrace> _traces = new List<MissionDrawTrace>();
+            private readonly List<TTrace> _traces = new List<TTrace>();
 
             /// <summary>
             /// 常にTraceを受け付けます。
@@ -374,13 +402,13 @@ namespace Ccc.Tests
             /// <summary>
             /// 報告されたTraceを報告順に取得します。
             /// </summary>
-            public IReadOnlyList<MissionDrawTrace> Traces => _traces;
+            public IReadOnlyList<TTrace> Traces => _traces;
 
             /// <summary>
             /// 報告されたTraceを記録します。
             /// </summary>
             /// <param name="trace">記録するTrace。</param>
-            public void Report(MissionDrawTrace trace)
+            public void Report(TTrace trace)
             {
                 _traces.Add(trace);
             }
