@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b01567eec3fd4855a950abb9c544472, type: 3}
+  m_Name: HardGameplayConfigAsset
+  m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.Assets.GameplayConfigAsset
+  minimumNumber: -5
+  maximumNumber: 5
+  initialLeft: 1
+  initialOperator: 0
+  initialRight: 1
+  initialLife: 3
+  initialDurationSeconds: 12
+  reductionPerSectionSeconds: 0.3
+  minimumDurationSeconds: 5
+  bonusRatio: 0.4
+  maximumBonusSeconds: 3
+  manualSubmitBonusSeconds: 0.5
+  isBonusCarryOverOnSuccessEnabled: 0
+  isBonusCarryOverOnFailureEnabled: 0
+  tierStartSections: 01000000050000000a0000000f000000
+  showCurrentAnswer: 0
+  minimumExpressionMatchRatio: 0.01
+  maximumExpressionMatchRatio: 0.6
+  minimumExpressionMatchCount: 2
+  zeroAndPrimeMinimumExpressionMatchCount: 1
+  currentTierDrawWeight: 0.4
+  lowerTierDrawWeight: 0.6
+  currentExpressionSatisfiedMissionSelectionRatio: 0.1
+  targetExpressionMatchRatio: 0.2
+  negatedMissionSelectionWeight: 0.5
+  missionParameterSelectionPoolSize: 3

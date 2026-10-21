@@ -369,7 +369,7 @@ namespace Ccc.Presentation
             return new GameplayViewStateDto(
                 _gameplayRequest.GameMode.ToString(),
                 _gameplayRequest.Difficulty.ToString(),
-                gameplayState.Section,
+                gameplayState.CorrectAnswerCount,
                 gameplayState.Life,
                 missionText,
                 expression.Left.ToString(CultureInfo.InvariantCulture),
