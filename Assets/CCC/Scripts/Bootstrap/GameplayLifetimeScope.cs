@@ -10,6 +10,7 @@ using Ccc.Infrastructure.Random;
 using Ccc.Infrastructure.Time;
 using Ccc.Infrastructure.Navigation;
 using Ccc.Infrastructure.Gameplay;
+using Ccc.Infrastructure.Telemetry;
 using Ccc.Presentation.Audio;
 using Ccc.Presentation;
 using Ccc.Presentation.Navigation;
@@ -25,6 +26,7 @@ namespace Ccc.Bootstrap
     public sealed class GameplayLifetimeScope : LifetimeScope
     {
         [SerializeField] private GameplayConfigCatalogAsset _configCatalogAsset;
+        [SerializeField] private TelemetrySettingsAsset _telemetrySettingsAsset;
 
         /// <summary>
         /// Gameplay Scopeの依存関係を登録します。
@@ -95,8 +97,53 @@ namespace Ccc.Bootstrap
 
             builder.RegisterComponentInHierarchy<GameplayView>()
                 .As<IGameplayView, IGameplayCountdownView>();
+            RegisterTelemetry(builder);
             builder.RegisterLogger<GameplayEntryPoint>(Lifetime.Scoped);
             builder.RegisterEntryPoint<GameplayEntryPoint>();
+        }
+
+        private void RegisterTelemetry(IContainerBuilder builder)
+        {
+            if (_telemetrySettingsAsset == null || !_telemetrySettingsAsset.IsEnabled)
+            {
+                return;
+            }
+
+            IReadOnlyList<string> telemetryErrors = _telemetrySettingsAsset.Validate();
+            if (telemetryErrors.Count > 0)
+            {
+                Debug.LogWarning(
+                    "Telemetry is disabled because settings are invalid: " +
+                    string.Join(" | ", telemetryErrors));
+                return;
+            }
+
+            builder.RegisterInstance(_telemetrySettingsAsset);
+            builder.Register<TelemetrySessionDescriptor>(
+                resolver => CreateTelemetrySessionDescriptor(resolver),
+                Lifetime.Scoped);
+            builder.RegisterLogger<TelemetrySender>(Lifetime.Scoped);
+            builder.Register<TelemetrySender>(Lifetime.Scoped);
+            builder.RegisterLogger<GameplayTelemetryRecorder>(Lifetime.Scoped);
+            builder.Register<GameplayTelemetryRecorder>(Lifetime.Scoped);
+            // EntryPointのStart（Session開始）より前に購読を始める
+            builder.RegisterBuildCallback(
+                resolver => resolver.Resolve<GameplayTelemetryRecorder>().StartRecording());
+        }
+
+        private static TelemetrySessionDescriptor CreateTelemetrySessionDescriptor(IObjectResolver resolver)
+        {
+            const string SessionIdFormat = "N";
+            GameplayConfigEntry entry = resolver.Resolve<GameplayConfigEntry>();
+            IPlayPlatformMode playPlatformMode = resolver.Resolve<IPlayPlatformMode>();
+            return new TelemetrySessionDescriptor(
+                Guid.NewGuid().ToString(SessionIdFormat),
+                playPlatformMode.Platform.ToString(),
+                Application.platform.ToString(),
+                SystemInfo.deviceModel,
+                Application.version,
+                entry.Difficulty,
+                entry.DisplayName);
         }
 
         private void ValidateAssetReferences()
