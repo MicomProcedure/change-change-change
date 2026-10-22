@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Ccc.Core.Model;
+using Ccc.Presentation;
 using Ccc.Presentation.Audio;
 using Ccc.Presentation.Navigation;
 using UnityEngine;
@@ -42,6 +43,9 @@ namespace Ccc.Infrastructure.Assets
 
         [SerializeField]
         private AudioKey gameplayBgmKey = DefaultGameplayBgmKey;
+
+        [SerializeField]
+        private ExpressionDisplayStyle expressionDisplayStyle;
 
         /// <summary>
         /// Inspectorやデバッグログで使用する表示名を取得します。
@@ -117,6 +121,14 @@ namespace Ccc.Infrastructure.Assets
         }
 
         /// <summary>
+        /// Gameplay画面で式を表示するスタイルを取得します。
+        /// </summary>
+        public ExpressionDisplayStyle ExpressionDisplayStyle
+        {
+            get { return expressionDisplayStyle; }
+        }
+
+        /// <summary>
         /// Entryの必須設定を検証し、検出されたエラー一覧を返します。
         /// </summary>
         /// <returns>検出された検証エラー一覧。</returns>
@@ -161,6 +173,11 @@ namespace Ccc.Infrastructure.Assets
                 gameplayBgmKey == AudioKey.None)
             {
                 errors.Add($"Gameplay BGM key is not configured: {gameplayBgmKey}.");
+            }
+
+            if (!Enum.IsDefined(typeof(ExpressionDisplayStyle), expressionDisplayStyle))
+            {
+                errors.Add($"Expression display style is undefined: {expressionDisplayStyle}.");
             }
 
             return errors;

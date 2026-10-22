@@ -1653,7 +1653,7 @@ Disposeは購読、進行中演出、MainMenu遷移待機をCancelすること�
 `GameplayView` は複数のコンポーネント（`MonoBehaviour`）を統括し、`IGameplayView` インターフェースを具象実装すること。
 
 > **構成する子Viewコンポーネント**
-> - `ExpressionView`（数式表示）
+> - `ExpressionView`（数式表示。`GameplayConfigEntry.ExpressionDisplayStyle` に対応する `ExpressionDisplaySet` だけを表示する）
 > - `MissionView`（Mission情報表示）
 > - `TimerView`（残り時間表示）
 > - `LifeView`（ライフ残数表示）

@@ -16,6 +16,12 @@ namespace Ccc.Presentation
         Observable<GameplayInput> Inputs { get; }
 
         /// <summary>
+        /// GameModeとGameDifficultyの組ごとに決まる表示設定を適用します。
+        /// </summary>
+        /// <param name="settings">適用する表示設定。</param>
+        void ApplyDisplaySettings(GameplayDisplaySettingsDto settings);
+
+        /// <summary>
         /// 完成済みの表示状態を描画します。
         /// </summary>
         /// <param name="state">描画対象の表示状態。</param>
