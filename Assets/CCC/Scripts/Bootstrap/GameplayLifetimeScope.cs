@@ -74,7 +74,7 @@ namespace Ccc.Bootstrap
                 resolver => CreateDiagnosticsSessionDescriptor(resolver),
                 Lifetime.Scoped);
             builder.RegisterMissionDrawDiagnostics();
-            builder.Register<IMissionDrawStrategy, FullMissionDrawStrategy>(Lifetime.Scoped);
+            builder.Register<IMissionDrawStrategy, SectionDecliningMatchRatioMissionDrawStrategy>(Lifetime.Scoped);
             builder.Register<ISectionTimer, UniTaskSectionTimer>(Lifetime.Scoped);
             builder.Register<ExpressionInput>(Lifetime.Scoped);
             builder.RegisterLogger<GameplayController>(Lifetime.Scoped);

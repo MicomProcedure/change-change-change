@@ -57,6 +57,16 @@ namespace Ccc.Core.Model
         public float TargetExpressionMatchRatio { get; }
 
         /// <summary>
+        /// Sectionが1進むごとに目標式適合割合の下限を下げる量を取得します。
+        /// </summary>
+        public float TargetExpressionMatchRatioReductionPerSection { get; }
+
+        /// <summary>
+        /// Sectionが進んでも下回らない目標式適合割合の下限を取得します。
+        /// </summary>
+        public float MinimumTargetExpressionMatchRatio { get; }
+
+        /// <summary>
         /// 肯定Missionの基準重み1.00に対するNegatedMissionの相対重みを取得します。
         /// </summary>
         public float NegatedMissionSelectionWeight { get; }
@@ -83,7 +93,9 @@ namespace Ccc.Core.Model
         /// <param name="currentTierDrawWeight">現在Tierの相対抽選重み。</param>
         /// <param name="lowerTierDrawWeight">下位Tierの相対抽選重み。</param>
         /// <param name="currentExpressionSatisfiedMissionSelectionRatio">現在式で達成できるMission候補群の選択確率。</param>
-        /// <param name="targetExpressionMatchRatio">本実装版抽選で優先する式適合割合。</param>
+        /// <param name="targetExpressionMatchRatio">本実装版抽選で優先する式適合割合。Section低下版抽選では初期値かつ上限とします。</param>
+        /// <param name="targetExpressionMatchRatioReductionPerSection">Sectionが1進むごとに目標式適合割合の下限を下げる量。</param>
+        /// <param name="minimumTargetExpressionMatchRatio">目標式適合割合の下限が下回らない値。</param>
         /// <param name="negatedMissionSelectionWeight">NegatedMissionの相対抽選重み。</param>
         /// <param name="missionParameterSelectionPoolSize">最終抽選プールへ含める候補数。</param>
         /// <exception cref="ArgumentNullException">必須の参照設定がnullの場合。</exception>
@@ -104,6 +116,8 @@ namespace Ccc.Core.Model
             float lowerTierDrawWeight,
             float currentExpressionSatisfiedMissionSelectionRatio,
             float targetExpressionMatchRatio,
+            float targetExpressionMatchRatioReductionPerSection,
+            float minimumTargetExpressionMatchRatio,
             float negatedMissionSelectionWeight,
             int missionParameterSelectionPoolSize)
         {
@@ -120,6 +134,10 @@ namespace Ccc.Core.Model
                 targetExpressionMatchRatio,
                 negatedMissionSelectionWeight,
                 missionParameterSelectionPoolSize);
+            ValidateTargetExpressionMatchRatioReduction(
+                targetExpressionMatchRatio,
+                targetExpressionMatchRatioReductionPerSection,
+                minimumTargetExpressionMatchRatio);
 
             MinimumNumber = minimumNumber;
             MaximumNumber = maximumNumber;
@@ -137,6 +155,8 @@ namespace Ccc.Core.Model
             CurrentExpressionSatisfiedMissionSelectionRatio =
                 currentExpressionSatisfiedMissionSelectionRatio;
             TargetExpressionMatchRatio = targetExpressionMatchRatio;
+            TargetExpressionMatchRatioReductionPerSection = targetExpressionMatchRatioReductionPerSection;
+            MinimumTargetExpressionMatchRatio = minimumTargetExpressionMatchRatio;
             NegatedMissionSelectionWeight = negatedMissionSelectionWeight;
             MissionParameterSelectionPoolSize = missionParameterSelectionPoolSize;
         }
@@ -261,6 +281,34 @@ namespace Ccc.Core.Model
             }
         }
 
+        private static void ValidateTargetExpressionMatchRatioReduction(
+            float targetExpressionMatchRatio,
+            float targetExpressionMatchRatioReductionPerSection,
+            float minimumTargetExpressionMatchRatio)
+        {
+            if (float.IsNaN(targetExpressionMatchRatioReductionPerSection) ||
+                float.IsInfinity(targetExpressionMatchRatioReductionPerSection) ||
+                targetExpressionMatchRatioReductionPerSection < 0f)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(targetExpressionMatchRatioReductionPerSection),
+                    targetExpressionMatchRatioReductionPerSection,
+                    "Target expression match ratio reduction per section must be finite and zero or positive.");
+            }
+
+            ValidateSelectionRatio(
+                minimumTargetExpressionMatchRatio,
+                nameof(minimumTargetExpressionMatchRatio),
+                "Minimum target expression match ratio");
+            if (minimumTargetExpressionMatchRatio > targetExpressionMatchRatio)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(minimumTargetExpressionMatchRatio),
+                    minimumTargetExpressionMatchRatio,
+                    "Minimum target expression match ratio must not exceed the target expression match ratio.");
+            }
+        }
+
         private static void ValidateSelectionRatio(
             float selectionRatio,
             string parameterName,
@@ -329,6 +377,8 @@ namespace Ccc.Core.Model
                 lowerTierDrawWeight: 0.40f,
                 currentExpressionSatisfiedMissionSelectionRatio: 0.10f,
                 targetExpressionMatchRatio: 0.20f,
+                targetExpressionMatchRatioReductionPerSection: 0f,
+                minimumTargetExpressionMatchRatio: 0f,
                 negatedMissionSelectionWeight: 0.60f,
                 missionParameterSelectionPoolSize: 3);
         }

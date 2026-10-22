@@ -31,6 +31,8 @@ namespace Ccc.Tests
             Assert.That(lines[0], Does.StartWith("Mission draw: Section=5"));
             Assert.That(lines[1], Does.Contain("Expression=Unmatched(18; Satisfied=12, Unmatched=18)"));
             Assert.That(lines[2], Does.Contain("SelectedRank=2"));
+            Assert.That(lines[2], Does.Contain("TargetRatio=0.1500(0.1000..0.2000)"));
+            Assert.That(lines[4], Does.Contain("Difference=0.1500"));
             Assert.That(lines[3], Does.StartWith("#1 ").And.EndWith("[Pool]"));
             Assert.That(lines[4], Does.StartWith("#2 ").And.EndWith("[Pool] [Selected]"));
         }
@@ -67,7 +69,7 @@ namespace Ccc.Tests
         }
 
         /// <summary>
-        /// draws表の1行がSession情報、抽選番号、段階別の選定結果、選出候補の順位を持つことを検証します。
+        /// draws表の1行がSession情報、抽選番号、段階別の選定結果、目標式適合割合の範囲と抽選値、選出候補の順位と抽選値との差を持つことを検証します。
         /// </summary>
         [Test]
         public void CsvFormatter_ShouldWriteOneDrawRowWithSessionAndStageValues()
@@ -81,15 +83,20 @@ namespace Ccc.Tests
             Assert.That(fields["SessionId"], Is.EqualTo("20261005_143012"));
             Assert.That(fields["GameMode"], Is.EqualTo("LifeEndless"));
             Assert.That(fields["TargetExpressionMatchRatio"], Is.EqualTo("0.2"));
+            Assert.That(fields["TargetExpressionMatchRatioReductionPerSection"], Is.EqualTo("0.025"));
+            Assert.That(fields["MinimumTargetExpressionMatchRatio"], Is.EqualTo("0.05"));
             Assert.That(fields["TierMinimumSections"], Is.EqualTo("1;4;8;12"));
             Assert.That(fields["DrawIndex"], Is.EqualTo("7"));
             Assert.That(fields["SelectedExpressionGroup"], Is.EqualTo("Unmatched"));
             Assert.That(fields["ExpressionStageCount"], Is.EqualTo("18"));
             Assert.That(fields["SelectedPolarity"], Is.EqualTo("Positive"));
             Assert.That(fields["KindStageCount"], Is.EqualTo("3"));
+            Assert.That(fields["TargetRatioLowerBound"], Is.EqualTo("0.1000"));
+            Assert.That(fields["TargetRatioUpperBound"], Is.EqualTo("0.2000"));
+            Assert.That(fields["TargetRatio"], Is.EqualTo("0.1500"));
             Assert.That(fields["SelectedRank"], Is.EqualTo("2"));
             Assert.That(fields["SelectedRatio"], Is.EqualTo("0.3000"));
-            Assert.That(fields["SelectedDifference"], Is.EqualTo("0.1000"));
+            Assert.That(fields["SelectedDifference"], Is.EqualTo("0.1500"));
         }
 
         /// <summary>
