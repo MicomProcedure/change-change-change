@@ -10,7 +10,7 @@
 
 オーディオ（Audio）の責務を、「ゲーム上の再生トリガー判断（いつ、どの音を鳴らすか）」と「Unity上の実際の再生処理」に明確に分離すること。
 
-- Presenter、EntryPoint、または画面遷移に対応する SE 再生クラス（`TitleScreenTransitionSoundPlayer`）がサウンドの再生タイミングにおいて `AudioKey` を指定すること。
+- Presenter、EntryPoint、または Title 画面の操作に対応する SE 再生クラス（`TitleScreenTransitionSoundPlayer` / `TitleSelectorChangeSoundPlayer`）がサウンドの再生タイミングにおいて `AudioKey` を指定すること。
 - `IAudioPlayer` は SE再生、BGM再生、BGM停止を受け付ける出力ポート（インターフェース）を提供すること。
 - `UnityAudioPlayer` は SE / BGM の各 Key から対応する設定を検索し、適切な `AudioSource` を使用して再生処理を行うこと。
 - `AudioCatalogAsset` は `AudioKey` と実際の `AudioClip` の紐付けを Unity Inspector 上で安全に編集・設定可能とすること。
@@ -103,6 +103,7 @@ ApplicationLifetimeScope o-- UnityAudioPlayer : registers
 - `GameplayPresenter` は Gameplay イベントやプレイヤー入力に応じて適切な `AudioKey` を選択する。
 - BGM の選定・制御は、各画面の EntryPoint または Presenter が画面遷移タイミングで行い、Gameplay 画面では `GameplayEntryPoint`、Title 画面では `TitleEntryPoint` が担当する。
 - Title 画面内の遷移 SE は `TitleScreenTransitionSoundPlayer` が `TitleScreenModel.ScreenTransitioned` の遷移方向から選択する。詳細は [画面遷移クラス設計](../presentation/scene-navigation.md#73-titlescreentransitionsoundplayer) を参照すること。
+- Title 画面の難易度・音量の change SE は `TitleSelectorChangeSoundPlayer` が選択値の切り替えから `SEChangeClick` を選択する。Gameplay の change 操作と同じ Key を用いること。詳細は [画面遷移クラス設計](../presentation/scene-navigation.md#75-titleselectorchangesoundplayer) を参照すること。
 
 ---
 
