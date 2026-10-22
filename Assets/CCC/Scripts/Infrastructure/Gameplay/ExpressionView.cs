@@ -14,14 +14,16 @@ namespace Ccc.Infrastructure.Gameplay
     /// </summary>
     public sealed class ExpressionView : MonoBehaviour
     {
-        [SerializeField] private CycleSelectorView _leftNumberView;
-        [SerializeField] private CycleSelectorView _operatorView;
-        [SerializeField] private CycleSelectorView _rightNumberView;
+        [Tooltip("ExpressionDisplayStyle.Plainで表示するSelector一式。")]
+        [SerializeField] private ExpressionDisplaySet _plainDisplaySet;
+        [Tooltip("ExpressionDisplayStyle.ChoiceIndicatorで表示するSelector一式。")]
+        [SerializeField] private ExpressionDisplaySet _choiceIndicatorDisplaySet;
         [SerializeField] private TMP_Text _answerText;
         [SerializeField] private TextBounceAnimator _answerBounceAnimator;
 
         private readonly List<IDisposable> _inputSubscriptions = new List<IDisposable>();
         private Subject<GameplayInput> _inputsSubject;
+        private ExpressionDisplaySet _activeDisplaySet;
         private bool _isInputEnabled = true;
 
         /// <summary>
@@ -38,6 +40,29 @@ namespace Ccc.Infrastructure.Gameplay
         private void Start()
         {
             ConnectSelectorInputs();
+        }
+
+        /// <summary>
+        /// 指定された表示スタイルのSelector一式だけを表示し、以降の表示と入力の対象にします。
+        /// 対応する一式が未設定の場合は、すべての一式を非表示にして式の表示と入力を無効にします。
+        /// </summary>
+        /// <param name="displayStyle">表示するスタイル。</param>
+        /// <returns>対応する一式を表示できた場合はtrue。未設定の場合はfalse。</returns>
+        public bool TryApplyDisplayStyle(ExpressionDisplayStyle displayStyle)
+        {
+            ExpressionDisplaySet matchedDisplaySet = GetDisplaySet(displayStyle);
+            ExpressionDisplaySet[] displaySets = GetDisplaySets();
+            for (int index = 0; index < displaySets.Length; index++)
+            {
+                ExpressionDisplaySet displaySet = displaySets[index];
+                if (displaySet != null)
+                {
+                    displaySet.SetVisible(displaySet == matchedDisplaySet);
+                }
+            }
+
+            _activeDisplaySet = matchedDisplaySet;
+            return matchedDisplaySet != null;
         }
 
         /// <summary>
@@ -66,16 +91,20 @@ namespace Ccc.Infrastructure.Gameplay
             string answerText,
             bool isInteractable)
         {
-            bool isSelectorInteractable = isInteractable && _isInputEnabled;
-            RenderSelector(
-                _leftNumberView,
-                new CycleSelectorStateDto(leftText, isSelectorInteractable, leftIndex, numberChoiceCount));
-            RenderSelector(
-                _operatorView,
-                new CycleSelectorStateDto(operatorText, isSelectorInteractable, operatorIndex, operatorChoiceCount));
-            RenderSelector(
-                _rightNumberView,
-                new CycleSelectorStateDto(rightText, isSelectorInteractable, rightIndex, numberChoiceCount));
+            if (_activeDisplaySet != null)
+            {
+                bool isSelectorInteractable = isInteractable && _isInputEnabled;
+                RenderSelector(
+                    _activeDisplaySet.LeftNumberView,
+                    new CycleSelectorStateDto(leftText, isSelectorInteractable, leftIndex, numberChoiceCount));
+                RenderSelector(
+                    _activeDisplaySet.OperatorView,
+                    new CycleSelectorStateDto(operatorText, isSelectorInteractable, operatorIndex, operatorChoiceCount));
+                RenderSelector(
+                    _activeDisplaySet.RightNumberView,
+                    new CycleSelectorStateDto(rightText, isSelectorInteractable, rightIndex, numberChoiceCount));
+            }
+
             RenderAnswer(answerText);
         }
 
@@ -86,27 +115,71 @@ namespace Ccc.Infrastructure.Gameplay
         public void SetInputEnabled(bool isEnabled)
         {
             _isInputEnabled = isEnabled;
-            RenderSelectorInputState(_leftNumberView, isEnabled);
-            RenderSelectorInputState(_operatorView, isEnabled);
-            RenderSelectorInputState(_rightNumberView, isEnabled);
+            // 表示スタイルの適用前に呼ばれても受付状態が揃うよう、非表示の一式にも反映する
+            ExpressionDisplaySet[] displaySets = GetDisplaySets();
+            for (int index = 0; index < displaySets.Length; index++)
+            {
+                ExpressionDisplaySet displaySet = displaySets[index];
+                if (displaySet == null)
+                {
+                    continue;
+                }
+
+                RenderSelectorInputState(displaySet.LeftNumberView, isEnabled);
+                RenderSelectorInputState(displaySet.OperatorView, isEnabled);
+                RenderSelectorInputState(displaySet.RightNumberView, isEnabled);
+            }
+        }
+
+        private ExpressionDisplaySet GetDisplaySet(ExpressionDisplayStyle displayStyle)
+        {
+            switch (displayStyle)
+            {
+                case ExpressionDisplayStyle.Plain:
+                    return _plainDisplaySet;
+                case ExpressionDisplayStyle.ChoiceIndicator:
+                    return _choiceIndicatorDisplaySet;
+                default:
+                    return null;
+            }
+        }
+
+        private ExpressionDisplaySet[] GetDisplaySets()
+        {
+            return new[] { _plainDisplaySet, _choiceIndicatorDisplaySet };
         }
 
         private void ConnectSelectorInputs()
         {
-            SubscribeSelector(_leftNumberView, GameplayInputKind.ChangeLeftNumber);
-            SubscribeSelector(_operatorView, GameplayInputKind.ChangeOperator);
-            SubscribeSelector(_rightNumberView, GameplayInputKind.ChangeRightNumber);
+            ExpressionDisplaySet[] displaySets = GetDisplaySets();
+            for (int index = 0; index < displaySets.Length; index++)
+            {
+                ExpressionDisplaySet displaySet = displaySets[index];
+                if (displaySet == null)
+                {
+                    continue;
+                }
+
+                SubscribeSelector(displaySet, displaySet.LeftNumberView, GameplayInputKind.ChangeLeftNumber);
+                SubscribeSelector(displaySet, displaySet.OperatorView, GameplayInputKind.ChangeOperator);
+                SubscribeSelector(displaySet, displaySet.RightNumberView, GameplayInputKind.ChangeRightNumber);
+            }
         }
 
-        private void SubscribeSelector(CycleSelectorView selector, GameplayInputKind inputKind)
+        private void SubscribeSelector(
+            ExpressionDisplaySet displaySet,
+            CycleSelectorView selector,
+            GameplayInputKind inputKind)
         {
             if (selector == null || selector.ChangeRequested == null || _inputsSubject == null)
             {
                 return;
             }
 
-            _inputSubscriptions.Add(selector.ChangeRequested.Subscribe(
-                _ => _inputsSubject.OnNext(new GameplayInput(inputKind))));
+            // 各一式のSelectorは同じボタンを購読しているため、表示中の一式からの入力だけを流す
+            _inputSubscriptions.Add(selector.ChangeRequested
+                .Where(_ => displaySet == _activeDisplaySet)
+                .Subscribe(_ => _inputsSubject.OnNext(new GameplayInput(inputKind))));
         }
 
         private void RenderAnswer(string answerText)

@@ -146,6 +146,29 @@ namespace Ccc.Infrastructure.Gameplay
         }
 
         /// <summary>
+        /// 表示設定を各子Viewへ適用します。
+        /// 式のスタイルに対応するSelector一式が未設定の場合はログを出し、式の表示と入力を無効にして処理を継続します。
+        /// </summary>
+        /// <param name="settings">適用する表示設定。</param>
+        public void ApplyDisplaySettings(GameplayDisplaySettingsDto settings)
+        {
+            if (settings == null)
+            {
+                throw new ArgumentNullException(nameof(settings));
+            }
+
+            if (_expressionView == null ||
+                _expressionView.TryApplyDisplayStyle(settings.ExpressionDisplayStyle))
+            {
+                return;
+            }
+
+            LogConfigurationProblem(
+                $"{nameof(GameplayView)}: {nameof(ExpressionView)}にExpressionDisplayStyle.{settings.ExpressionDisplayStyle}の" +
+                "Selector一式が未設定です。式の表示と入力を無効にして処理を継続します。");
+        }
+
+        /// <summary>
         /// Countdownの残り秒数を中央に表示します。
         /// </summary>
         /// <param name="remainingSeconds">表示する残り秒数。</param>
@@ -359,6 +382,11 @@ namespace Ccc.Infrastructure.Gameplay
                 (IsDebugMode
                     ? "DebugModeのため処理を継続します。"
                     : "該当するUI表示または入力を無効にして処理を継続します。");
+            LogConfigurationProblem(message);
+        }
+
+        private void LogConfigurationProblem(string message)
+        {
             if (IsDebugMode)
             {
                 Debug.LogError(message, this);
