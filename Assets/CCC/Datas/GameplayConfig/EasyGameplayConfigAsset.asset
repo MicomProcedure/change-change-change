@@ -35,6 +35,8 @@ MonoBehaviour:
   currentTierDrawWeight: 0.3
   lowerTierDrawWeight: 0.7
   currentExpressionSatisfiedMissionSelectionRatio: 0.1
-  targetExpressionMatchRatio: 0.2
+  targetExpressionMatchRatio: 0.3
+  targetExpressionMatchRatioReductionPerSection: 0.001
+  minimumTargetExpressionMatchRatio: 0.1
   negatedMissionSelectionWeight: 0.5
   missionParameterSelectionPoolSize: 3
