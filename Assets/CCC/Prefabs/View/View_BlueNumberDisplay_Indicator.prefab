@@ -161,6 +161,14 @@ PrefabInstance:
       propertyPath: m_Spacing.y
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 2145565663143910779, guid: 52cfbf37f98a645b3a109b01c3a0fa2c, type: 3}
+      propertyPath: m_Padding.m_Left
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 2145565663143910779, guid: 52cfbf37f98a645b3a109b01c3a0fa2c, type: 3}
+      propertyPath: m_Padding.m_Bottom
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 2354573690898181541, guid: 52cfbf37f98a645b3a109b01c3a0fa2c, type: 3}
       propertyPath: m_Pivot.x
       value: 0
