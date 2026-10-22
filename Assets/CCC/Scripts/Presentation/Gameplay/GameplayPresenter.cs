@@ -183,7 +183,7 @@ namespace Ccc.Presentation
                 case GameplayInputKind.Submit:
                     if (CanForwardGameplayInput())
                     {
-                        _audio.PlaySE(AudioKey.SENormalClick);
+                        _audio.PlaySE(AudioKey.SESubmit);
                         _flow.Submit(_latestState.CurrentMission.Id);
                     }
                     break;
