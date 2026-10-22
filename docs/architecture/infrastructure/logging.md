@@ -119,10 +119,10 @@ public interface IDiagnosticsReporter<in TTrace>
 
 | 表（`FileSuffix`） | 1行の単位 | 列 |
 | --- | --- | --- |
-| `draws` | 抽選1回 | Session情報（SessionId、ConfigDisplayName、GameMode、Difficulty）、パラメータ（TargetExpressionMatchRatio、MissionParameterSelectionPoolSize、NegatedMissionSelectionWeight、CurrentExpressionSatisfiedMissionSelectionRatio、CurrentTierDrawWeight、LowerTierDrawWeight、TierMinimumSections）、段階（DrawIndex、Section、IsInitialDraw、CurrentTier、EnabledCount、UnlockedCount、SatisfiedCount、UnmatchedCount、SelectedExpressionGroup、ExpressionStageCount、SelectedTier、TierStageCount、SelectedPolarity、PolarityStageCount、RepeatFilteredCount、SelectedKind、KindStageCount、PoolSize）、選出候補（SelectedRank、SelectedParameterA、SelectedParameterB、SelectedMatchCount、SelectedEvaluatedCount、SelectedRatio、SelectedDifference） |
+| `draws` | 抽選1回 | Session情報（SessionId、ConfigDisplayName、GameMode、Difficulty）、パラメータ（TargetExpressionMatchRatio、TargetExpressionMatchRatioReductionPerSection、MinimumTargetExpressionMatchRatio、MissionParameterSelectionPoolSize、NegatedMissionSelectionWeight、CurrentExpressionSatisfiedMissionSelectionRatio、CurrentTierDrawWeight、LowerTierDrawWeight、TierMinimumSections）、段階（DrawIndex、Section、IsInitialDraw、CurrentTier、EnabledCount、UnlockedCount、SatisfiedCount、UnmatchedCount、SelectedExpressionGroup、ExpressionStageCount、SelectedTier、TierStageCount、SelectedPolarity、PolarityStageCount、RepeatFilteredCount、SelectedKind、KindStageCount、TargetRatioLowerBound、TargetRatioUpperBound、TargetRatio、PoolSize）、選出候補（SelectedRank、SelectedParameterA、SelectedParameterB、SelectedMatchCount、SelectedEvaluatedCount、SelectedRatio、SelectedDifference） |
 | `candidates` | 順位上位の候補1件（`CsvCandidateCount` 件まで） | SessionId、DrawIndex、Rank、Tier、Kind、ParameterA、ParameterB、IsNegated、MatchCount、EvaluatedCount、Ratio、Difference、IsInPool、IsSelected |
 
-`draws` と `candidates` は SessionId と DrawIndex で結合できること。`TierMinimumSections` はTier順の開始Sectionを `;` で連結すること。
+`draws` と `candidates` は SessionId と DrawIndex で結合できること。`TierMinimumSections` はTier順の開始Sectionを `;` で連結すること。`TargetRatioLowerBound`・`TargetRatioUpperBound` はその抽選で目標式適合割合を選んだ範囲、`TargetRatio` は範囲から選んだ値とすること。`SelectedDifference` と `candidates` の `Difference` は、設定の `TargetExpressionMatchRatio` ではなくその抽選の `TargetRatio` との差とすること。
 
 - `MissionCatalogCsvFormatter` は引数を受け取らず、MissionCatalogの全候補をCatalog内の順序で次の1表へ出力すること。書式は `MissionDrawTraceCsvFormatter` と同じとし、報告の通し番号は行に含めないこと。
 

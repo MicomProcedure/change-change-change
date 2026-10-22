@@ -29,6 +29,12 @@ namespace Ccc.Infrastructure.Logging
                 "TargetExpressionMatchRatio",
                 row => FormatNumber(row.Trace.Config.TargetExpressionMatchRatio)),
             new Column<DrawRowSource>(
+                "TargetExpressionMatchRatioReductionPerSection",
+                row => FormatNumber(row.Trace.Config.TargetExpressionMatchRatioReductionPerSection)),
+            new Column<DrawRowSource>(
+                "MinimumTargetExpressionMatchRatio",
+                row => FormatNumber(row.Trace.Config.MinimumTargetExpressionMatchRatio)),
+            new Column<DrawRowSource>(
                 "MissionParameterSelectionPoolSize",
                 row => FormatNumber(row.Trace.Config.MissionParameterSelectionPoolSize)),
             new Column<DrawRowSource>(
@@ -76,6 +82,13 @@ namespace Ccc.Infrastructure.Logging
                 row => FormatNumber(row.Trace.RepeatFilteredCandidateCount)),
             new Column<DrawRowSource>("SelectedKind", row => row.Trace.SelectedKind.ToString()),
             new Column<DrawRowSource>("KindStageCount", row => FormatNumber(row.Trace.RankedCandidates.Count)),
+            new Column<DrawRowSource>(
+                "TargetRatioLowerBound",
+                row => FormatRatio(row.Trace.TargetExpressionMatchRatioRange.LowerBound)),
+            new Column<DrawRowSource>(
+                "TargetRatioUpperBound",
+                row => FormatRatio(row.Trace.TargetExpressionMatchRatioRange.UpperBound)),
+            new Column<DrawRowSource>("TargetRatio", row => FormatRatio(row.Trace.TargetExpressionMatchRatio)),
             new Column<DrawRowSource>("PoolSize", row => FormatNumber(row.Trace.PoolSize)),
             new Column<DrawRowSource>("SelectedRank", row => FormatNumber(row.Trace.SelectedRank)),
             new Column<DrawRowSource>(
@@ -242,7 +255,7 @@ namespace Ccc.Infrastructure.Logging
 
         private static float CalculateTargetDifference(MissionDrawTrace trace, MissionCandidate candidate)
         {
-            return Math.Abs(candidate.ExpressionMatchRatio - trace.Config.TargetExpressionMatchRatio);
+            return Math.Abs(candidate.ExpressionMatchRatio - trace.TargetExpressionMatchRatio);
         }
 
         private sealed class Column<TRow>

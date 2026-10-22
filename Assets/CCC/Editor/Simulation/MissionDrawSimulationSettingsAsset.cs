@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Ccc.Core.Model;
+using Ccc.Core.UseCases;
 using Ccc.Infrastructure.Assets;
 using Ccc.Infrastructure.Logging;
 using Ccc.Simulation;
@@ -26,7 +27,23 @@ namespace Ccc.Editor.Simulation
     }
 
     /// <summary>
-    /// Mission抽選シミュレーションの対象Config、出力先、seed、方式別パラメータをInspectorで編集するScriptableObjectです。
+    /// Mission抽選シミュレーションで使うMission抽選Strategyを表します。
+    /// </summary>
+    public enum MissionDrawSimulationStrategy
+    {
+        /// <summary>
+        /// 設定の目標式適合割合に近い候補から選ぶ <see cref="FullMissionDrawStrategy"/> を使います。
+        /// </summary>
+        Full,
+
+        /// <summary>
+        /// Sectionが進むほど下限が下がる範囲から目標式適合割合を選ぶ <see cref="SectionDecliningMatchRatioMissionDrawStrategy"/> を使います。
+        /// </summary>
+        SectionDecliningMatchRatio
+    }
+
+    /// <summary>
+    /// Mission抽選シミュレーションの対象Config、Strategy、出力先、seed、方式別パラメータをInspectorで編集するScriptableObjectです。
     /// </summary>
     [CreateAssetMenu(menuName = "CCC/Mission Draw Simulation Settings")]
     public sealed class MissionDrawSimulationSettingsAsset : ScriptableObject
@@ -45,6 +62,9 @@ namespace Ccc.Editor.Simulation
 
         [SerializeField]
         private LogSettingsAsset logSettings;
+
+        [SerializeField]
+        private MissionDrawSimulationStrategy strategy = MissionDrawSimulationStrategy.SectionDecliningMatchRatio;
 
         [Header("Output")]
         [SerializeField]
@@ -199,6 +219,30 @@ namespace Ccc.Editor.Simulation
             }
 
             return errors;
+        }
+
+        /// <summary>
+        /// 選択中のStrategyを、抽選用乱数と診断Reporterから生成します。
+        /// </summary>
+        /// <param name="randomSource">抽選用の乱数提供元。</param>
+        /// <param name="diagnosticsReporter">各抽選のTraceを受け取る診断Reporter。</param>
+        /// <returns>Mission抽選Strategy。</returns>
+        /// <exception cref="ArgumentOutOfRangeException">Strategyが未定義の場合。</exception>
+        public IMissionDrawStrategy CreateStrategy(
+            IRandomSource randomSource,
+            IDiagnosticsReporter<MissionDrawTrace> diagnosticsReporter)
+        {
+            switch (strategy)
+            {
+                case MissionDrawSimulationStrategy.Full:
+                    return new FullMissionDrawStrategy(randomSource, diagnosticsReporter);
+
+                case MissionDrawSimulationStrategy.SectionDecliningMatchRatio:
+                    return new SectionDecliningMatchRatioMissionDrawStrategy(randomSource, diagnosticsReporter);
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(strategy), strategy, null);
+            }
         }
 
         /// <summary>

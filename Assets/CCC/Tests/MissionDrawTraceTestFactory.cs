@@ -17,7 +17,7 @@ namespace Ccc.Tests
         private const int EvaluatedExpressionCount = 10;
 
         /// <summary>
-        /// 目標適合率0.20に対して差の昇順に並ぶ3候補を持ち、2位の候補を選出したTraceを生成します。
+        /// 範囲0.10〜0.20から選んだ目標式適合割合0.15に対して差の昇順に並ぶ3候補を持ち、2位の候補を選出したTraceを生成します。
         /// </summary>
         /// <param name="poolSize">順位先頭から抽選対象にした候補数。</param>
         /// <returns>テスト用の抽選Trace。</returns>
@@ -44,6 +44,8 @@ namespace Ccc.Tests
                 polarityStageCandidateCount: 6,
                 repeatFilteredCandidateCount: 5,
                 selectedKind: MissionKind.Exact,
+                targetExpressionMatchRatioRange: new TargetExpressionMatchRatioRange(0.10f, 0.20f),
+                targetExpressionMatchRatio: 0.15f,
                 rankedCandidates: rankedCandidates,
                 poolSize: poolSize,
                 selectedCandidate: rankedCandidates[1]);
@@ -97,6 +99,8 @@ namespace Ccc.Tests
                 lowerTierDrawWeight: 0.40f,
                 currentExpressionSatisfiedMissionSelectionRatio: 0.10f,
                 targetExpressionMatchRatio: 0.20f,
+                targetExpressionMatchRatioReductionPerSection: 0.025f,
+                minimumTargetExpressionMatchRatio: 0.05f,
                 negatedMissionSelectionWeight: 0.60f,
                 missionParameterSelectionPoolSize: 3);
         }

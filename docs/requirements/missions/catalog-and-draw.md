@@ -19,7 +19,9 @@ Gameplay 開始時の Mission 候補カタログ準備処理と、Session 進行
 | `ExpressionMatchRatio` | `ExpressionMatchCount` を正常な `ExpressionCandidate` 全体数で除した「式適合割合」 |
 | `MinExpressionMatchRatio` | `MissionCandidate` として採択・登録するための最小式適合割合 |
 | `MaxExpressionMatchRatio` | `MissionCandidate` として採択・登録するための最大式適合割合 |
-| `TargetExpressionMatchRatio` | 本実装版の抽出処理において優先目標とするターゲット式適合割合 |
+| `TargetExpressionMatchRatio` | 本実装版の抽出処理において優先目標とするターゲット式適合割合。Section低下版では初期値かつ上限 |
+| `TargetExpressionMatchRatioReductionPerSection` | Section低下版で、Sectionが1進むごとに目標式適合割合の下限を下げる量 |
+| `MinimumTargetExpressionMatchRatio` | Section低下版で、目標式適合割合の下限が下回らない値 |
 | `CurrentExpressionSatisfiedMissionSelectionRatio` | 2問目以降に現在式で達成できるMission候補群を選択する確率 |
 | `NegatedMissionSelectionWeight` | 肯定 Mission に対する反転 Mission（`Negated`）の相対抽選重み |
 
@@ -77,13 +79,15 @@ Gameplay 開始時、選択されたゲームモードと `GameDifficulty` か�
 | `MaxExpressionMatchRatio` | `0.60` |
 | `CurrentExpressionSatisfiedMissionSelectionRatio` | `0.10` |
 | `TargetExpressionMatchRatio` | `0.20` |
+| `TargetExpressionMatchRatioReductionPerSection` | `0`（低下しない） |
+| `MinimumTargetExpressionMatchRatio` | `0` |
 | `MissionParameterSelectionPoolSize` | `3` |
 | `CurrentTierSelectionWeight` | `0.60` |
 | `LowerTierSelectionWeight` | `0.40` |
 | `NegatedMissionSelectionWeight` | `0.60` |
 | `CompoundMissionSelectionWeight` | `0` |
 
-※上記パラメーターは難易度ごとにConfig設定可能とする。`CurrentExpressionSatisfiedMissionSelectionRatio`と`TargetExpressionMatchRatio`はSession内抽選でのみ参照すること。
+※上記パラメーターは難易度ごとにConfig設定可能とする。`CurrentExpressionSatisfiedMissionSelectionRatio`、`TargetExpressionMatchRatio`、`TargetExpressionMatchRatioReductionPerSection`、`MinimumTargetExpressionMatchRatio`はSession内抽選でのみ参照すること。
 
 ## Missionパラメータ候補の自動生成
 
@@ -106,7 +110,10 @@ Gameplay 開始時、選択されたゲームモードと `GameDifficulty` か�
 3. 肯定 Mission（基準重み `1.00`）と `NegatedMission`（相対重み `NegatedMissionSelectionWeight` 例: `0.60`）のいずれかを選択すること。
 4. 直前の出題と同一の Kind かつ同一パラメータの候補を除外すること（代替候補が存在する場合）。
 5. 残った Kind の中から一様抽選すること。
-6. 選択された Kind の候補を `TargetExpressionMatchRatio` との差分が小さい順に並べ替え、ConfigのMissionパラメータ抽選プール数までを上位候補群としてランダム抽選すること。
+6. その抽選で使う目標式適合割合を決め、選択された Kind の候補をその値との差分が小さい順に並べ替え、ConfigのMissionパラメータ抽選プール数までを上位候補群としてランダム抽選すること。目標式適合割合は、製品用のSection低下版では次の範囲から一様に選び、比較用の固定版では `TargetExpressionMatchRatio` とすること。
+   - 上限: `TargetExpressionMatchRatio`
+   - 下限: `TargetExpressionMatchRatio − TargetExpressionMatchRatioReductionPerSection × (Section − 1)`。`MinimumTargetExpressionMatchRatio` を下回る場合は `MinimumTargetExpressionMatchRatio`
+   - 下限と上限が等しい場合（Section 1、または低下量 `0`）は乱数を消費しないこと。手順1の候補群が達成できる候補群でも同じ値を使うこと。
 7. 直前Missionの除外は代替候補が存在する場合にのみ適用すること。手順1で解放済みの利用可能候補が0件の場合は設定エラーとすること。
 
 ## NegatedMission（判定反転ミッション）
