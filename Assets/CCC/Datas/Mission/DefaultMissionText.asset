@@ -15,58 +15,58 @@ MonoBehaviour:
   entries:
   - kind: 0
     positiveTemplate: "\u5076\u6570\u306B\u3057\u308D"
-    negatedTemplate: "\u5076\u6570\u306B\u3059\u308B\u306A"
+    negatedTemplate: "\u5076\u6570\u306B<style=MissionNegation>\u3059\u308B\u306A</style>"
   - kind: 1
     positiveTemplate: "\u5947\u6570\u306B\u3057\u308D"
-    negatedTemplate: "\u5947\u6570\u306B\u3059\u308B\u306A"
+    negatedTemplate: "\u5947\u6570\u306B<style=MissionNegation>\u3059\u308B\u306A</style>"
   - kind: 2
     positiveTemplate: "\u6574\u6570\u306B\u3057\u308D"
-    negatedTemplate: "\u6574\u6570\u306B\u3059\u308B\u306A"
+    negatedTemplate: "\u6574\u6570\u306B<style=MissionNegation>\u3059\u308B\u306A</style>"
   - kind: 3
     positiveTemplate: "\u5C0F\u6570\u306B\u3057\u308D"
-    negatedTemplate: "\u5C0F\u6570\u306B\u3059\u308B\u306A"
+    negatedTemplate: "\u5C0F\u6570\u306B<style=MissionNegation>\u3059\u308B\u306A</style>"
   - kind: 4
     positiveTemplate: "\u6B63\u306E\u6570\u306B\u3057\u308D"
-    negatedTemplate: "\u6B63\u306E\u6570\u306B\u3059\u308B\u306A"
+    negatedTemplate: "\u6B63\u306E\u6570\u306B<style=MissionNegation>\u3059\u308B\u306A</style>"
   - kind: 5
     positiveTemplate: "\u8CA0\u306E\u6570\u306B\u3057\u308D"
-    negatedTemplate: "\u8CA0\u306E\u6570\u306B\u3059\u308B\u306A"
+    negatedTemplate: "\u8CA0\u306E\u6570\u306B<style=MissionNegation>\u3059\u308B\u306A</style>"
   - kind: 6
     positiveTemplate: "\u7D20\u6570\u306B\u3057\u308D"
-    negatedTemplate: "\u7D20\u6570\u306B\u3059\u308B\u306A"
+    negatedTemplate: "\u7D20\u6570\u306B<style=MissionNegation>\u3059\u308B\u306A</style>"
   - kind: 7
     positiveTemplate: "\u30BC\u30ED\u306B\u3057\u308D"
-    negatedTemplate: "\u30BC\u30ED\u306B\u3059\u308B\u306A"
+    negatedTemplate: "\u30BC\u30ED\u306B<style=MissionNegation>\u3059\u308B\u306A</style>"
   - kind: 8
     positiveTemplate: "\u5E73\u65B9\u6570\u306B\u3057\u308D"
-    negatedTemplate: "\u5E73\u65B9\u6570\u306B\u3059\u308B\u306A"
+    negatedTemplate: "\u5E73\u65B9\u6570\u306B<style=MissionNegation>\u3059\u308B\u306A</style>"
   - kind: 9
     positiveTemplate: "\u5408\u6210\u6570\u306B\u3057\u308D"
-    negatedTemplate: "\u5408\u6210\u6570\u306B\u3059\u308B\u306A"
+    negatedTemplate: "\u5408\u6210\u6570\u306B<style=MissionNegation>\u3059\u308B\u306A</style>"
   - kind: 10
     positiveTemplate: "{0}\u4EE5\u4E0A\u306B\u3057\u308D"
-    negatedTemplate: "{0}\u4EE5\u4E0A\u306B\u3059\u308B\u306A"
+    negatedTemplate: "{0}\u4EE5\u4E0A\u306B<style=MissionNegation>\u3059\u308B\u306A</style>"
   - kind: 11
     positiveTemplate: "{0}\u4EE5\u4E0B\u306B\u3057\u308D"
-    negatedTemplate: "{0}\u4EE5\u4E0B\u306B\u3059\u308B\u306A"
+    negatedTemplate: "{0}\u4EE5\u4E0B\u306B<style=MissionNegation>\u3059\u308B\u306A</style>"
   - kind: 12
     positiveTemplate: "{0}\u306B\u3057\u308D"
-    negatedTemplate: "{0}\u306B\u3059\u308B\u306A"
+    negatedTemplate: "{0}\u306B<style=MissionNegation>\u3059\u308B\u306A</style>"
   - kind: 13
     positiveTemplate: "{0}\u306E\u500D\u6570\u306B\u3057\u308D"
-    negatedTemplate: "{0}\u306E\u500D\u6570\u306B\u3059\u308B\u306A"
+    negatedTemplate: "{0}\u306E\u500D\u6570\u306B<style=MissionNegation>\u3059\u308B\u306A</style>"
   - kind: 14
     positiveTemplate: "\u7D76\u5BFE\u5024\u3092{0}\u306B\u3057\u308D"
-    negatedTemplate: "\u7D76\u5BFE\u5024\u3092{0}\u306B\u3059\u308B\u306A"
+    negatedTemplate: "\u7D76\u5BFE\u5024\u3092{0}\u306B<style=MissionNegation>\u3059\u308B\u306A</style>"
   - kind: 15
     positiveTemplate: "\u4E00\u306E\u4F4D\u3092{0}\u306B\u3057\u308D"
-    negatedTemplate: "\u4E00\u306E\u4F4D\u3092{0}\u306B\u3059\u308B\u306A"
+    negatedTemplate: "\u4E00\u306E\u4F4D\u3092{0}\u306B<style=MissionNegation>\u3059\u308B\u306A</style>"
   - kind: 16
     positiveTemplate: "\u5C0F\u6570\u7B2C\u4E00\u4F4D\u3092{0}\u306B\u3057\u308D"
-    negatedTemplate: "\u5C0F\u6570\u7B2C\u4E00\u4F4D\u3092{0}\u306B\u3059\u308B\u306A"
+    negatedTemplate: "\u5C0F\u6570\u7B2C\u4E00\u4F4D\u3092{0}\u306B<style=MissionNegation>\u3059\u308B\u306A</style>"
   - kind: 17
     positiveTemplate: "{0}\u4EE5\u4E0A{1}\u4EE5\u4E0B\u306B\u3057\u308D"
-    negatedTemplate: "{0}\u4EE5\u4E0A{1}\u4EE5\u4E0B\u306B\u3059\u308B\u306A"
+    negatedTemplate: "{0}\u4EE5\u4E0A{1}\u4EE5\u4E0B\u306B<style=MissionNegation>\u3059\u308B\u306A</style>"
   - kind: 18
     positiveTemplate: "{0}\u3067\u5272\u3063\u305F\u3042\u307E\u308A\u3092{1}\u306B\u3057\u308D"
-    negatedTemplate: "{0}\u3067\u5272\u3063\u305F\u3042\u307E\u308A\u3092{1}\u306B\u3059\u308B\u306A"
+    negatedTemplate: "{0}\u3067\u5272\u3063\u305F\u3042\u307E\u308A\u3092{1}\u306B<style=MissionNegation>\u3059\u308B\u306A</style>"

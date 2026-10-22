@@ -127,6 +127,8 @@
 - 直前と同一の Kind かつ同一パラメータのミッションが、代替候補が存在する場合に連続出題されないこと。
 - `Negated` の有無のみが異なるミッションは、連続出題回避上の同種に含まれないこと。
 - `TargetExpressionMatchRatio` が難易度 Config から正しく取得・適用されること。
+- 製品用の抽選で、目標式適合割合がSection 1では `TargetExpressionMatchRatio` に等しく、以降は `TargetExpressionMatchRatioReductionPerSection` ずつ下がる下限（`MinimumTargetExpressionMatchRatio` で停止）から `TargetExpressionMatchRatio` までの範囲で選ばれること。
+- 目標式適合割合の範囲の幅が0の場合、目標式適合割合の選択で乱数を消費しないこと。
 - 直前と同一条件しか存在しない場合、連続出題回避条件を適用しないこと。
 
 ## Mission候補自動生成に関する検証要件

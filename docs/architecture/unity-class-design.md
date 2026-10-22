@@ -342,6 +342,8 @@ public sealed class GameplayConfig
    public float LowerTierDrawWeight { get; }
    public float CurrentExpressionSatisfiedMissionSelectionRatio { get; }
    public float TargetExpressionMatchRatio { get; }
+   public float TargetExpressionMatchRatioReductionPerSection { get; }
+   public float MinimumTargetExpressionMatchRatio { get; }
    public float NegatedMissionSelectionWeight { get; }
    public int MissionParameterSelectionPoolSize { get; }
 
@@ -349,7 +351,7 @@ public sealed class GameplayConfig
 }
 ```
 
-constructorは全propertyと同名の引数を受ける。`MinimumNumber <= MaximumNumber`、初期式の左右が範囲内、`InitialLife > 0`、割合と重みが有限、割合が0〜1、各重みが0以上、Current／Lower重みの合計が正、各最小件数とMissionパラメータ抽選プール数が1以上であることを生成時に検証すること。
+constructorは全propertyと同名の引数を受ける。`MinimumNumber <= MaximumNumber`、初期式の左右が範囲内、`InitialLife > 0`、割合と重みが有限、割合が0〜1、各重みが0以上、Current／Lower重みの合計が正、各最小件数とMissionパラメータ抽選プール数が1以上、目標式適合割合のSectionごとの低下量が有限かつ0以上、目標式適合割合の最小値が0〜1かつ`TargetExpressionMatchRatio`以下であることを生成時に検証すること。
 
 `TimerConfig`は初期時間と最低時間が正、短縮量が0以上であることを要求し、最低時間より短くしないこと。`GetDuration(section <= 0)`と`GetTier(section <= 0)`は`ArgumentOutOfRangeException(nameof(section))`とすること。
 
@@ -377,6 +379,9 @@ Normal初期値：
 | Current／Lower Tier重み | 0.60／0.40 |
 | 現在式で達成できるMission候補群の選択確率 | 0.10 |
 | 式適合割合 | 0.10〜0.50 |
+| 目標式適合割合 | 0.20 |
+| 目標式適合割合のSectionごとの低下量 | 0（低下しない） |
+| 目標式適合割合の最小値 | 0 |
 | 最小適合式数 | 通常2、Zero／Prime 1 |
 | ShowCurrentAnswer | false |
 
@@ -1180,7 +1185,7 @@ Candidateの順序はCatalog構築時に`Tier -> MissionKind -> ParameterA -> Pa
 
 - 開発確認用。
 - Evenの固定Candidateを返すこと。
-- 開発確認用のStrategyとして登録できる。製品設定では`FullMissionDrawStrategy`を登録すること。
+- 開発確認用のStrategyとして登録できる。製品設定では`SectionDecliningMatchRatioMissionDrawStrategy`を登録すること。
 
 `SimpleMissionDrawStrategy`：
 
@@ -1206,9 +1211,20 @@ Candidateの順序はCatalog構築時に`Tier -> MissionKind -> ParameterA -> Pa
 
 抽選が候補0件や不正重みで失敗した場合、Controllerは`IGameplayFlow.Failures`へ理由付きの`GameplayFlowFailure`を公開してTimerを停止すること。この失敗はCatalog／Configの内部不整合を表す。
 
-`FullMissionDrawStrategy`は同じinterfaceを実装し、本番設定で使用すること。初回は現在式を評価せず、2問目以降はControllerが`ExpressionInput.Current`と直前MissionをContextへ渡すこと。解放済み候補を現在式で達成できる群と達成できない群へ分け、両群が存在する場合は`CurrentExpressionSatisfiedMissionSelectionRatio`の直接確率で一方を選ぶこと。乱数sampleが比率未満なら達成できる群、以上なら達成できない群とする。片方の群しか存在しない場合、および比率0/1で選択先が確定する場合は乱数を消費しないこと。その後、Tier、肯定／Negated、直前Mission、Kind、目標適合率上位候補の順に選定すること。共通のTier・Kind・比率・乱数選定は`MissionDrawSelectionModule`へ集約し、Simple版と共有可能な境界に保つこと。
+`FullMissionDrawStrategy`と`SectionDecliningMatchRatioMissionDrawStrategy`は同じinterfaceを実装し、内部の`MissionDrawPipeline`（internal）で同じ段階を実行すること。2つのStrategyの違いは、`MissionDrawPipeline`へ渡す`ITargetExpressionMatchRatioRangeResolver`（目標式適合割合を選ぶ範囲を決める部品）だけとする。製品設定では`SectionDecliningMatchRatioMissionDrawStrategy`を使用し、`FullMissionDrawStrategy`は目標式適合割合を固定した比較用とすること。
 
-`FullMissionDrawStrategy`は抽選成功時、`IDiagnosticsReporter<MissionDrawTrace>.IsEnabled`がtrueの場合だけ`MissionDrawTrace`を1回報告すること。Traceには各段階（極性設定による有効候補、Tier解放、現在式の達成群／未達成群、Tier、極性、直前Mission除外、Kind）の候補数と選ばれた値、選択したKindの全候補を目標適合率との差で順位付けした一覧、実際のPool範囲、選出候補を含めること。Strategyは診断の整形、出力件数、出力先を扱わないこと。Traceの`SelectedTier`は選出候補のTierとすること。Lowerを選んだ場合は複数Tierの候補群から選出されるため、Tier段階の候補群ではなく選出候補から求めること。診断の報告有無は抽選結果、Poolの大きさ、乱数消費を変えないこと。出力側の構成は [CCC Log・診断出力クラス設計](./infrastructure/logging.md) を参照すること。
+`MissionDrawPipeline`は次のとおり選定すること。初回は現在式を評価せず、2問目以降はControllerが`ExpressionInput.Current`と直前MissionをContextへ渡すこと。解放済み候補を現在式で達成できる群と達成できない群へ分け、両群が存在する場合は`CurrentExpressionSatisfiedMissionSelectionRatio`の直接確率で一方を選ぶこと。乱数sampleが比率未満なら達成できる群、以上なら達成できない群とする。片方の群しか存在しない場合、および比率0/1で選択先が確定する場合は乱数を消費しないこと。その後、Tier、肯定／Negated、直前Mission、Kind、目標式適合割合、目標式適合割合上位候補の順に選定すること。共通のTier・Kind・比率・目標式適合割合・乱数選定は`MissionDrawSelectionModule`へ集約し、Simple版と共有可能な境界に保つこと。
+
+目標式適合割合の段階では、`ITargetExpressionMatchRatioRangeResolver.Resolve(section, config)`で範囲（`TargetExpressionMatchRatioRange`、下限以上上限以下の閉区間）を求め、範囲から一様に1つ選ぶこと。下限と上限が等しい場合は乱数を消費せずその値とし、幅がある場合だけKind段階の後、Pool内候補の選択の前に乱数を1回消費して`下限 + (上限 − 下限) × sample`とすること。部品は乱数を消費せず、同じ引数には同じ範囲を返すこと。
+
+| 部品 | 範囲 | 使用するStrategy |
+| --- | --- | --- |
+| `FixedTargetExpressionMatchRatioRangeResolver` | 下限・上限とも`TargetExpressionMatchRatio` | `FullMissionDrawStrategy` |
+| `SectionDecliningTargetExpressionMatchRatioRangeResolver` | 上限は`TargetExpressionMatchRatio`。下限は`TargetExpressionMatchRatio − TargetExpressionMatchRatioReductionPerSection × (Section − 1)`とし、`MinimumTargetExpressionMatchRatio`を下回る場合は`MinimumTargetExpressionMatchRatio` | `SectionDecliningMatchRatioMissionDrawStrategy` |
+
+Section低下版の部品はSection 1、および低下量0では下限と上限が等しくなるため、`FullMissionDrawStrategy`と同じ候補と乱数消費になる。どちらの部品も`section <= 0`は`ArgumentOutOfRangeException(nameof(section))`、`config`がnullなら`ArgumentNullException(nameof(config))`とすること。
+
+各Strategyは抽選成功時、`IDiagnosticsReporter<MissionDrawTrace>.IsEnabled`がtrueの場合だけ`MissionDrawTrace`を1回報告すること。Traceには各段階（極性設定による有効候補、Tier解放、現在式の達成群／未達成群、Tier、極性、直前Mission除外、Kind）の候補数と選ばれた値、目標式適合割合の範囲とその抽選で選んだ値、選択したKindの全候補をその値との差で順位付けした一覧、実際のPool範囲、選出候補を含めること。Traceは選んだ値が範囲外なら`ArgumentOutOfRangeException(nameof(targetExpressionMatchRatio))`とすること。Strategyは診断の整形、出力件数、出力先を扱わないこと。Traceの`SelectedTier`は選出候補のTierとすること。Lowerを選んだ場合は複数Tierの候補群から選出されるため、Tier段階の候補群ではなく選出候補から求めること。診断の報告有無は抽選結果、Poolの大きさ、乱数消費を変えないこと。出力側の構成は [CCC Log・診断出力クラス設計](./infrastructure/logging.md) を参照すること。
 
 #### DI
 
@@ -1221,7 +1237,7 @@ builder.Register<DiagnosticsSessionDescriptor>(
    resolver => CreateDiagnosticsSessionDescriptor(resolver),
    Lifetime.Scoped);
 builder.RegisterMissionDrawDiagnostics();
-builder.Register<IMissionDrawStrategy, FullMissionDrawStrategy>(
+builder.Register<IMissionDrawStrategy, SectionDecliningMatchRatioMissionDrawStrategy>(
    Lifetime.Scoped);
 ```
 
