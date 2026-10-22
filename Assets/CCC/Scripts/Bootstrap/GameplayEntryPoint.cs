@@ -122,6 +122,7 @@ namespace Ccc.Bootstrap
                 return;
             }
 
+            _view.ApplyDisplaySettings(new GameplayDisplaySettingsDto(configEntry.ExpressionDisplayStyle));
             MonoBehaviour viewBehaviour = _view as MonoBehaviour;
             CancellationToken destroyCancellationToken = viewBehaviour == null
                 ? CancellationToken.None
