@@ -45,6 +45,7 @@ namespace Ccc.Infrastructure.Navigation
 
         [Header("難易度選択")]
         [SerializeField] private CycleSelectorView _difficultySelectorView;
+        [SerializeField] private DifficultyDescriptionView _difficultyDescriptionView;
         [SerializeField] private TutorialPageView _tutorialPageView;
 
         [Header("音量設定")]
@@ -308,6 +309,11 @@ namespace Ccc.Infrastructure.Navigation
 
         private void RenderDifficulty(GameDifficulty difficulty)
         {
+            if (_difficultyDescriptionView != null)
+            {
+                _difficultyDescriptionView.Render(difficulty);
+            }
+
             if (_difficultySelectorView == null)
             {
                 return;
@@ -469,6 +475,22 @@ namespace Ccc.Infrastructure.Navigation
             if (_difficultySelectorView == null)
             {
                 LogMissingReference(nameof(_difficultySelectorView));
+            }
+
+            if (_difficultyDescriptionView == null)
+            {
+                LogMissingReference(nameof(_difficultyDescriptionView));
+            }
+            else
+            {
+                for (int index = 0; index < DifficultyChoices.Length; index++)
+                {
+                    GameDifficulty difficulty = DifficultyChoices[index];
+                    if (!_difficultyDescriptionView.HasDescription(difficulty))
+                    {
+                        LogMissingReference($"{nameof(_difficultyDescriptionView)}の{difficulty}の説明");
+                    }
+                }
             }
 
             if (_tutorialPageView == null)
