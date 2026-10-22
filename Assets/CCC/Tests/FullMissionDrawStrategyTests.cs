@@ -618,6 +618,34 @@ namespace Ccc.Tests
         }
 
         /// <summary>
+        /// 本実装版抽選が目標式適合割合の低下設定を使わず、設定の目標式適合割合で順位付けして目標値の乱数を消費しないことを検証します。
+        /// </summary>
+        [Test]
+        public void Draw_ShouldIgnoreTargetRatioReductionAndConsumeNoTargetSample()
+        {
+            var randomSource = new SequenceRandomSource(0.99d);
+            var strategy = CreateStrategy(randomSource);
+            var candidates = new[]
+            {
+                CreateCandidate(MissionCondition.Create(MissionKind.Exact, 1), matchCount: 1, evaluatedCount: 10),
+                CreateCandidate(MissionCondition.Create(MissionKind.Exact, 2), matchCount: 2, evaluatedCount: 10),
+                CreateCandidate(MissionCondition.Create(MissionKind.Exact, 3), matchCount: 3, evaluatedCount: 10)
+            };
+            GameplayConfig config = CreateConfig(
+                targetExpressionMatchRatio: 0.20f,
+                targetExpressionMatchRatioReductionPerSection: 0.05f,
+                minimumTargetExpressionMatchRatio: 0.10f,
+                missionParameterSelectionPoolSize: 1);
+
+            MissionDrawResult result = strategy.Draw(
+                MissionDrawContext.CreateForInitialMission(CreateSessionContext(candidates, config), 3));
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Candidate.Condition.ParameterA, Is.EqualTo(2));
+            Assert.That(randomSource.ConsumedSamples, Is.Empty);
+        }
+
+        /// <summary>
         /// 同一Catalog、Context、sample列から同一結果と同一乱数消費順を再現することを検証します。
         /// </summary>
         [Test]
@@ -861,6 +889,9 @@ namespace Ccc.Tests
             Assert.That(trace.PolarityStageCandidateCount, Is.EqualTo(3));
             Assert.That(trace.RepeatFilteredCandidateCount, Is.EqualTo(3));
             Assert.That(trace.SelectedKind, Is.EqualTo(MissionKind.Exact));
+            Assert.That(trace.TargetExpressionMatchRatioRange.LowerBound, Is.EqualTo(0.20f));
+            Assert.That(trace.TargetExpressionMatchRatioRange.UpperBound, Is.EqualTo(0.20f));
+            Assert.That(trace.TargetExpressionMatchRatio, Is.EqualTo(0.20f));
             Assert.That(trace.RankedCandidates, Is.EqualTo(new[] { closestCandidate, secondCandidate }));
             Assert.That(trace.PoolSize, Is.EqualTo(2));
             Assert.That(trace.SelectedCandidate, Is.SameAs(result.Candidate));
@@ -967,6 +998,8 @@ namespace Ccc.Tests
                 polarityStageCandidateCount: 2,
                 repeatFilteredCandidateCount: 2,
                 selectedKind: MissionKind.Exact,
+                targetExpressionMatchRatioRange: new TargetExpressionMatchRatioRange(0.20f, 0.20f),
+                targetExpressionMatchRatio: 0.20f,
                 rankedCandidates: new[] { pooledCandidate, outsideCandidate },
                 poolSize: 1,
                 selectedCandidate: outsideCandidate));
@@ -1009,6 +1042,8 @@ namespace Ccc.Tests
         private static GameplayConfig CreateConfig(
             float currentExpressionSatisfiedMissionSelectionRatio = 0.10f,
             float targetExpressionMatchRatio = 0.20f,
+            float targetExpressionMatchRatioReductionPerSection = 0f,
+            float minimumTargetExpressionMatchRatio = 0f,
             float negatedMissionSelectionWeight = 0.60f,
             int missionParameterSelectionPoolSize = 3)
         {
@@ -1032,6 +1067,8 @@ namespace Ccc.Tests
                 currentExpressionSatisfiedMissionSelectionRatio:
                     currentExpressionSatisfiedMissionSelectionRatio,
                 targetExpressionMatchRatio: targetExpressionMatchRatio,
+                targetExpressionMatchRatioReductionPerSection: targetExpressionMatchRatioReductionPerSection,
+                minimumTargetExpressionMatchRatio: minimumTargetExpressionMatchRatio,
                 negatedMissionSelectionWeight: negatedMissionSelectionWeight,
                 missionParameterSelectionPoolSize: missionParameterSelectionPoolSize);
         }

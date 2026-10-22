@@ -2,7 +2,7 @@
 
 > [ドキュメント一覧](../../README.md) / 区分: クラス設計
 
-> **対象範囲**: 本番と同じCatalog準備と本実装版Mission抽選StrategyをEditor上で繰り返し実行し、Catalogと抽選TraceをCSVへ出力する開発ツール
+> **対象範囲**: 本番と同じCatalog準備と、設定で選んだ本実装版系のMission抽選StrategyをEditor上で繰り返し実行し、Catalogと抽選TraceをCSVへ出力する開発ツール
 
 ---
 
@@ -19,7 +19,7 @@
 
 ## 2. 設計方針
 
-- **本番ロジックを再利用する**: Catalogは `MissionCatalogPreparer.Prepare`、抽選は `FullMissionDrawStrategy` をそのまま使うこと。シミュレーション専用の抽選ロジックや確率計算を実装しないこと。
+- **本番ロジックを再利用する**: Catalogは `MissionCatalogPreparer.Prepare`、抽選は設定Assetで選んだ `SectionDecliningMatchRatioMissionDrawStrategy`（製品用）または `FullMissionDrawStrategy`（目標式適合割合を固定した比較用）をそのまま使うこと。シミュレーション専用の抽選ロジックや確率計算を実装しないこと。
 - **出力形式を共有する**: 抽選Traceは `IDiagnosticsReporter<MissionDrawTrace>` へ渡し、プレイログと同じ `MissionDrawTraceCsvFormatter` と `CsvDiagnosticsReporter` でCSVへ出力すること。準備したCatalogは `IDiagnosticsReporter<MissionCatalog>` へ渡し、`MissionCatalogCsvFormatter` と `CsvDiagnosticsReporter` でCSVへ出力すること。
 - **再現性**: 1つのseedから抽選用乱数（seedそのまま）とシナリオ用乱数（seedと固定値の排他的論理和）を作り、同じseedと入力から同じ結果を再現すること。
 - **純C#とEditorの分離**: シミュレーション本体はUnity APIに依存しない `Ccc.Simulation` に置き、設定Asset・EditorWindow・Asset変換は `Ccc.Editor.Simulation` に置くこと。
@@ -36,7 +36,7 @@
 | `SequentialFlowScenario` | `Ccc.Simulation` | ① 流れ |
 | `FixedConditionScenario` / `FixedConditionDrawKind` / `ScenarioValueSource` | `Ccc.Simulation` | ② 固定条件 |
 | `MissionDrawSimulation` / `MissionDrawSimulationSummary` | `Ccc.Simulation` | Catalog準備、シナリオ生成、抽選の繰り返しと集計 |
-| `MissionDrawSimulationSettingsAsset` / `MissionDrawSimulationMode` | `Ccc.Editor.Simulation` | 対象Config、出力先、seed、方式別パラメータを保持するScriptableObject |
+| `MissionDrawSimulationSettingsAsset` / `MissionDrawSimulationMode` / `MissionDrawSimulationStrategy` | `Ccc.Editor.Simulation` | 対象Config、抽選Strategy、出力先、seed、方式別パラメータを保持するScriptableObject |
 | `MissionDrawSimulationExecutor` | `Ccc.Editor.Simulation` | 設定からConfigとCatalog準備設定を作り、CSV Reporterを組み立てて実行する |
 | `MissionDrawSimulationWindow` | `Ccc.Editor.Simulation` | `CCC/Mission Draw Simulation` メニューから開くEditorWindow |
 
@@ -62,6 +62,7 @@
 
 ### 4.3 MissionDrawSimulation.Run
 
+- 抽選Strategyは引数の生成関数へ抽選用乱数と診断Reporterを渡して1回だけ生成し、全抽選で使うこと。生成関数がnullなら `ArgumentNullException`、生成関数がnullを返した場合は `InvalidOperationException` とすること。
 - Catalog準備に失敗した場合は `InvalidOperationException` とすること。
 - Catalog準備に成功した場合は、抽選を始める前に準備したCatalogをCatalog Reporterへ1回だけ報告すること。
 - シナリオがfalseを返すまで抽選を繰り返し、抽選回数と失敗理由ごとの失敗回数を返すこと。
@@ -76,6 +77,7 @@
 | 区画 | 項目 | 既定値 |
 | --- | --- | --- |
 | Target | `configEntry` / `logSettings` | 未設定（Window直接入力時は最初に見つかったAssetを自動設定） |
+| Target | `strategy` | `SectionDecliningMatchRatio`（`Full` で比較用Strategyを使う） |
 | Output | `outputDirectoryName` / `csvCandidateCount` | `Simulation` / 10 |
 | Run | `seed` / `mode` | 0 / `SequentialFlow` |
 | Sequential Flow | `sessionCount` / `maximumSection` | 100 / 20 |
@@ -93,6 +95,7 @@
 
 - 設定Asset、ConfigEntry、GameplayConfigAsset、LogSettingsAssetを検証し、エラーがあれば `InvalidOperationException` とすること。
 - `GameplayConfigAsset.CreateRuntimeConfig()` と `GameplayConfigEntry.CreateCatalogPreparationSettings(config)` で本番と同じ入力を作ること。
+- `MissionDrawSimulationSettingsAsset.CreateStrategy` を抽選Strategyの生成関数として渡すこと。
 - SessionIdは `sim_{日時}_seed{seed}` とし、1回の実行を `Logs/Ccc/{outputDirectoryName}/{SessionId}_catalog.csv`、`_draws.csv`、`_candidates.csv` の1組へ出力すること。①のSession境界は `IsInitialDraw=True` の行で判別すること。
 - 出力したCSVは [Mission抽選シミュレーション解析Notebook](./mission-draw-analysis.md) で解析できること。
 
@@ -106,5 +109,6 @@
 - ①が抽選失敗後に次Sessionの初回抽選へ移ること。
 - ②の固定値が全抽選で使われ、毎回選ぶ値が定義済み候補式／解放済みCatalog候補から選ばれること。
 - ②が候補式にない現在式と、Catalogにない直前Missionを拒否すること。
+- 生成関数が作ったStrategyで全抽選が行われ、生成関数に診断Reporterが渡されること。
 - 全抽選のTraceが診断Reporterへ報告されること。
 - 抽選に使ったCatalogが1回だけCatalog Reporterへ報告され、全選出候補がそのCatalogに含まれること。

@@ -97,7 +97,17 @@ namespace Ccc.Core.UseCases
         public MissionKind SelectedKind { get; }
 
         /// <summary>
-        /// Kind段階で選ばれた全候補を目標適合率との差の昇順に並べた一覧を取得します。
+        /// この抽選で目標式適合割合を選んだ範囲を取得します。
+        /// </summary>
+        public TargetExpressionMatchRatioRange TargetExpressionMatchRatioRange { get; }
+
+        /// <summary>
+        /// この抽選で範囲から選び、候補の順位付けに使った目標式適合割合を取得します。
+        /// </summary>
+        public float TargetExpressionMatchRatio { get; }
+
+        /// <summary>
+        /// Kind段階で選ばれた全候補を、この抽選の目標式適合割合との差の昇順に並べた一覧を取得します。
         /// </summary>
         public IReadOnlyList<MissionCandidate> RankedCandidates { get; }
 
@@ -133,11 +143,15 @@ namespace Ccc.Core.UseCases
         /// <param name="polarityStageCandidateCount">極性段階で選ばれた候補数。</param>
         /// <param name="repeatFilteredCandidateCount">直前Mission除外後の候補数。</param>
         /// <param name="selectedKind">Kind段階で選ばれたMissionKind。</param>
-        /// <param name="rankedCandidates">目標適合率との差の昇順に並べた候補一覧。呼び出し側は生成後に変更しないこと。</param>
+        /// <param name="targetExpressionMatchRatioRange">この抽選で目標式適合割合を選んだ範囲。</param>
+        /// <param name="targetExpressionMatchRatio">範囲から選んだ目標式適合割合。</param>
+        /// <param name="rankedCandidates">目標式適合割合との差の昇順に並べた候補一覧。呼び出し側は生成後に変更しないこと。</param>
         /// <param name="poolSize">順位先頭から抽選対象にした候補数。</param>
         /// <param name="selectedCandidate">最終的に選出された候補。</param>
         /// <exception cref="ArgumentNullException">参照型の引数がnullの場合。</exception>
-        /// <exception cref="ArgumentOutOfRangeException">候補数が負、またはPoolSizeが1以上順位候補数以下でない場合。</exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// 候補数が負の場合、PoolSizeが1以上順位候補数以下でない場合、または目標式適合割合が範囲外の場合。
+        /// </exception>
         /// <exception cref="ArgumentException">選出候補がPool内の順位候補に含まれない場合。</exception>
         public MissionDrawTrace(
             int section,
@@ -154,11 +168,24 @@ namespace Ccc.Core.UseCases
             int polarityStageCandidateCount,
             int repeatFilteredCandidateCount,
             MissionKind selectedKind,
+            TargetExpressionMatchRatioRange targetExpressionMatchRatioRange,
+            float targetExpressionMatchRatio,
             IReadOnlyList<MissionCandidate> rankedCandidates,
             int poolSize,
             MissionCandidate selectedCandidate)
         {
             Config = config ?? throw new ArgumentNullException(nameof(config));
+            TargetExpressionMatchRatioRange = targetExpressionMatchRatioRange ??
+                throw new ArgumentNullException(nameof(targetExpressionMatchRatioRange));
+            if (!targetExpressionMatchRatioRange.Contains(targetExpressionMatchRatio))
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(targetExpressionMatchRatio),
+                    targetExpressionMatchRatio,
+                    "Target expression match ratio must be within the target range.");
+            }
+
+            TargetExpressionMatchRatio = targetExpressionMatchRatio;
             RankedCandidates = rankedCandidates ?? throw new ArgumentNullException(nameof(rankedCandidates));
             SelectedCandidate = selectedCandidate ?? throw new ArgumentNullException(nameof(selectedCandidate));
             EnabledCandidateCount = RequireNonNegative(enabledCandidateCount, nameof(enabledCandidateCount));

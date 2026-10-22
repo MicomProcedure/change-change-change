@@ -47,6 +47,8 @@ Session中の抽選はSourceによらず、確定済み`MissionCatalog`、Sectio
 - `MinExpressionMatchRatio` / `MaxExpressionMatchRatio`
 - `CurrentExpressionSatisfiedMissionSelectionRatio`（現在式で達成できるMission候補群の選択確率）
 - `TargetExpressionMatchRatio`（目標式適合率）
+- `TargetExpressionMatchRatioReductionPerSection`（目標式適合率の下限をSectionごとに下げる量）
+- `MinimumTargetExpressionMatchRatio`（目標式適合率の下限の最小値）
 - `MinimumExpressionMatchCount`（最小適合式数）
 - `Zero` / `Prime` における `MinimumExpressionMatchCount`
 - `NegatedMissionSelectionWeight`（反転ミッション抽選重み）
@@ -56,7 +58,7 @@ Session中の抽選はSourceによらず、確定済み`MissionCatalog`、Sectio
 - Kind別有効フラグ、適合率範囲適用フラグ、Negated生成フラグ
 - Kind別ParameterA/Bドメイン、Kind別候補上限、全体候補上限
 
-※`TargetExpressionMatchRatio`は難易度ごとに設定し、同一Kind内の候補を優位順にソート・フィルタリングする際に利用すること。
+※`TargetExpressionMatchRatio`は難易度ごとに設定し、同一Kind内の候補を優位順にソート・フィルタリングする際に利用すること。製品用の抽選では、Sectionが進むほど下限が下がる範囲（上限は`TargetExpressionMatchRatio`）から抽選ごとに目標式適合率を選ぶこと。詳細は [Missionカタログ・抽選内部仕様](../missions/catalog-and-draw.md) を参照すること。
 
 ## Normalモード用プリセット設定値
 
@@ -73,6 +75,8 @@ Session中の抽選はSourceによらず、確定済み`MissionCatalog`、Sectio
 | **MaxExpressionMatchRatio** | `0.60` |
 | **CurrentExpressionSatisfiedMissionSelectionRatio** | `0.10` |
 | **TargetExpressionMatchRatio** | `0.20` |
+| **TargetExpressionMatchRatioReductionPerSection** | `0`（低下しない） |
+| **MinimumTargetExpressionMatchRatio** | `0` |
 | **MinimumExpressionMatchCount** | `2` |
 | **Zero / Prime MinimumExpressionMatchCount** | `1` |
 | **NegatedMissionSelectionWeight** | `0.60` |

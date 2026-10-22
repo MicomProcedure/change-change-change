@@ -258,6 +258,33 @@ namespace Ccc.Core.UseCases
             return true;
         }
 
+        /// <summary>
+        /// 範囲から目標式適合割合を一様に選びます。下限と上限が等しい場合は乱数を消費しません。
+        /// </summary>
+        internal bool TrySelectTargetExpressionMatchRatio(
+            TargetExpressionMatchRatioRange range,
+            out float targetExpressionMatchRatio,
+            out string failureMessage)
+        {
+            targetExpressionMatchRatio = 0f;
+            failureMessage = null;
+            if (range.IsSingleValue)
+            {
+                targetExpressionMatchRatio = range.LowerBound;
+                return true;
+            }
+
+            if (!TryGetRandomValue(out float randomValue, out failureMessage))
+            {
+                return false;
+            }
+
+            // 倍精度で補間してからfloatへ丸めることで、結果が上限を超えないようにする
+            targetExpressionMatchRatio = (float)(
+                range.LowerBound + ((double)range.UpperBound - range.LowerBound) * randomValue);
+            return true;
+        }
+
         private bool TrySelectWeightedFirst(
             float firstWeight,
             float secondWeight,
