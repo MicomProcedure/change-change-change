@@ -11,7 +11,7 @@ namespace Ccc.Presentation.UI
         /// </summary>
         /// <param name="valueText">表示用の文字列。</param>
         /// <param name="isInteractable">入力を受け付けるかどうか。</param>
-        /// <param name="selectedIndex">循環順で0始まりの現在位置。</param>
+        /// <param name="selectedIndex">循環順で0始まりの現在位置。負の値の場合はどの位置も選択しない。</param>
         /// <param name="choiceCount">選択肢の総数。0の場合は位置を表示しない。</param>
         public CycleSelectorStateDto(
             string valueText,
@@ -38,7 +38,7 @@ namespace Ccc.Presentation.UI
         public bool IsInteractable { get; }
 
         /// <summary>
-        ///     循環順で0始まりの現在位置。
+        ///     循環順で0始まりの現在位置。負の値の場合はどの位置も選択しない。
         /// </summary>
         public int SelectedIndex { get; }
 
