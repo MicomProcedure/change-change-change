@@ -10,7 +10,7 @@
 
 オーディオ（Audio）の責務を、「ゲーム上の再生トリガー判断（いつ、どの音を鳴らすか）」と「Unity上の実際の再生処理」に明確に分離すること。
 
-- Presenter や EntryPoint がサウンドの再生タイミングにおいて `AudioKey` を指定すること。
+- Presenter、EntryPoint、または画面遷移に対応する SE 再生クラス（`TitleScreenTransitionSoundPlayer`）がサウンドの再生タイミングにおいて `AudioKey` を指定すること。
 - `IAudioPlayer` は SE再生、BGM再生、BGM停止を受け付ける出力ポート（インターフェース）を提供すること。
 - `UnityAudioPlayer` は SE / BGM の各 Key から対応する設定を検索し、適切な `AudioSource` を使用して再生処理を行うこと。
 - `AudioCatalogAsset` は `AudioKey` と実際の `AudioClip` の紐付けを Unity Inspector 上で安全に編集・設定可能とすること。
@@ -37,7 +37,7 @@ Key と `AudioClip` の紐付け管理には `ScriptableObject` を採用する�
 
 | 型名 | 配置アセンブリ / 名前空間 | 役割・分類の理由 |
 | --- | --- | --- |
-| `AudioKey` | `Ccc.Presentation.Audio` | Presenter / EntryPoint が指定する演出上の意味的なサウンド識別子 |
+| `AudioKey` | `Ccc.Presentation.Audio` | Presenter / EntryPoint / SE 再生クラスが指定する演出上の意味的なサウンド識別子 |
 | `IAudioPlayer` | `Ccc.Presentation.Audio` | Presentation層から外部へ向けたサウンド再生の出力ポート |
 | `AudioEntry` | `Ccc.Infrastructure.Audio` | `AudioClip` や音量設定を含む Unity 依存の設定構造 |
 | `AudioCatalogAsset` | `Ccc.Infrastructure.Audio` | Inspector 編集用の `ScriptableObject` 実装 |
@@ -101,7 +101,8 @@ ApplicationLifetimeScope o-- UnityAudioPlayer : registers
 ```
 
 - `GameplayPresenter` は Gameplay イベントやプレイヤー入力に応じて適切な `AudioKey` を選択する。
-- BGM の選定・制御は、各画面の EntryPoint または Presenter が画面遷移タイミングで行い、Gameplay 画面では `GameplayEntryPoint` が担当する。
+- BGM の選定・制御は、各画面の EntryPoint または Presenter が画面遷移タイミングで行い、Gameplay 画面では `GameplayEntryPoint`、Title 画面では `TitleEntryPoint` が担当する。
+- Title 画面内の遷移 SE は `TitleScreenTransitionSoundPlayer` が `TitleScreenModel.ScreenTransitioned` の遷移方向から選択する。詳細は [画面遷移クラス設計](../presentation/scene-navigation.md#73-titlescreentransitionsoundplayer) を参照すること。
 
 ---
 

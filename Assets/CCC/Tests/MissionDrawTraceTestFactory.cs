@@ -39,7 +39,6 @@ namespace Ccc.Tests
                 satisfiedCandidateCount: 12,
                 unmatchedCandidateCount: 18,
                 selectedExpressionGroup: CurrentExpressionCandidateGroup.Unmatched,
-                selectedTier: 2,
                 tierStageCandidateCount: 10,
                 isNegatedPolaritySelected: false,
                 polarityStageCandidateCount: 6,

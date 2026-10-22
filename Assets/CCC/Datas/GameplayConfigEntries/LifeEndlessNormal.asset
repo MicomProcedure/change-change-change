@@ -20,3 +20,5 @@ MonoBehaviour:
   missionParameterGenerationProfileAsset: {fileID: 11400000, guid: c67ec2046f8a447db0f07017e360216d, type: 2}
   missionPresetAsset: {fileID: 0}
   missionTextAsset: {fileID: 11400000, guid: b1014d3a149b1417982fbb0cda8c7830, type: 2}
+  gameplayBgmKey: 101
+  expressionDisplayStyle: 1

@@ -90,15 +90,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1056074403275662737, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
       propertyPath: m_Color.b
-      value: 0
+      value: 0.990566
       objectReference: {fileID: 0}
     - target: {fileID: 1056074403275662737, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
       propertyPath: m_Color.g
-      value: 1
+      value: 0.990566
       objectReference: {fileID: 0}
     - target: {fileID: 1056074403275662737, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
       propertyPath: m_Color.r
-      value: 1
+      value: 0.990566
       objectReference: {fileID: 0}
     - target: {fileID: 1056074403275662737, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
       propertyPath: m_FillMethod
@@ -134,11 +134,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2788320714692803097, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
       propertyPath: _colorGradient.key0.g
-      value: 1
+      value: 0.05694356
       objectReference: {fileID: 0}
     - target: {fileID: 2788320714692803097, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
       propertyPath: _colorGradient.key0.r
-      value: 0.99034953
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2788320714692803097, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
       propertyPath: _colorGradient.key1.a
@@ -146,11 +146,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2788320714692803097, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
       propertyPath: _colorGradient.key1.g
-      value: 1
+      value: 0.05694356
       objectReference: {fileID: 0}
     - target: {fileID: 2788320714692803097, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
       propertyPath: _colorGradient.key1.r
-      value: 0.99034953
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2788320714692803097, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
       propertyPath: _colorGradient.key2.g
@@ -185,12 +185,16 @@ PrefabInstance:
       value: BarBonusTimerIndicator
       objectReference: {fileID: 0}
     - target: {fileID: 7705919428955418453, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7705919428955418453, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
       propertyPath: m_SizeDelta.x
       value: -14
       objectReference: {fileID: 0}
     - target: {fileID: 7705919428955418453, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
       propertyPath: m_SizeDelta.y
-      value: -367
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 7705919428955418453, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -198,7 +202,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7705919428955418453, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -176.5
+      value: 41.5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

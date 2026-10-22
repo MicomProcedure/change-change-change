@@ -119,11 +119,6 @@ namespace Ccc.Infrastructure.Assets
         public IReadOnlyList<string> Validate()
         {
             var errors = new List<string>();
-            if (minimumNumber <= 0)
-            {
-                errors.Add("Minimum number must be greater than zero.");
-            }
-
             if (maximumNumber < minimumNumber)
             {
                 errors.Add("Maximum number must be greater than or equal to minimum number.");

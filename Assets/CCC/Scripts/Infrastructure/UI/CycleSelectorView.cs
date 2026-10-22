@@ -15,11 +15,18 @@ namespace Ccc.Infrastructure.UI
     public sealed class CycleSelectorView : MonoBehaviour
     {
         [SerializeField] private TextMeshProUGUI valueText;
-        [SerializeField] private List<PointerDownInputView> changeInputViews = new();
+        [SerializeField] private List<PressInputView> changeInputViews = new();
         [Tooltip("入力受付可否の視覚的なフィードバックをCanvasGroupで設定する場合はこちらを利用。")]
         [SerializeField] private CanvasGroup interactionCanvasGroup;
         [SerializeField] private Graphic disabledGraphic;
         [SerializeField] private CardFlipAnimation flipAnimation;
+        [Tooltip("位置を示す丸を並べる親。未設定の場合は位置を表示しない。")]
+        [SerializeField] private RectTransform _indicatorRoot;
+        [SerializeField] private Image _indicatorSlotPrefab;
+        [SerializeField] private Sprite _selectedSlotSprite;
+        [SerializeField] private Sprite _unselectedSlotSprite;
+        [Tooltip("位置を示す丸の色。カードの枠の色に合わせる。")]
+        [SerializeField] private Color _indicatorColor = Color.white;
 
         private Subject<Unit> _changeRequestedSubject = new();
         private readonly List<IDisposable> _pressedSubscriptions = new();
@@ -27,6 +34,9 @@ namespace Ccc.Infrastructure.UI
         private bool _referencesValidated;
         private bool _canFlipAnimate = false;
         private string _lastValueText;
+        private readonly List<Image> _indicatorSlotImages = new();
+        private int _renderedSelectedIndex = -1;
+        private int _renderedChoiceCount = -1;
 
         /// <summary>
         ///     変更要求のイベント。
@@ -42,7 +52,7 @@ namespace Ccc.Infrastructure.UI
 
             for (int index = 0; index < changeInputViews.Count; index++)
             {
-                PointerDownInputView changeInputView = changeInputViews[index];
+                PressInputView changeInputView = changeInputViews[index];
                 if (changeInputView == null)
                 {
                     continue;
@@ -108,7 +118,7 @@ namespace Ccc.Infrastructure.UI
             {
                 for (int index = 0; index < changeInputViews.Count; index++)
                 {
-                    PointerDownInputView changeInputView = changeInputViews[index];
+                    PressInputView changeInputView = changeInputViews[index];
                     if (changeInputView != null)
                     {
                         changeInputView.SetInteractable(state.IsInteractable);
@@ -120,6 +130,7 @@ namespace Ccc.Infrastructure.UI
             if (_lastValueText != state.ValueText)
             {
                 _lastValueText = state.ValueText;
+                RenderIndicator(state.SelectedIndex, state.ChoiceCount);
                 TryPlayFlipAnimation(state);
             }
 
@@ -137,7 +148,7 @@ namespace Ccc.Infrastructure.UI
             {
                 for (int index = 0; index < changeInputViews.Count; index++)
                 {
-                    PointerDownInputView changeInputView = changeInputViews[index];
+                    PressInputView changeInputView = changeInputViews[index];
                     if (changeInputView != null)
                     {
                         changeInputView.SetInteractable(isEnabled);
@@ -223,6 +234,39 @@ namespace Ccc.Infrastructure.UI
             if (_canFlipAnimate)
             {
                 flipAnimation.Play();
+            }
+        }
+
+        private void RenderIndicator(int selectedIndex, int choiceCount)
+        {
+            // Gameplay ではタイマー更新ごとに Render されるため、位置が変わった時だけ描画し直す
+            if (_indicatorRoot == null ||
+                _indicatorSlotPrefab == null ||
+                (_renderedSelectedIndex == selectedIndex && _renderedChoiceCount == choiceCount))
+            {
+                return;
+            }
+
+            _renderedSelectedIndex = selectedIndex;
+            _renderedChoiceCount = choiceCount;
+            _indicatorRoot.gameObject.SetActive(choiceCount > 0);
+
+            while (_indicatorSlotImages.Count < choiceCount)
+            {
+                Image slotImage = Instantiate(_indicatorSlotPrefab, _indicatorRoot);
+                slotImage.color = _indicatorColor;
+                _indicatorSlotImages.Add(slotImage);
+            }
+
+            for (int index = 0; index < _indicatorSlotImages.Count; index++)
+            {
+                bool isUsed = index < choiceCount;
+                _indicatorSlotImages[index].gameObject.SetActive(isUsed);
+                if (isUsed)
+                {
+                    _indicatorSlotImages[index].sprite =
+                        index == selectedIndex ? _selectedSlotSprite : _unselectedSlotSprite;
+                }
             }
         }
     }

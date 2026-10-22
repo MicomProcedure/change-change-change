@@ -79,7 +79,6 @@ namespace Ccc.Core.UseCases
                         expressionSelection.SelectedCandidates,
                         context.Section,
                         config,
-                        shouldSelectSpecificLowerTierWhenCurrentTierIsUnavailable: true,
                         out IReadOnlyList<MissionCandidate> selectedTierCandidates,
                         out string tierFailure))
                 {
@@ -135,7 +134,6 @@ namespace Ccc.Core.UseCases
                         satisfiedCandidateCount: expressionSelection.SatisfiedCandidateCount,
                         unmatchedCandidateCount: expressionSelection.UnmatchedCandidateCount,
                         selectedExpressionGroup: expressionSelection.SelectedGroup,
-                        selectedTier: selectedTierCandidates[0].Tier,
                         tierStageCandidateCount: selectedTierCandidates.Count,
                         isNegatedPolaritySelected: selectedPolarityCandidates[0].Condition.IsNegated,
                         polarityStageCandidateCount: selectedPolarityCandidates.Count,

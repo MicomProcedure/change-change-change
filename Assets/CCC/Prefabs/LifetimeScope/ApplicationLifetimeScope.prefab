@@ -492,3 +492,5 @@ MonoBehaviour:
   isDebugMode: 0
   startingTitleScreenState: 1
   logSettingsAsset: {fileID: 11400000, guid: dcd72eb398ccbd24c91c2b4b734ee4ee, type: 2}
+  sceneCatalogAsset: {fileID: 11400000, guid: 3c7d15df3744db74d9117bd1a15df154, type: 2}
+  editorPlayPlatformOverride: 0

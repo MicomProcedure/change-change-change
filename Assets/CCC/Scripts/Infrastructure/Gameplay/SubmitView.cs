@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Ccc.Infrastructure.UI;
 using Ccc.Presentation;
 using R3;
@@ -15,8 +16,8 @@ namespace Ccc.Infrastructure.Gameplay
         [SerializeField] private Button _submitButton;
 
         private Subject<GameplayInput> _inputsSubject;
-        private PointerDownInputView _submitInputView;
-        private IDisposable _submitInputSubscription;
+        private PressInputView[] _submitInputViews = Array.Empty<PressInputView>();
+        private readonly List<IDisposable> _submitInputSubscriptions = new List<IDisposable>();
         private bool _isInputEnabled = true;
         private bool _isSubmitInteractable;
 
@@ -29,18 +30,21 @@ namespace Ccc.Infrastructure.Gameplay
         {
             _inputsSubject = new Subject<GameplayInput>();
             Inputs = _inputsSubject;
-            _submitInputView = GetComponent<PointerDownInputView>();
+            _submitInputViews = GetComponents<PressInputView>();
         }
 
         private void Start()
         {
-            if (_submitInputView == null || _inputsSubject == null)
+            if (_inputsSubject == null)
             {
                 return;
             }
 
-            _submitInputSubscription = _submitInputView.Pressed.Subscribe(
-                _ => _inputsSubject.OnNext(new GameplayInput(GameplayInputKind.Submit)));
+            for (int index = 0; index < _submitInputViews.Length; index++)
+            {
+                _submitInputSubscriptions.Add(_submitInputViews[index].Pressed.Subscribe(
+                    _ => _inputsSubject.OnNext(new GameplayInput(GameplayInputKind.Submit))));
+            }
         }
 
         /// <summary>
@@ -56,9 +60,9 @@ namespace Ccc.Infrastructure.Gameplay
                 _submitButton.interactable = canInteract;
             }
 
-            if (_submitInputView != null)
+            for (int index = 0; index < _submitInputViews.Length; index++)
             {
-                _submitInputView.SetInteractable(canInteract);
+                _submitInputViews[index].SetInteractable(canInteract);
             }
         }
 
@@ -74,7 +78,12 @@ namespace Ccc.Infrastructure.Gameplay
 
         private void OnDestroy()
         {
-            _submitInputSubscription?.Dispose();
+            for (int index = 0; index < _submitInputSubscriptions.Count; index++)
+            {
+                _submitInputSubscriptions[index].Dispose();
+            }
+
+            _submitInputSubscriptions.Clear();
 
             if (_inputsSubject != null)
             {

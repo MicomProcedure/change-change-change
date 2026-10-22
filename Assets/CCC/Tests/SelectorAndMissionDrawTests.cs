@@ -65,10 +65,10 @@ namespace Ccc.Tests
         }
 
         /// <summary>
-        /// 現在Tierに候補がない場合も、Simple版が従来どおり全下位Tierを同一候補群として扱うことを検証します。
+        /// 現在Tierに候補がない場合は、全下位Tierの候補を1つの候補群としてKindを一様抽選することを検証します。
         /// </summary>
         [Test]
-        public void Draw_WhenCurrentTierHasNoCandidate_ShouldKeepExistingLowerTierPoolBehavior()
+        public void Draw_WhenCurrentTierHasNoCandidate_ShouldSelectKindUniformlyAcrossAllLowerTiers()
         {
             var randomSource = new SequenceRandomSource(0.99d);
             var candidates = new[]
@@ -85,6 +85,29 @@ namespace Ccc.Tests
             Assert.That(result.Candidate.Condition.Kind, Is.EqualTo(MissionKind.Exact));
             Assert.That(result.Candidate.Tier, Is.EqualTo(1));
             Assert.That(randomSource.ConsumedSamples, Is.EqualTo(new[] { 0.99d }));
+        }
+
+        /// <summary>
+        /// 重み抽選で下位Tierが選ばれた場合は、全下位Tierの候補を1つの候補群としてKindを一様抽選することを検証します。
+        /// </summary>
+        [Test]
+        public void Draw_WhenLowerTierIsSelected_ShouldSelectKindUniformlyAcrossAllLowerTiers()
+        {
+            var randomSource = new SequenceRandomSource(0.70d, 0.99d);
+            var candidates = new[]
+            {
+                CreateCandidate(MissionKind.Even, 2, 1),
+                CreateCandidate(MissionKind.Odd, 1, 1),
+                CreateCandidate(MissionKind.Exact, 3, 1)
+            };
+
+            MissionDrawResult result = new SimpleMissionDrawStrategy(randomSource)
+                .Draw(CreateContext(candidates, section: 8));
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Candidate.Condition.Kind, Is.EqualTo(MissionKind.Odd));
+            Assert.That(result.Candidate.Tier, Is.EqualTo(1));
+            Assert.That(randomSource.ConsumedSamples, Is.EqualTo(new[] { 0.70d, 0.99d }));
         }
 
         /// <summary>
