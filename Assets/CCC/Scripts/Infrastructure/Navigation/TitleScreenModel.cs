@@ -18,6 +18,8 @@ namespace Ccc.Infrastructure.Navigation
         private const string GameplayLoadFailedErrorMessage =
             "ゲームを開始できませんでした。";
 
+        private const GameDifficulty InitialDifficulty = GameDifficulty.Easy;
+
         private readonly ISceneNavigator _sceneNavigator;
         private readonly OptionMenuModel _optionMenuModel;
         private readonly ReactiveProperty<TitleScreenState> _currentScreen;
@@ -81,7 +83,7 @@ namespace Ccc.Infrastructure.Navigation
 
             _isBusy = new ReactiveProperty<bool>(false);
             _errorMessage = new ReactiveProperty<string>(string.Empty);
-            _selectedDifficulty = new ReactiveProperty<GameDifficulty>(GameDifficulty.Normal);
+            _selectedDifficulty = new ReactiveProperty<GameDifficulty>(InitialDifficulty);
             _screenTransitioned = new Subject<TitleScreenTransitionDirection>();
 
             CurrentScreen = _currentScreen.ToReadOnlyReactiveProperty();
