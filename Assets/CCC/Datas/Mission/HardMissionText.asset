@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ecdbf826fac439d902334f47ab7a21e, type: 3}
+  m_Name: HardMissionText
+  m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.Assets.MissionTextAsset
+  entries:
+  - kind: 0
+    positiveTemplate: "\u5076\u6570\u306B\u3057\u308D"
+    negatedTemplate: "\u5076\u6570\u306B\u3059\u308B\u306A"
+  - kind: 1
+    positiveTemplate: "\u5947\u6570\u306B\u3057\u308D"
+    negatedTemplate: "\u5947\u6570\u306B\u3059\u308B\u306A"
+  - kind: 2
+    positiveTemplate: "\u6574\u6570\u306B\u3057\u308D"
+    negatedTemplate: "\u6574\u6570\u306B\u3059\u308B\u306A"
+  - kind: 3
+    positiveTemplate: "\u5C0F\u6570\u306B\u3057\u308D"
+    negatedTemplate: "\u5C0F\u6570\u306B\u3059\u308B\u306A"
+  - kind: 4
+    positiveTemplate: "\u6B63\u306E\u6570\u306B\u3057\u308D"
+    negatedTemplate: "\u6B63\u306E\u6570\u306B\u3059\u308B\u306A"
+  - kind: 5
+    positiveTemplate: "\u8CA0\u306E\u6570\u306B\u3057\u308D"
+    negatedTemplate: "\u8CA0\u306E\u6570\u306B\u3059\u308B\u306A"
+  - kind: 6
+    positiveTemplate: "\u7D20\u6570\u306B\u3057\u308D"
+    negatedTemplate: "\u7D20\u6570\u306B\u3059\u308B\u306A"
+  - kind: 7
+    positiveTemplate: "\u30BC\u30ED\u306B\u3057\u308D"
+    negatedTemplate: "\u30BC\u30ED\u306B\u3059\u308B\u306A"
+  - kind: 8
+    positiveTemplate: "\u5E73\u65B9\u6570\u306B\u3057\u308D"
+    negatedTemplate: "\u5E73\u65B9\u6570\u306B\u3059\u308B\u306A"
+  - kind: 9
+    positiveTemplate: "\u5408\u6210\u6570\u306B\u3057\u308D"
+    negatedTemplate: "\u5408\u6210\u6570\u306B\u3059\u308B\u306A"
+  - kind: 10
+    positiveTemplate: "{0}\u4EE5\u4E0A\u306B\u3057\u308D"
+    negatedTemplate: "{0}\u4EE5\u4E0A\u306B\u3059\u308B\u306A"
+  - kind: 11
+    positiveTemplate: "{0}\u4EE5\u4E0B\u306B\u3057\u308D"
+    negatedTemplate: "{0}\u4EE5\u4E0B\u306B\u3059\u308B\u306A"
+  - kind: 12
+    positiveTemplate: "{0}\u306B\u3057\u308D"
+    negatedTemplate: "{0}\u306B\u3059\u308B\u306A"
+  - kind: 13
+    positiveTemplate: "{0}\u306E\u500D\u6570\u306B\u3057\u308D"
+    negatedTemplate: "{0}\u306E\u500D\u6570\u306B\u3059\u308B\u306A"
+  - kind: 14
+    positiveTemplate: "\u7D76\u5BFE\u5024\u3092{0}\u306B\u3057\u308D"
+    negatedTemplate: "\u7D76\u5BFE\u5024\u3092{0}\u306B\u3059\u308B\u306A"
+  - kind: 15
+    positiveTemplate: "\u4E00\u306E\u4F4D\u3092{0}\u306B\u3057\u308D"
+    negatedTemplate: "\u4E00\u306E\u4F4D\u3092{0}\u306B\u3059\u308B\u306A"
+  - kind: 16
+    positiveTemplate: "\u5C0F\u6570\u7B2C\u4E00\u4F4D\u3092{0}\u306B\u3057\u308D"
+    negatedTemplate: "\u5C0F\u6570\u7B2C\u4E00\u4F4D\u3092{0}\u306B\u3059\u308B\u306A"
+  - kind: 17
+    positiveTemplate: "{0}\u4EE5\u4E0A{1}\u4EE5\u4E0B\u306B\u3057\u308D"
+    negatedTemplate: "{0}\u4EE5\u4E0A{1}\u4EE5\u4E0B\u306B\u3059\u308B\u306A"
+  - kind: 18
+    positiveTemplate: "{0}\u3067\u5272\u3063\u305F\u3042\u307E\u308A\u3092{1}\u306B\u3057\u308D"
+    negatedTemplate: "{0}\u3067\u5272\u3063\u305F\u3042\u307E\u308A\u3092{1}\u306B\u3059\u308B\u306A"
