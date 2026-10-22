@@ -89,6 +89,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1056074403275662737, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 6dd9b9171e3c043f2aedc3481ed6a3b9, type: 3}
+    - target: {fileID: 1056074403275662737, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
       propertyPath: m_Color.b
       value: 0.990566
       objectReference: {fileID: 0}
@@ -107,6 +111,10 @@ PrefabInstance:
     - target: {fileID: 1056074403275662737, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
       propertyPath: m_FillOrigin
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1458384414229088059, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: -16
       objectReference: {fileID: 0}
     - target: {fileID: 2788320714692803097, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
       propertyPath: _colorGradient.atime1
@@ -134,7 +142,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2788320714692803097, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
       propertyPath: _colorGradient.key0.g
-      value: 0.05694356
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2788320714692803097, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
       propertyPath: _colorGradient.key0.r
@@ -145,8 +153,12 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2788320714692803097, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
+      propertyPath: _colorGradient.key1.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2788320714692803097, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
       propertyPath: _colorGradient.key1.g
-      value: 0.05694356
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2788320714692803097, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
       propertyPath: _colorGradient.key1.r
@@ -190,7 +202,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7705919428955418453, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
       propertyPath: m_SizeDelta.x
-      value: -14
+      value: -16
       objectReference: {fileID: 0}
     - target: {fileID: 7705919428955418453, guid: 0c4c895e30fc14a9e904e8cc3578c704, type: 3}
       propertyPath: m_SizeDelta.y
