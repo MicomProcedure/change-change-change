@@ -66,6 +66,7 @@ stateDiagram-v2
 | `TitleScreenView` / `GameScreenView` | `Ccc.Infrastructure.Navigation` | 各 Scene 内の Screen 表示制御と入力イベンド検知 |
 | `TitleScreenTransitionSoundPlayer` | `Ccc.Infrastructure.Navigation` | TitleScene 内の画面遷移方向に対応する SE の再生 |
 | `OptionVolumeAudioSynchronizer` | `Ccc.Infrastructure.Navigation` | `OptionMenuModel` の音量レベルを Audio へ継続反映 |
+| `TitleSelectorChangeSoundPlayer` | `Ccc.Infrastructure.Navigation` | TitleScene 内の選択値（難易度・音量）の切り替えに対応する SE の再生 |
 | `CycleSelectorView` | `Ccc.Infrastructure.UI` | Gameplay と OptionMenu で共有する循環選択 UI コンポーネント |
 | `ApplicationLifetimeScope` | `Ccc.Bootstrap` | アプリケーション共通のシングルトンコンポーネント登録 |
 | `TitleLifetimeScope` / `GameplayLifetimeScope` | `Ccc.Bootstrap` | 各シーンの DI 依存関係登録 |
@@ -88,6 +89,7 @@ class TitleScreenView
 class TitleEntryPoint
 class TitleScreenTransitionSoundPlayer
 class OptionVolumeAudioSynchronizer
+class TitleSelectorChangeSoundPlayer
 class IAudioPlayer
 class IAudioVolumeControl
 class CycleSelectorView
@@ -106,6 +108,7 @@ TitleLifetimeScope o-- OptionMenuModel
 TitleLifetimeScope o-- TitleScreenView
 TitleLifetimeScope o-- TitleScreenTransitionSoundPlayer
 TitleLifetimeScope o-- OptionVolumeAudioSynchronizer
+TitleLifetimeScope o-- TitleSelectorChangeSoundPlayer
 TitleLifetimeScope o-- TitleEntryPoint
 GameplayLifetimeScope o-- GameScreenModel
 GameplayLifetimeScope o-- GameScreenView
@@ -118,11 +121,15 @@ TitleScreenModel --> OptionMenuModel : settings snapshot
 TitleScreenModel --> SceneNavigator
 TitleEntryPoint --> TitleScreenTransitionSoundPlayer : StartSubscription
 TitleEntryPoint --> OptionVolumeAudioSynchronizer : StartSubscription
+TitleEntryPoint --> TitleSelectorChangeSoundPlayer : StartSubscription
 TitleEntryPoint --> IAudioPlayer : PlayBgm
 TitleScreenTransitionSoundPlayer --> TitleScreenModel : ScreenTransitioned
 TitleScreenTransitionSoundPlayer --> IAudioPlayer : PlaySE
 OptionVolumeAudioSynchronizer --> OptionMenuModel : volume levels
 OptionVolumeAudioSynchronizer --> IAudioVolumeControl
+TitleSelectorChangeSoundPlayer --> TitleScreenModel : SelectedDifficulty
+TitleSelectorChangeSoundPlayer --> OptionMenuModel : volume levels
+TitleSelectorChangeSoundPlayer --> IAudioPlayer : PlaySE
 GameplayPresenter --> IGameplayNavigation
 GameScreenModel ..|> IGameplayNavigation
 GameScreenModel --> SceneNavigator
@@ -320,13 +327,33 @@ public sealed class OptionVolumeAudioSynchronizer : IDisposable
 - `StartSubscription` で `OptionMenuModel.SEVolumeLevel` / `BgmVolumeLevel` を購読し、開始時点の値を即時に、以降は変更の都度 `IAudioVolumeControl` へ反映すること。
 - 例外仕様と `Dispose` の挙動は `TitleScreenTransitionSoundPlayer` と同じとすること。
 
-### 7.5 TitleEntryPoint
+### 7.5 TitleSelectorChangeSoundPlayer
 
-- TitleScene 開始時の初期処理のみを担当すること。`Start` で `OptionVolumeAudioSynchronizer` と `TitleScreenTransitionSoundPlayer` の購読を開始し、`AudioKey.BgmTitle` を再生すること。
+```csharp
+public sealed class TitleSelectorChangeSoundPlayer : IDisposable
+{
+    public TitleSelectorChangeSoundPlayer(
+        TitleScreenModel titleScreenModel,
+        OptionMenuModel optionMenuModel,
+        IAudioPlayer audio);
+
+    public void StartSubscription();
+    public void Dispose();
+}
+```
+
+- `StartSubscription` で `TitleScreenModel.SelectedDifficulty` と `OptionMenuModel.SEVolumeLevel` / `BgmVolumeLevel` を購読し、値が切り替わるたびに `AudioKey.SEChangeClick` を再生すること。開始時点の値では再生しないこと。
+- 値の切り替えを契機とするため、`IsBusy` 中など Model が受け付けなかった change 操作では再生しないこと。
+- 例外仕様と `Dispose` の挙動は `TitleScreenTransitionSoundPlayer` と同じとすること。
+
+### 7.6 TitleEntryPoint
+
+- TitleScene 開始時の初期処理のみを担当すること。`Start` で `OptionVolumeAudioSynchronizer`、`TitleScreenTransitionSoundPlayer`、`TitleSelectorChangeSoundPlayer` の順に購読を開始し、`AudioKey.BgmTitle` を再生すること。
+- `TitleSelectorChangeSoundPlayer` は `OptionVolumeAudioSynchronizer` より後に購読を開始し、SE 音量の変更時は変更後の音量で change SE が鳴るようにすること。
 - 画面遷移や設定変更への継続的な反応、および Model の破棄は担当しないこと。
 
 > **DI仕様（TitleLifetimeScope）**
-> - `OptionMenuModel`、`TitleScreenModel`、`OptionVolumeAudioSynchronizer`、`TitleScreenTransitionSoundPlayer` は `Lifetime.Scoped` で自身の型として登録し、TitleScene の Scope 破棄時に VContainer が `Dispose` すること。
+> - `OptionMenuModel`、`TitleScreenModel`、`OptionVolumeAudioSynchronizer`、`TitleScreenTransitionSoundPlayer`、`TitleSelectorChangeSoundPlayer` は `Lifetime.Scoped` で自身の型として登録し、TitleScene の Scope 破棄時に VContainer が `Dispose` すること。
 > - `TitleEntryPoint` は `RegisterEntryPoint` で登録すること。
 >
 > ```csharp
@@ -334,6 +361,7 @@ public sealed class OptionVolumeAudioSynchronizer : IDisposable
 > builder.Register<TitleScreenModel>(Lifetime.Scoped);
 > builder.Register<OptionVolumeAudioSynchronizer>(Lifetime.Scoped);
 > builder.Register<TitleScreenTransitionSoundPlayer>(Lifetime.Scoped);
+> builder.Register<TitleSelectorChangeSoundPlayer>(Lifetime.Scoped);
 > builder.RegisterComponentInHierarchy<TitleScreenView>();
 > builder.RegisterEntryPoint<TitleEntryPoint>();
 > ```
@@ -381,6 +409,7 @@ public sealed class GameScreenModel : IGameplayNavigation, IDisposable
 | `OptionMenuModel` | 設定候補、現在の選択Index、設定データ | TitleScene |
 | `TitleScreenTransitionSoundPlayer` | 画面遷移の購読 | TitleScene |
 | `OptionVolumeAudioSynchronizer` | 音量レベルの購読 | TitleScene |
+| `TitleSelectorChangeSoundPlayer` | 選択値（難易度・音量）の購読 | TitleScene |
 | `GameScreenModel` | `GameScreenState`、`SessionResult`、Retry状態 | GameScene |
 | `GameplayController` | `GameplaySessionContext`、`GameplayState` | GameScene内セッション |
 | `GameplayPresenter` | イベント購読、演出待機処理、UI用一時状態 | GameScene |
@@ -391,6 +420,7 @@ public sealed class GameScreenModel : IGameplayNavigation, IDisposable
 
 - タイトル画面からメインメニューへの移動、オプション画面・クレジット画面の開閉がスムーズに行えること。
 - TitleScene 内で `Close*` による遷移が受け付けられた場合のみキャンセルSEが鳴り、`IsBusy` 中など受け付けられなかった操作では鳴らないこと。
+- TitleScene 内で難易度・SE 音量・BGM 音量の change 操作が受け付けられた場合のみ change SE が鳴り、SE 音量の変更時は変更後の音量で鳴ること。
 - メインメニューでのゲーム開始操作時、設定スナップショットを含む `GameplayStartRequest` が正常に生成・渡されること。
 - シーンロード中の重複タップによって二重ロードが発生しないこと（`AlreadyLoading` の検知）。
 - ゲームオーバー時に `ResultScreen` へ切り替わり、リトライ操作によって同一シーン内で速やかに再スタートできること。
