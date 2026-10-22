@@ -130,6 +130,11 @@ namespace Ccc.Infrastructure.Gameplay
                     state.LeftText,
                     state.OperatorText,
                     state.RightText,
+                    state.LeftIndex,
+                    state.OperatorIndex,
+                    state.RightIndex,
+                    state.NumberChoiceCount,
+                    state.OperatorChoiceCount,
                     state.AnswerText,
                     state.CanSubmit && _isGameplayInputEnabled);
             }

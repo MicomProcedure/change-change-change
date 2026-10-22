@@ -19,6 +19,9 @@ namespace Ccc.Presentation
         private const int TimeWarningThresholdSeconds = 3;
         private const string HiddenAnswerText = "?";
 
+        // OperatorType.Next() は enum の定義順で循環するため、定義数がそのまま選択肢数になる
+        private static readonly int OperatorChoiceCount = Enum.GetValues(typeof(OperatorType)).Length;
+
         private readonly IGameplayFlow _flow;
         private readonly IGameplayView _view;
         private readonly ISceneNavigator _sceneNavigator;
@@ -375,6 +378,11 @@ namespace Ccc.Presentation
                 expression.Left.ToString(CultureInfo.InvariantCulture),
                 FormatOperator(expression.Operator),
                 expression.Right.ToString(CultureInfo.InvariantCulture),
+                expression.Left - _gameplayConfig.MinimumNumber,
+                (int)expression.Operator,
+                expression.Right - _gameplayConfig.MinimumNumber,
+                _gameplayConfig.MaximumNumber - _gameplayConfig.MinimumNumber + 1,
+                OperatorChoiceCount,
                 answerText,
                 hasRemainingTime,
                 remainingSeconds,

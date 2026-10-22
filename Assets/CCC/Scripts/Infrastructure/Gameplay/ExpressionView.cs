@@ -47,18 +47,35 @@ namespace Ccc.Infrastructure.Gameplay
         /// <param name="leftText">式の左側。</param>
         /// <param name="operatorText">式の演算子。</param>
         /// <param name="rightText">式の右側。</param>
+        /// <param name="leftIndex">式の左側の、選択肢の中での位置。</param>
+        /// <param name="operatorIndex">式の演算子の、選択肢の中での位置。</param>
+        /// <param name="rightIndex">式の右側の、選択肢の中での位置。</param>
+        /// <param name="numberChoiceCount">数値の選択肢の総数。</param>
+        /// <param name="operatorChoiceCount">演算子の選択肢の総数。</param>
         /// <param name="answerText">答え。</param>
         /// <param name="isInteractable">式を変更できるかどうか。</param>
         public void Render(
             string leftText,
             string operatorText,
             string rightText,
+            int leftIndex,
+            int operatorIndex,
+            int rightIndex,
+            int numberChoiceCount,
+            int operatorChoiceCount,
             string answerText,
             bool isInteractable)
         {
-            RenderSelector(_leftNumberView, leftText, isInteractable && _isInputEnabled);
-            RenderSelector(_operatorView, operatorText, isInteractable && _isInputEnabled);
-            RenderSelector(_rightNumberView, rightText, isInteractable && _isInputEnabled);
+            bool isSelectorInteractable = isInteractable && _isInputEnabled;
+            RenderSelector(
+                _leftNumberView,
+                new CycleSelectorStateDto(leftText, isSelectorInteractable, leftIndex, numberChoiceCount));
+            RenderSelector(
+                _operatorView,
+                new CycleSelectorStateDto(operatorText, isSelectorInteractable, operatorIndex, operatorChoiceCount));
+            RenderSelector(
+                _rightNumberView,
+                new CycleSelectorStateDto(rightText, isSelectorInteractable, rightIndex, numberChoiceCount));
             RenderAnswer(answerText);
         }
 
@@ -109,12 +126,11 @@ namespace Ccc.Infrastructure.Gameplay
 
         private static void RenderSelector(
             CycleSelectorView selector,
-            string valueText,
-            bool isInteractable)
+            CycleSelectorStateDto state)
         {
             if (selector != null)
             {
-                selector.Render(new CycleSelectorStateDto(valueText, isInteractable));
+                selector.Render(state);
             }
         }
 

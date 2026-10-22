@@ -54,6 +54,10 @@ namespace Ccc.Infrastructure.Navigation
         [Header("エラー表示")]
         [SerializeField] private TMP_Text _errorText;
 
+        // TitleScreenModel.CycleDifficulty() は enum の定義順で循環するため、この並びがそのまま丸の並びになる
+        private static readonly GameDifficulty[] DifficultyChoices =
+            (GameDifficulty[])Enum.GetValues(typeof(GameDifficulty));
+
         private TitleScreenModel _model;
         private IRuntimeMode _runtimeMode;
         private IDisposable _screenSubscription;
@@ -312,7 +316,9 @@ namespace Ccc.Infrastructure.Navigation
             _difficultySelectorView.Render(
                 new CycleSelectorStateDto(
                     difficulty.ToString(),
-                    !_model.IsBusy.CurrentValue));
+                    !_model.IsBusy.CurrentValue,
+                    Array.IndexOf(DifficultyChoices, difficulty),
+                    DifficultyChoices.Length));
         }
 
         private void RenderSEVolumeLevel(int volumeLevel)
@@ -332,10 +338,13 @@ namespace Ccc.Infrastructure.Navigation
                 return;
             }
 
+            // 音量は最小レベル（ミュート）を丸に含めず、最小レベルの時はどの丸も塗りつぶさない
             selectorView.Render(
                 new CycleSelectorStateDto(
                     volumeLevel.ToString(),
-                    !_model.IsBusy.CurrentValue));
+                    !_model.IsBusy.CurrentValue,
+                    volumeLevel - OptionVolumeLevels.Min - 1,
+                    OptionVolumeLevels.Count - 1));
         }
 
         private void RenderErrorMessage(string errorMessage)
