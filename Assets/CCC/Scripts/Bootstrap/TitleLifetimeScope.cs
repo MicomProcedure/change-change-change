@@ -15,6 +15,7 @@ namespace Ccc.Bootstrap
             builder.Register<TitleScreenModel>(Lifetime.Scoped);
             builder.Register<OptionVolumeAudioSynchronizer>(Lifetime.Scoped);
             builder.Register<TitleScreenTransitionSoundPlayer>(Lifetime.Scoped);
+            builder.Register<TitleSelectorChangeSoundPlayer>(Lifetime.Scoped);
             builder.RegisterComponentInHierarchy<TitleScreenView>();
             builder.RegisterEntryPoint<TitleEntryPoint>();
         }

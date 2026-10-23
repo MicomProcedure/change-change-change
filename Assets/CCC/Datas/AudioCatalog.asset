@@ -43,6 +43,9 @@ MonoBehaviour:
   - key: 209
     clip: {fileID: 8300000, guid: aefc37a8e630da8429430ef8cde82d77, type: 3}
     volume: 1
+  - key: 210
+    clip: {fileID: 8300000, guid: bc14df8ccdc77214fa98a7e46b5ec104, type: 3}
+    volume: 0
   bgmEntries:
   - key: 100
     clip: {fileID: 8300000, guid: ad08d597ae711c44c9f07d37822a481e, type: 3}
