@@ -129,6 +129,35 @@ namespace Ccc.Tests
             Assert.That(buildResult.FailureMessage, Is.Not.Empty);
         }
 
+        /// <summary>
+        /// 約数の肯定候補が、Nを式で到達できるかによってTierを確定することを検証します。
+        /// </summary>
+        [Test]
+        public void Build_Divisor_ShouldResolveTierByWhetherParameterIsReachable()
+        {
+            GameplayConfig config = GameplayConfigDefaults.CreateNormal();
+            var parameters = new List<MissionParameterCandidate>
+            {
+                // 12は1〜5の式で到達可能、24は到達不可
+                new MissionParameterCandidate(MissionCondition.Create(MissionKind.Divisor, 12)),
+                new MissionParameterCandidate(MissionCondition.Create(MissionKind.Divisor, 24))
+            };
+
+            MissionCatalogBuildResult buildResult = MissionCatalogBuilder.Build(
+                ExpressionCandidateGenerator.Generate(config.MinimumNumber, config.MaximumNumber),
+                parameters,
+                MissionTestSettings.CreateEvaluationPolicy(config),
+                Rational.FromSingle(0.25f));
+
+            Assert.That(buildResult.IsSuccess, Is.True);
+            Assert.That(
+                buildResult.Catalog.Candidates.Single(candidate => candidate.Condition.ParameterA == 12).Tier,
+                Is.EqualTo(3));
+            Assert.That(
+                buildResult.Catalog.Candidates.Single(candidate => candidate.Condition.ParameterA == 24).Tier,
+                Is.EqualTo(4));
+        }
+
         private static MissionCandidate FindCandidate(MissionCatalog catalog, MissionKind kind)
         {
             return catalog.Candidates.Single(candidate => candidate.Condition.Kind == kind);

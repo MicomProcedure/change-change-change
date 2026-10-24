@@ -144,6 +144,7 @@
 - 明示値および包含範囲ドメインが重複除去後の昇順へ正規化されること。
 - Single Kind、Between、Moduloが到達可能性とKind固有制約を満たす候補だけを生成すること。
 - Negated候補が固定定義とProfileの両方で許可された場合だけ肯定候補の直後に生成されること。
+- `Divisor` の肯定候補が、Nを式で到達できる場合はTier3、到達できない場合はTier4として確定すること。
 - Kind別・全体候補上限はNegated展開後かつ適合率評価前に判定され、超過時に切り捨てないこと。
 - 有効Kindの候補0件、件数オーバーフロー、上限超過を`InvalidConfiguration`としてSession開始前に失敗させること。
 - AutomaticではPreset参照を不要とし、PresetDebugではProfileとPresetを必須とすること。

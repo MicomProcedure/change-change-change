@@ -29,7 +29,7 @@
 | **3** | 一の位N | 整数かつ符号を除いた一の位が `N` | `OnesDigit` | 一の位をNにしろ |
 | **3** | 合成数 | `val > 1` かつ素数ではない整数 | `Composite` | 合成数にしろ |
 | **3** | N以上M以下（幅狭） | `N <= val <= M`（両端を含む） | `Between` | N以上M以下にしろ |
-| **3** | Nの約数 | `0` 以外の整数かつ `N mod abs(val) == 0`（負の約数を含む） | `Divisor` | Nの約数にしろ |
+| **3**（Nが到達不可なら**4**） | Nの約数 | `0` 以外の整数かつ `N mod abs(val) == 0`（負の約数を含む） | `Divisor` | Nの約数にしろ |
 | **3** | Nの累乗 | 整数かつ `val == N^k`（`k >= 1`。`1` は含まない） | `Power` | Nの累乗にしろ |
 | **3** | 0と1の間 | `0 < val < 1`（両端を含まない） | `BetweenZeroAndOne` | 0と1の間にしろ |
 | **3** | 各桁の和N | 整数かつ符号を除いた各桁の和が `N` | `DigitSum` | 各桁の和をNにしろ |
@@ -40,6 +40,7 @@
 - 小数桁を指定するミッションは「小数第1位」のみとし、第2位・第3位の指定ミッションは出題しないこと。
 - `Between` の表示上の上限値 `M` は、内部パラメータの下限 `N` と範囲幅 `W` から `N + W` として動的計算すること（`W >= 1`）。
 - `ExpressionMatchRatio` がProfileの`BetweenTierTwoThreshold`以上であれば「幅広（Tier2）」、未満であれば「幅狭（Tier3）」として割り当てること。閾値一致はTier2とする。
+- `Divisor` は、`N` そのものが正常な `ExpressionCandidate` の計算結果として到達可能であればTier3、到達不可であればTier4として割り当てること。到達可能性は難易度の数字範囲から求めるため、同じ `N` でも難易度によってTierが変わり得る。
 - パラメータの範囲は、`Divisor` と `DigitSum` が `N >= 1`、`Power` が `N >= 2`、`TensDigit` が `0 <= N <= 9` とする。`DigitSum` の `N = 0` は `Zero` と同一条件になるため除外する。
 - `RepeatingDecimal` の表示上の小数は第2桁で切り捨てられるため（`1/3` → `0.33`）、表示から有限小数と見分けることはできない。判定には有理数の分母を使用すること。
 
@@ -105,7 +106,7 @@ Gameplay 開始時、すべての正常な `ExpressionCandidate` に対して `M
 
 製品経路では、正常な `ExpressionCandidate` から計算到達可能な整数値集合を自動抽出し、Profileの整数ドメインとの積集合から、Profileで有効化した全Kindの候補を生成すること。`Between`と`Modulo`はParameterAとParameterBの直積をKind固有制約で絞り込むこと。生成後にCondition単位で重複を最初の1件へ正規化し、上記の評価フィルタリングを適用すること。
 
-`MissionParameterCandidate`はTierを保持しないこと。固定Tier、Betweenの分析済み適合率、Negated既定TierからCatalog採用時にTierを確定し、`MissionCandidate`だけが確定Tierを保持すること。
+`MissionParameterCandidate`はTierを保持しないこと。固定Tier、Betweenの分析済み適合率、DivisorのNの到達可能性、Negated既定TierからCatalog採用時にTierを確定し、`MissionCandidate`だけが確定Tierを保持すること。
 
 ---
 - カタログ・抽選仕様: [Missionカタログ・抽選内部仕様](./catalog-and-draw.md)

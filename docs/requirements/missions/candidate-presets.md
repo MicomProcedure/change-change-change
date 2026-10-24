@@ -25,7 +25,7 @@
 | `ParameterB` | Betweenの幅、Moduloの剰余 |
 | `IsNegated` | 判定反転の有無 |
 
-`Tier`は入力しないこと。肯定固定Tier、Betweenの分析済み適合率、Negated既定Tierから`MissionCatalogBuilder`が確定する。
+`Tier`は入力しないこと。肯定固定Tier、Betweenの分析済み適合率、DivisorのNの到達可能性、Negated既定Tierから`MissionCatalogBuilder`が確定する。
 
 ## パラメータ構造
 

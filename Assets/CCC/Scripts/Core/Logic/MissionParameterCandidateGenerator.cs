@@ -354,34 +354,25 @@ namespace Ccc.Core.Logic
         private static ReachableResults AnalyzeReachableResults(
             IReadOnlyList<ExpressionCandidate> expressions)
         {
-            var integers = new SortedSet<int>();
             var decimalFirstDigits = new HashSet<int>();
             for (int index = 0; index < expressions.Count; index++)
             {
                 CalculationResult result = expressions[index].Result;
-                if (!result.IsDefined)
+                if (!result.IsDefined || result.Value.IsInteger)
                 {
                     continue;
                 }
 
                 Rational value = result.Value;
-                if (value.IsInteger)
-                {
-                    if (value.Numerator >= int.MinValue && value.Numerator <= int.MaxValue)
-                    {
-                        integers.Add((int)value.Numerator);
-                    }
-                }
-                else
-                {
-                    long fractionalNumerator = Math.Abs(
-                        value.Numerator % value.Denominator);
-                    int firstDigit = (int)(fractionalNumerator * 10L / value.Denominator);
-                    decimalFirstDigits.Add(firstDigit);
-                }
+                long fractionalNumerator = Math.Abs(
+                    value.Numerator % value.Denominator);
+                int firstDigit = (int)(fractionalNumerator * 10L / value.Denominator);
+                decimalFirstDigits.Add(firstDigit);
             }
 
-            return new ReachableResults(integers, decimalFirstDigits);
+            return new ReachableResults(
+                ReachableIntegerCollector.Collect(expressions),
+                decimalFirstDigits);
         }
 
         private static int EuclideanModulo(int dividend, int divisor)

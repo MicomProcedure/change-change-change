@@ -28,9 +28,9 @@ namespace Ccc.Core.Model
             Define(MissionKind.Absolute, MissionParameterStructure.Single, 3, false, 0),
             Define(MissionKind.OnesDigit, MissionParameterStructure.Single, 3, false, 0),
             Define(MissionKind.DecimalFirstDigit, MissionParameterStructure.Single, 4, false, 0),
-            Define(MissionKind.Between, MissionParameterStructure.Pair, 0, true, 4),
+            DefineSwitching(MissionKind.Between, MissionParameterStructure.Pair, MissionPositiveTierRule.MatchRatioThreshold, 2, 3, true, 4),
             Define(MissionKind.Modulo, MissionParameterStructure.Pair, 4, false, 0),
-            Define(MissionKind.Divisor, MissionParameterStructure.Single, 3, true, 4),
+            DefineSwitching(MissionKind.Divisor, MissionParameterStructure.Single, MissionPositiveTierRule.ParameterReachability, 3, 4, true, 4),
             Define(MissionKind.Power, MissionParameterStructure.Single, 3, true, 4),
             Define(MissionKind.BetweenZeroAndOne, MissionParameterStructure.None, 3, true, 4),
             Define(MissionKind.TwoDigit, MissionParameterStructure.None, 1, true, 2),
@@ -71,7 +71,28 @@ namespace Ccc.Core.Model
             return new MissionKindDefinition(
                 kind,
                 parameterStructure,
+                MissionPositiveTierRule.Fixed,
                 fixedPositiveTier,
+                0,
+                canGenerateNegated,
+                negatedTier);
+        }
+
+        private static MissionKindDefinition DefineSwitching(
+            MissionKind kind,
+            MissionParameterStructure parameterStructure,
+            MissionPositiveTierRule positiveTierRule,
+            int criterionMetPositiveTier,
+            int criterionUnmetPositiveTier,
+            bool canGenerateNegated,
+            int negatedTier)
+        {
+            return new MissionKindDefinition(
+                kind,
+                parameterStructure,
+                positiveTierRule,
+                criterionMetPositiveTier,
+                criterionUnmetPositiveTier,
                 canGenerateNegated,
                 negatedTier);
         }
