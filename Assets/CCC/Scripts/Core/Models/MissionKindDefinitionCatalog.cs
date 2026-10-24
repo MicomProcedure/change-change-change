@@ -35,7 +35,7 @@ namespace Ccc.Core.Model
             Define(MissionKind.BetweenZeroAndOne, MissionParameterStructure.None, 3, true, 4),
             Define(MissionKind.TwoDigit, MissionParameterStructure.None, 1, true, 2),
             Define(MissionKind.TensDigit, MissionParameterStructure.Single, 2, true, 3),
-            Define(MissionKind.DigitSum, MissionParameterStructure.Single, 3, true, 4),
+            Define(MissionKind.DigitSum, MissionParameterStructure.Single, 4, true, 4),
             Define(MissionKind.RepeatingDecimal, MissionParameterStructure.None, 4, true, 4)
         };
 

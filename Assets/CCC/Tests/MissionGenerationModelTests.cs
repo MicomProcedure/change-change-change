@@ -89,7 +89,7 @@ namespace Ccc.Tests
         [TestCase(MissionKind.BetweenZeroAndOne, MissionParameterStructure.None, 3, 4)]
         [TestCase(MissionKind.TwoDigit, MissionParameterStructure.None, 1, 2)]
         [TestCase(MissionKind.TensDigit, MissionParameterStructure.Single, 2, 3)]
-        [TestCase(MissionKind.DigitSum, MissionParameterStructure.Single, 3, 4)]
+        [TestCase(MissionKind.DigitSum, MissionParameterStructure.Single, 4, 4)]
         [TestCase(MissionKind.RepeatingDecimal, MissionParameterStructure.None, 4, 4)]
         public void MissionKindDefinitionCatalog_ShouldExposeNumberPropertyMissionContracts(
             MissionKind kind,
