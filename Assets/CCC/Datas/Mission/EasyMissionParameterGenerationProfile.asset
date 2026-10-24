@@ -472,7 +472,7 @@ MonoBehaviour:
       maximum: 0
       step: 1
   - kind: 24
-    isEnabled: 1
+    isEnabled: 0
     appliesMatchRatioRange: 1
     generatesNegated: 0
     maximumCandidateCount: 9
