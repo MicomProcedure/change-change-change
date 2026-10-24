@@ -274,6 +274,23 @@ namespace Ccc.Core.Logic
                     return parameter >= 0 &&
                            parameter <= 9 &&
                            reachableResults.DecimalFirstDigits.Contains(parameter);
+                case MissionKind.Divisor:
+                    return parameter >= 1 &&
+                           reachableResults.Integers.Any(
+                               reachable => reachable != 0 && parameter % reachable == 0);
+                case MissionKind.Power:
+                    return parameter >= 2 &&
+                           reachableResults.Integers.Any(
+                               reachable => IntegerPropertyCalculator.IsPositivePowerOf(reachable, parameter));
+                case MissionKind.TensDigit:
+                    return parameter >= 0 &&
+                           parameter <= 9 &&
+                           reachableResults.Integers.Any(
+                               reachable => IntegerPropertyCalculator.GetTensDigit(reachable) == parameter);
+                case MissionKind.DigitSum:
+                    return parameter >= 1 &&
+                           reachableResults.Integers.Any(
+                               reachable => IntegerPropertyCalculator.SumDigits(reachable) == parameter);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
             }

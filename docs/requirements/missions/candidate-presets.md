@@ -29,8 +29,8 @@
 
 ## パラメータ構造
 
-- `None`: Even、Odd、Integer、Decimal、Positive、Negative、Prime、Zero、Square、Composite
-- `Single`: AtLeast、AtMost、Exact、Multiple、Absolute、OnesDigit、DecimalFirstDigit
+- `None`: Even、Odd、Integer、Decimal、Positive、Negative、Prime、Zero、Square、Composite、BetweenZeroAndOne、TwoDigit、RepeatingDecimal
+- `Single`: AtLeast、AtMost、Exact、Multiple、Absolute、OnesDigit、DecimalFirstDigit、Divisor、Power、TensDigit、DigitSum
 - `Pair`: Between、Modulo
 
 `None`はParameterA/Bを0、`Single`はParameterBを0とする。`Between`のParameterBは幅であり1以上、`Modulo`は法2以上かつ`0 <= remainder < divisor`とする。

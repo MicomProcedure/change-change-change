@@ -20,6 +20,13 @@ namespace Ccc.Core.Model
         OnesDigit = 15,
         DecimalFirstDigit = 16,
         Between = 17,
-        Modulo = 18
+        Modulo = 18,
+        Divisor = 19,
+        Power = 20,
+        BetweenZeroAndOne = 21,
+        TwoDigit = 22,
+        TensDigit = 23,
+        DigitSum = 24,
+        RepeatingDecimal = 25
     }
 }

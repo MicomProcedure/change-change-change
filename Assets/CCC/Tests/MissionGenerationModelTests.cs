@@ -31,8 +31,8 @@ namespace Ccc.Tests
         {
             MissionKind[] kinds = (MissionKind[])Enum.GetValues(typeof(MissionKind));
 
-            Assert.That(kinds.Select(kind => (int)kind), Is.EqualTo(Enumerable.Range(0, 19)));
-            Assert.That(MissionKindDefinitionCatalog.Definitions, Has.Count.EqualTo(19));
+            Assert.That(kinds.Select(kind => (int)kind), Is.EqualTo(Enumerable.Range(0, 26)));
+            Assert.That(MissionKindDefinitionCatalog.Definitions, Has.Count.EqualTo(26));
             Assert.That(
                 MissionKindDefinitionCatalog.Definitions.Select(definition => definition.Kind),
                 Is.EqualTo(kinds));
@@ -60,6 +60,30 @@ namespace Ccc.Tests
             Assert.That(even.ParameterStructure, Is.EqualTo(MissionParameterStructure.None));
             Assert.That(even.FixedPositiveTier, Is.EqualTo(1));
             Assert.That(even.NegatedTier, Is.EqualTo(2));
+        }
+
+        /// <summary>
+        /// 約数・累乗・桁・無限小数系Kindのパラメータ構造、肯定Tier、Negated Tierを検証します。
+        /// </summary>
+        [TestCase(MissionKind.Divisor, MissionParameterStructure.Single, 3, 4)]
+        [TestCase(MissionKind.Power, MissionParameterStructure.Single, 3, 4)]
+        [TestCase(MissionKind.BetweenZeroAndOne, MissionParameterStructure.None, 3, 4)]
+        [TestCase(MissionKind.TwoDigit, MissionParameterStructure.None, 1, 2)]
+        [TestCase(MissionKind.TensDigit, MissionParameterStructure.Single, 2, 3)]
+        [TestCase(MissionKind.DigitSum, MissionParameterStructure.Single, 3, 4)]
+        [TestCase(MissionKind.RepeatingDecimal, MissionParameterStructure.None, 4, 4)]
+        public void MissionKindDefinitionCatalog_ShouldExposeNumberPropertyMissionContracts(
+            MissionKind kind,
+            MissionParameterStructure expectedStructure,
+            int expectedPositiveTier,
+            int expectedNegatedTier)
+        {
+            MissionKindDefinition definition = MissionKindDefinitionCatalog.Get(kind);
+
+            Assert.That(definition.ParameterStructure, Is.EqualTo(expectedStructure));
+            Assert.That(definition.FixedPositiveTier, Is.EqualTo(expectedPositiveTier));
+            Assert.That(definition.CanGenerateNegated, Is.True);
+            Assert.That(definition.NegatedTier, Is.EqualTo(expectedNegatedTier));
         }
 
         /// <summary>

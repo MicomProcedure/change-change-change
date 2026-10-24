@@ -82,7 +82,21 @@ namespace Ccc.Core.Model
                         throw new ArgumentOutOfRangeException(nameof(parameter), parameter, null);
                     }
                     break;
+                case MissionKind.Divisor:
+                case MissionKind.DigitSum:
+                    if (parameter < 1)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(parameter), parameter, null);
+                    }
+                    break;
+                case MissionKind.Power:
+                    if (parameter < 2)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(parameter), parameter, null);
+                    }
+                    break;
                 case MissionKind.OnesDigit:
+                case MissionKind.TensDigit:
                 case MissionKind.DecimalFirstDigit:
                     if (parameter < 0 || parameter > 9)
                     {

@@ -8,6 +8,11 @@ namespace Ccc.Core.Logic
     /// </summary>
     public static class MissionConditionMatcher
     {
+        private const int TwoDigitCount = 2;
+
+        // 有限小数になる分母が持ち得る素因数（10の素因数）
+        private static readonly long[] TerminatingDecimalPrimeFactors = { 2L, 5L };
+
         /// <summary>
         /// 指定された条件と計算結果が一致するか判定します。
         /// </summary>
@@ -121,6 +126,43 @@ namespace Ccc.Core.Logic
                     // 小数第1位（有限小数の筆算方式）
                     return !value.IsInteger && (Math.Abs(value.Numerator) * 10 / value.Denominator) % 10 == condition.ParameterA;
 
+                // ==========================================
+                // 約数・累乗・桁・無限小数
+                // ==========================================
+                case MissionKind.Divisor:
+                    // Nの約数: 0以外の整数で、負の約数を含む
+                    return value.IsInteger &&
+                           value.Numerator != 0 &&
+                           condition.ParameterA % value.Numerator == 0;
+
+                case MissionKind.Power:
+                    // Nの累乗: 指数1以上（N, N^2, ...）。1は含まない
+                    return value.IsInteger &&
+                           IntegerPropertyCalculator.IsPositivePowerOf(value.Numerator, condition.ParameterA);
+
+                case MissionKind.BetweenZeroAndOne:
+                    // 0と1の間: 両端を含まない
+                    return value.Numerator > 0 && value.CompareTo(Rational.Create(1, 1)) < 0;
+
+                case MissionKind.TwoDigit:
+                    // 2桁: 符号を除いた整数の桁数が2
+                    return value.IsInteger &&
+                           IntegerPropertyCalculator.CountDigits(value.Numerator) == TwoDigitCount;
+
+                case MissionKind.TensDigit:
+                    // 十の位: 符号を除いた整数で判定し、1桁の数は十の位0とみなす
+                    return value.IsInteger &&
+                           IntegerPropertyCalculator.GetTensDigit(value.Numerator) == condition.ParameterA;
+
+                case MissionKind.DigitSum:
+                    // 各桁の和: 符号を除いた整数の各桁を合計する
+                    return value.IsInteger &&
+                           IntegerPropertyCalculator.SumDigits(value.Numerator) == condition.ParameterA;
+
+                case MissionKind.RepeatingDecimal:
+                    // 無限小数: 約分済みの分母に2と5以外の素因数を含む
+                    return !value.IsInteger && HasRepeatingDecimalExpansion(value.Denominator);
+
                 default:
                     throw new ArgumentOutOfRangeException(nameof(condition.Kind), $"Unsupported MissionKind: {condition.Kind}");
             }
@@ -164,6 +206,21 @@ namespace Ccc.Core.Logic
 
             long root = (long)Math.Sqrt(number);
             return root * root == number;
+        }
+
+        private static bool HasRepeatingDecimalExpansion(long denominator)
+        {
+            long remaining = denominator;
+            for (int index = 0; index < TerminatingDecimalPrimeFactors.Length; index++)
+            {
+                long primeFactor = TerminatingDecimalPrimeFactors[index];
+                while (remaining % primeFactor == 0)
+                {
+                    remaining /= primeFactor;
+                }
+            }
+
+            return remaining != 1;
         }
 
         private static long EuclideanModulo(long dividend, int divisor)
