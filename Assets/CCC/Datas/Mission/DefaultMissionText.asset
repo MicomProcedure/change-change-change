@@ -86,8 +86,8 @@ MonoBehaviour:
     positiveTemplate: "\u5341\u306E\u4F4D\u3092{0}\u306B\u3057\u308D"
     negatedTemplate: "\u5341\u306E\u4F4D\u3092{0}\u306B<style=MissionNegation>\u3059\u308B\u306A</style>"
   - kind: 24
-    positiveTemplate: "\u5404\u6841\u306E\u548C\u3092{0}\u306B\u3057\u308D"
-    negatedTemplate: "\u5404\u6841\u306E\u548C\u3092{0}\u306B<style=MissionNegation>\u3059\u308B\u306A</style>"
+    positiveTemplate: "\u5404\u6841\u306E\u6570\u5B57\u3092\u8DB3\u3057\u3066{0}\u306B\u3057\u308D"
+    negatedTemplate: "\u5404\u6841\u306E\u6570\u5B57\u3092\u8DB3\u3057\u3066{0}\u306B<style=MissionNegation>\u3059\u308B\u306A</style>"
   - kind: 25
-    positiveTemplate: "\u7121\u9650\u5C0F\u6570\u306B\u3057\u308D"
-    negatedTemplate: "\u7121\u9650\u5C0F\u6570\u306B<style=MissionNegation>\u3059\u308B\u306A</style>"
+    positiveTemplate: "\u7121\u9650\u306B\u7D9A\u304F\u5C0F\u6570\u306B\u3057\u308D"
+    negatedTemplate: "\u7121\u9650\u306B\u7D9A\u304F\u5C0F\u6570\u306B<style=MissionNegation>\u3059\u308B\u306A</style>"
