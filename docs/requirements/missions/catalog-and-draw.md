@@ -98,6 +98,11 @@ Gameplay 開始時、選択されたゲームモードと `GameDifficulty` か�
 - `Absolute`: `N >= 1`かつNまたは-Nが到達可能
 - `OnesDigit`: `0～9`かつ対応する到達可能整数が存在
 - `DecimalFirstDigit`: `0～9`かつ対応する到達可能非整数が存在
+- `Divisor`: `N >= 1`かつNを割り切る0以外の到達可能整数が存在
+- `Power`: `N >= 2`かつ指数1以上のNの累乗である到達可能整数が存在
+- `TensDigit`: `0～9`かつ符号を除いた十の位がNの到達可能整数が存在（1桁の数は十の位0）
+- `DigitSum`: `N >= 1`かつ符号を除いた各桁の和がNの到達可能整数が存在
+- パラメータなしKind（`BetweenZeroAndOne`・`TwoDigit`・`RepeatingDecimal`を含む）: 到達可能性による事前絞り込みを行わず、Catalogの評価フィルタリングで採否を決める
 - `Between`: `lowerBound × width`の直積。`width >= 1`、加算がオーバーフローせず、両端が到達可能整数であること。上限は保持しない
 - `Modulo`: `divisor × remainder`の直積。`divisor >= 2`、`0 <= remainder < divisor`、対応するユークリッド剰余を持つ到達可能整数が存在すること
 

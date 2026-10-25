@@ -31,8 +31,8 @@ namespace Ccc.Tests
         {
             MissionKind[] kinds = (MissionKind[])Enum.GetValues(typeof(MissionKind));
 
-            Assert.That(kinds.Select(kind => (int)kind), Is.EqualTo(Enumerable.Range(0, 19)));
-            Assert.That(MissionKindDefinitionCatalog.Definitions, Has.Count.EqualTo(19));
+            Assert.That(kinds.Select(kind => (int)kind), Is.EqualTo(Enumerable.Range(0, 26)));
+            Assert.That(MissionKindDefinitionCatalog.Definitions, Has.Count.EqualTo(26));
             Assert.That(
                 MissionKindDefinitionCatalog.Definitions.Select(definition => definition.Kind),
                 Is.EqualTo(kinds));
@@ -52,14 +52,58 @@ namespace Ccc.Tests
                 MissionKindDefinitionCatalog.Get(MissionKind.Even);
 
             Assert.That(between.ParameterStructure, Is.EqualTo(MissionParameterStructure.Pair));
-            Assert.That(between.HasFixedPositiveTier, Is.False);
+            Assert.That(between.PositiveTierRule, Is.EqualTo(MissionPositiveTierRule.MatchRatioThreshold));
+            Assert.That(between.PositiveTier, Is.EqualTo(2));
+            Assert.That(between.CriterionUnmetPositiveTier, Is.EqualTo(3));
             Assert.That(between.CanGenerateNegated, Is.True);
             Assert.That(between.NegatedTier, Is.EqualTo(4));
-            Assert.That(modulo.FixedPositiveTier, Is.EqualTo(4));
+            Assert.That(modulo.PositiveTierRule, Is.EqualTo(MissionPositiveTierRule.Fixed));
+            Assert.That(modulo.PositiveTier, Is.EqualTo(4));
+            Assert.That(modulo.CriterionUnmetPositiveTier, Is.EqualTo(0));
             Assert.That(modulo.CanGenerateNegated, Is.False);
             Assert.That(even.ParameterStructure, Is.EqualTo(MissionParameterStructure.None));
-            Assert.That(even.FixedPositiveTier, Is.EqualTo(1));
+            Assert.That(even.PositiveTier, Is.EqualTo(1));
             Assert.That(even.NegatedTier, Is.EqualTo(2));
+        }
+
+        /// <summary>
+        /// 約数がパラメータの到達可能性で肯定Tierを切り替える定義を持つことを検証します。
+        /// </summary>
+        [Test]
+        public void MissionKindDefinitionCatalog_Divisor_ShouldResolveTierByParameterReachability()
+        {
+            MissionKindDefinition divisor = MissionKindDefinitionCatalog.Get(MissionKind.Divisor);
+
+            Assert.That(divisor.ParameterStructure, Is.EqualTo(MissionParameterStructure.Single));
+            Assert.That(divisor.PositiveTierRule, Is.EqualTo(MissionPositiveTierRule.ParameterReachability));
+            Assert.That(divisor.PositiveTier, Is.EqualTo(3));
+            Assert.That(divisor.CriterionUnmetPositiveTier, Is.EqualTo(4));
+            Assert.That(divisor.CanGenerateNegated, Is.True);
+            Assert.That(divisor.NegatedTier, Is.EqualTo(4));
+        }
+
+        /// <summary>
+        /// 累乗・桁・無限小数系Kindのパラメータ構造、固定肯定Tier、Negated Tierを検証します。
+        /// </summary>
+        [TestCase(MissionKind.Power, MissionParameterStructure.Single, 3, 4)]
+        [TestCase(MissionKind.BetweenZeroAndOne, MissionParameterStructure.None, 3, 4)]
+        [TestCase(MissionKind.TwoDigit, MissionParameterStructure.None, 1, 2)]
+        [TestCase(MissionKind.TensDigit, MissionParameterStructure.Single, 2, 3)]
+        [TestCase(MissionKind.DigitSum, MissionParameterStructure.Single, 4, 4)]
+        [TestCase(MissionKind.RepeatingDecimal, MissionParameterStructure.None, 4, 4)]
+        public void MissionKindDefinitionCatalog_ShouldExposeNumberPropertyMissionContracts(
+            MissionKind kind,
+            MissionParameterStructure expectedStructure,
+            int expectedPositiveTier,
+            int expectedNegatedTier)
+        {
+            MissionKindDefinition definition = MissionKindDefinitionCatalog.Get(kind);
+
+            Assert.That(definition.ParameterStructure, Is.EqualTo(expectedStructure));
+            Assert.That(definition.PositiveTierRule, Is.EqualTo(MissionPositiveTierRule.Fixed));
+            Assert.That(definition.PositiveTier, Is.EqualTo(expectedPositiveTier));
+            Assert.That(definition.CanGenerateNegated, Is.True);
+            Assert.That(definition.NegatedTier, Is.EqualTo(expectedNegatedTier));
         }
 
         /// <summary>
