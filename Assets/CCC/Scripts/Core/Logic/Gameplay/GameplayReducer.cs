@@ -45,8 +45,7 @@ namespace Ccc.Core.Logic
                         currentState,
                         submitCommand.MissionId,
                         submitCommand.SubmittedExpression,
-                        SubmissionTrigger.ManualSubmit,
-                        submitCommand.RemainingTime);
+                        SubmissionTrigger.ManualSubmit);
 
                 case TimeExpiredCommand timeExpiredCommand:
                     return ReduceSubmission(
@@ -54,8 +53,7 @@ namespace Ccc.Core.Logic
                         currentState,
                         timeExpiredCommand.MissionId,
                         timeExpiredCommand.SubmittedExpression,
-                        SubmissionTrigger.TimeExpired,
-                        TimeSpan.Zero);
+                        SubmissionTrigger.TimeExpired);
 
                 case FeedbackCompletedCommand feedbackCompletedCommand:
                     return ReduceFeedbackCompleted(
@@ -79,8 +77,7 @@ namespace Ccc.Core.Logic
             GameplayState currentState,
             MissionId missionId,
             Expression submittedExpression,
-            SubmissionTrigger trigger,
-            TimeSpan remainingTime)
+            SubmissionTrigger trigger)
         {
             if (currentState.Status != GameplayStatus.Playing ||
                 currentState.CurrentMission.Id != missionId)
@@ -106,19 +103,12 @@ namespace Ccc.Core.Logic
             int nextSection = isSuccess
                 ? checked(currentState.Section + 1)
                 : currentState.Section;
-            TimeSpan pendingBonusDuration = BonusTimeCalculator.CalculateNextBonusDuration(
-                context.Config.Timer,
-                currentState.Section,
-                remainingTime,
-                isSuccess,
-                trigger);
             var nextState = new GameplayState(
                 GameplayStatus.Transitioning,
                 nextSection,
                 remainingLife,
                 currentState.CurrentMission,
-                resolution,
-                pendingBonusDuration);
+                resolution);
             var missionCandidate = FindMissionCandidate(
                 context,
                 currentState.CurrentMission);
@@ -192,8 +182,7 @@ namespace Ccc.Core.Logic
                 currentState.Life,
                 mission,
                 currentState.LastResolution);
-            var duration = context.Config.Timer.GetDuration(nextState.Section) +
-                           currentState.PendingBonusDuration;
+            var duration = context.Config.Timer.GetDuration(nextState.Section);
             var presentedEvent = new MissionPresentedEvent(mission, duration);
 
             return GameplayTransition.Accepted(nextState, presentedEvent);

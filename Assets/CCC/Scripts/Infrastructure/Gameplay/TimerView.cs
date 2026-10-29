@@ -1,3 +1,5 @@
+using System;
+using Ccc.Presentation;
 using TMPro;
 using UnityEngine;
 
@@ -26,7 +28,6 @@ namespace Ccc.Infrastructure.Gameplay
         private const string RemainingSecondsFormat = "0.0";
         private const float EmptyRatio = 0f;
         private const float EmptySeconds = 0f;
-        private const float FullSectionRatio = 1f;
 
         [SerializeField] private TMP_Text _timerText;
         [SerializeField] private TimerIndicator _timerIndicator;
@@ -35,48 +36,33 @@ namespace Ccc.Infrastructure.Gameplay
         [SerializeField] private BonusIndicatorMode _bonusIndicatorMode;
         [SerializeField] private float _fixedBonusDecreaseRatioPerSecond;
 
-        private float _bonusStartSeconds;
-        private float _previousBonusSeconds;
-
         /// <summary>
         /// 残り時間の数値とインジケーターを更新します。
-        /// 残り時間のうちSection制限時間を超える分をボーナスとして表示します。
         /// </summary>
-        /// <param name="hasRemainingTime">残り時間を表示するかどうか。</param>
-        /// <param name="remainingSeconds">表示する残り秒数（ボーナス込み）。</param>
-        /// <param name="sectionDurationSeconds">現在Sectionの通常制限時間。</param>
-        public void Render(
-            bool hasRemainingTime,
-            float remainingSeconds,
-            float sectionDurationSeconds)
+        /// <param name="state">Gameplay画面の表示状態。</param>
+        /// <exception cref="ArgumentNullException"><paramref name="state"/> が null の場合。</exception>
+        public void Render(GameplayViewStateDto state)
         {
+            if (state == null)
+            {
+                throw new ArgumentNullException(nameof(state));
+            }
+
             if (_timerText != null)
             {
-                _timerText.text = hasRemainingTime
-                    ? remainingSeconds.ToString(RemainingSecondsFormat)
+                _timerText.text = state.HasRemainingTime
+                    ? state.RemainingSeconds.ToString(RemainingSecondsFormat)
                     : string.Empty;
             }
 
-            if (!hasRemainingTime ||
-                float.IsNaN(remainingSeconds) ||
-                float.IsInfinity(remainingSeconds) ||
-                remainingSeconds < 0f ||
-                float.IsNaN(sectionDurationSeconds) ||
-                float.IsInfinity(sectionDurationSeconds) ||
-                sectionDurationSeconds <= 0f)
+            if (!state.HasRemainingTime || state.NormalDurationSeconds <= EmptySeconds)
             {
-                ResetBonusState();
                 RenderIndicators(EmptyRatio, EmptyRatio);
                 return;
             }
 
-            float normalRemainingRatio =
-                Mathf.Min(remainingSeconds / sectionDurationSeconds, FullSectionRatio);
-
-            float bonusSeconds = Mathf.Max(remainingSeconds - sectionDurationSeconds, EmptySeconds);
-            float bonusRemainingRatio = CalculateBonusRemainingRatio(bonusSeconds, sectionDurationSeconds);
-
-            RenderIndicators(normalRemainingRatio, bonusRemainingRatio);
+            float normalRemainingRatio = state.NormalRemainingSeconds / state.NormalDurationSeconds;
+            RenderIndicators(normalRemainingRatio, CalculateBonusRemainingRatio(state));
         }
 
         private void RenderIndicators(float normalRemainingRatio, float bonusRemainingRatio)
@@ -92,40 +78,25 @@ namespace Ccc.Infrastructure.Gameplay
             }
         }
 
-        private float CalculateBonusRemainingRatio(float bonusSeconds, float sectionDurationSeconds)
+        private float CalculateBonusRemainingRatio(GameplayViewStateDto state)
         {
-            if (bonusSeconds <= EmptySeconds)
+            if (state.BonusRemainingSeconds <= EmptySeconds || state.BonusDurationSeconds <= EmptySeconds)
             {
-                ResetBonusState();
                 return EmptyRatio;
             }
-
-            bool isBonusIncreased = bonusSeconds > _previousBonusSeconds;
-            _previousBonusSeconds = bonusSeconds;
 
             switch (_bonusIndicatorMode)
             {
                 case BonusIndicatorMode.FullToEmpty:
-                    if (isBonusIncreased)
-                    {
-                        _bonusStartSeconds = bonusSeconds;
-                    }
-
-                    return bonusSeconds / _bonusStartSeconds;
+                    return state.BonusRemainingSeconds / state.BonusDurationSeconds;
 
                 case BonusIndicatorMode.FixedSpeed:
                     // ボーナスゲージはSection秒に関係なく固定速度で減る
-                    return bonusSeconds * _fixedBonusDecreaseRatioPerSecond;
+                    return state.BonusRemainingSeconds * _fixedBonusDecreaseRatioPerSecond;
 
                 default:
-                    return bonusSeconds / sectionDurationSeconds;
+                    return state.BonusRemainingSeconds / state.NormalDurationSeconds;
             }
-        }
-
-        private void ResetBonusState()
-        {
-            _bonusStartSeconds = EmptySeconds;
-            _previousBonusSeconds = EmptySeconds;
         }
     }
 }

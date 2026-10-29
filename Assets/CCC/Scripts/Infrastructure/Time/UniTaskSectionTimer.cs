@@ -18,7 +18,8 @@ namespace Ccc.Infrastructure.Time
 
         private CancellationTokenSource _timerCancellationSource;
         private MissionId _currentMissionId;
-        private TimeSpan _currentDuration;
+        private TimeSpan _normalDuration;
+        private TimeSpan _bonusDuration;
         private TimeSpan _remainingTime;
         private double _startedAtRealtimeSeconds;
         private int _timerGeneration;
@@ -52,31 +53,36 @@ namespace Ccc.Infrastructure.Time
         /// 指定MissionのTimerを開始します。
         /// </summary>
         /// <param name="missionId">対象MissionId。</param>
-        /// <param name="duration">制限時間。</param>
-        /// <exception cref="ArgumentOutOfRangeException">制限時間が正でない場合。</exception>
+        /// <param name="normalDuration">Sectionの通常制限時間。</param>
+        /// <param name="bonusDuration">付与するボーナス時間。</param>
+        /// <exception cref="ArgumentOutOfRangeException">通常制限時間が正でない、またはボーナス時間が負の場合。</exception>
         /// <exception cref="ObjectDisposedException">破棄済みの場合。</exception>
-        public void Start(MissionId missionId, TimeSpan duration)
+        public void Start(MissionId missionId, TimeSpan normalDuration, TimeSpan bonusDuration)
         {
             ThrowIfDisposed();
-            if (duration <= TimeSpan.Zero)
+            if (normalDuration <= TimeSpan.Zero)
             {
-                throw new ArgumentOutOfRangeException(nameof(duration), duration, "Duration must be positive.");
+                throw new ArgumentOutOfRangeException(nameof(normalDuration), normalDuration, "Normal duration must be positive.");
+            }
+
+            if (bonusDuration < TimeSpan.Zero)
+            {
+                throw new ArgumentOutOfRangeException(nameof(bonusDuration), bonusDuration, "Bonus duration must be zero or positive.");
             }
 
             CancelCurrentTimer();
             int timerGeneration = checked(++_timerGeneration);
+            TimeSpan duration = normalDuration + bonusDuration;
             _currentMissionId = missionId;
-            _currentDuration = duration;
+            _normalDuration = normalDuration;
+            _bonusDuration = bonusDuration;
             _remainingTime = duration;
             _startedAtRealtimeSeconds = UnityEngine.Time.realtimeSinceStartupAsDouble;
             _hasCurrentMission = true;
             _isRunning = true;
             _isExpired = false;
 
-            _snapshotsSubject.OnNext(new SectionTimerSnapshot(
-                missionId,
-                SectionTimerStatus.Running,
-                duration));
+            _snapshotsSubject.OnNext(CreateSnapshot(missionId, SectionTimerStatus.Running, duration));
 
             _timerCancellationSource = new CancellationTokenSource();
             RunTimerAsync(
@@ -87,16 +93,19 @@ namespace Ccc.Infrastructure.Time
         }
 
         /// <summary>
-        /// MissionIdが一致する実行中Timerを停止します。
+        /// MissionIdが一致する実行中Timerを停止し、停止時点のSnapshotを返します。
         /// </summary>
         /// <param name="missionId">停止対象MissionId。</param>
+        /// <param name="stoppedSnapshot">停止時点のSnapshot。停止しなかった場合はdefault。</param>
+        /// <returns>停止した場合はtrue。満了済み・不一致などで停止しなかった場合はfalse。</returns>
         /// <exception cref="ObjectDisposedException">破棄済みの場合。</exception>
-        public void Stop(MissionId missionId)
+        public bool TryStop(MissionId missionId, out SectionTimerSnapshot stoppedSnapshot)
         {
             ThrowIfDisposed();
             if (!_hasCurrentMission || !_isRunning || _isExpired || _currentMissionId != missionId)
             {
-                return;
+                stoppedSnapshot = default;
+                return false;
             }
 
             UpdateRemainingTime();
@@ -106,10 +115,9 @@ namespace Ccc.Infrastructure.Time
             }
             CancelCurrentTimer();
             _isRunning = false;
-            _snapshotsSubject.OnNext(new SectionTimerSnapshot(
-                missionId,
-                SectionTimerStatus.Stopped,
-                _remainingTime));
+            stoppedSnapshot = CreateSnapshot(missionId, SectionTimerStatus.Stopped, _remainingTime);
+            _snapshotsSubject.OnNext(stoppedSnapshot);
+            return true;
         }
 
         /// <summary>
@@ -186,7 +194,7 @@ namespace Ccc.Infrastructure.Time
                         _isRunning = false;
                         _isExpired = true;
                         CancelCurrentTimer();
-                        _snapshotsSubject.OnNext(new SectionTimerSnapshot(
+                        _snapshotsSubject.OnNext(CreateSnapshot(
                             missionId,
                             SectionTimerStatus.Expired,
                             TimeSpan.Zero));
@@ -194,7 +202,7 @@ namespace Ccc.Infrastructure.Time
                         return;
                     }
 
-                    _snapshotsSubject.OnNext(new SectionTimerSnapshot(
+                    _snapshotsSubject.OnNext(CreateSnapshot(
                         missionId,
                         SectionTimerStatus.Running,
                         _remainingTime));
@@ -215,7 +223,7 @@ namespace Ccc.Infrastructure.Time
 
             TimeSpan elapsedTime = TimeSpan.FromSeconds(
                 Math.Max(0d, UnityEngine.Time.realtimeSinceStartupAsDouble - _startedAtRealtimeSeconds));
-            _remainingTime = _currentDuration - elapsedTime;
+            _remainingTime = _normalDuration + _bonusDuration - elapsedTime;
             if (_remainingTime < TimeSpan.Zero)
             {
                 _remainingTime = TimeSpan.Zero;
@@ -240,6 +248,11 @@ namespace Ccc.Infrastructure.Time
             {
                 throw new ObjectDisposedException(nameof(UniTaskSectionTimer));
             }
+        }
+
+        private SectionTimerSnapshot CreateSnapshot(MissionId missionId, SectionTimerStatus status, TimeSpan remainingTime)
+        {
+            return new SectionTimerSnapshot(missionId, status, remainingTime, _normalDuration, _bonusDuration);
         }
     }
 }
