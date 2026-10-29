@@ -21,7 +21,7 @@ namespace Ccc.Core.Logic
         public Mission Mission { get; }
 
         /// <summary>
-        /// 提示されたミッションの制限時間を取得します。
+        /// 提示されたミッションの通常の制限時間（ボーナスを含まない）を取得します。
         /// </summary>
         public TimeSpan Duration { get; }
 
