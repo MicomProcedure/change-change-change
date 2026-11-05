@@ -47,6 +47,7 @@ namespace Ccc.Infrastructure.Navigation
         [SerializeField] private CycleSelectorView _difficultySelectorView;
         [SerializeField] private DifficultyDescriptionView _difficultyDescriptionView;
         [SerializeField] private TutorialPageView _tutorialPageView;
+        [SerializeField] private TMP_Text _highScoreText;
 
         [Header("音量設定")]
         [SerializeField] private CycleSelectorView _seVolumeSelectorView;
@@ -66,6 +67,7 @@ namespace Ccc.Infrastructure.Navigation
         private IDisposable _errorSubscription;
         private IDisposable _difficultyChangeSubscription;
         private IDisposable _difficultySubscription;
+        private IDisposable _highScoreSubscription;
         private OptionMenuModel _optionMenuModel;
         private IDisposable _seVolumeChangeSubscription;
         private IDisposable _seVolumeSubscription;
@@ -170,7 +172,11 @@ namespace Ccc.Infrastructure.Navigation
 
             _difficultySubscription =
                 _model.SelectedDifficulty.Subscribe(RenderDifficulty);
-            
+
+            _highScoreSubscription =
+                _model.SelectedHighScoreText.Subscribe(RenderHighScore);
+
+
             _seVolumeSubscription =
                 _optionMenuModel.SEVolumeLevel.Subscribe(RenderSEVolumeLevel);
 
@@ -191,6 +197,7 @@ namespace Ccc.Infrastructure.Navigation
             _errorSubscription?.Dispose();
             _difficultySubscription?.Dispose();
             _difficultyChangeSubscription?.Dispose();
+            _highScoreSubscription?.Dispose();
             _seVolumeSubscription?.Dispose();
             _seVolumeChangeSubscription?.Dispose();
             _bgmVolumeSubscription?.Dispose();
@@ -325,6 +332,14 @@ namespace Ccc.Infrastructure.Navigation
                     !_model.IsBusy.CurrentValue,
                     Array.IndexOf(DifficultyChoices, difficulty),
                     DifficultyChoices.Length));
+        }
+
+        private void RenderHighScore(string highScoreText)
+        {
+            if (_highScoreText != null)
+            {
+                _highScoreText.text = highScoreText;
+            }
         }
 
         private void RenderSEVolumeLevel(int volumeLevel)
@@ -496,6 +511,11 @@ namespace Ccc.Infrastructure.Navigation
             if (_tutorialPageView == null)
             {
                 LogMissingReference(nameof(_tutorialPageView));
+            }
+
+            if (_highScoreText == null)
+            {
+                LogMissingReference(nameof(_highScoreText));
             }
 
             if (_seVolumeSelectorView == null)

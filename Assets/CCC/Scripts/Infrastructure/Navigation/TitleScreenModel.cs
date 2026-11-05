@@ -1,5 +1,7 @@
 using System;
+using System.Globalization;
 using Ccc.Core.Model;
+using Ccc.Core.UseCases;
 using Ccc.Presentation.Navigation;
 using Cysharp.Threading.Tasks;
 using R3;
@@ -17,6 +19,8 @@ namespace Ccc.Infrastructure.Navigation
 
         private const string GameplayLoadFailedErrorMessage =
             "ゲームを開始できませんでした。";
+
+        private const GameMode SelectedGameMode = GameMode.LifeEndless;
 
         private const GameDifficulty InitialDifficulty = GameDifficulty.Easy;
 
@@ -57,15 +61,22 @@ namespace Ccc.Infrastructure.Navigation
         public ReadOnlyReactiveProperty<GameDifficulty> SelectedDifficulty { get; }
 
         /// <summary>
+        /// 選択中のゲームモードと難易度のハイスコアを表示用の文字列で取得します。記録がない場合は0です。
+        /// </summary>
+        public ReadOnlyReactiveProperty<string> SelectedHighScoreText { get; }
+
+        /// <summary>
         /// TitleScreenModelを生成します。
         /// </summary>
         /// <param name="sceneNavigator">Scene遷移処理。</param>
         /// <param name="optionMenuModel">Option設定を保持するModel。</param>
         /// <param name="startRequest">TitleScene開始Request。</param>
+        /// <param name="highScoreService">ハイスコアの参照処理。</param>
         public TitleScreenModel(
             ISceneNavigator sceneNavigator,
             OptionMenuModel optionMenuModel,
-            TitleStartRequest startRequest)
+            TitleStartRequest startRequest,
+            HighScoreService highScoreService)
         {
             _sceneNavigator =
                 sceneNavigator ?? throw new ArgumentNullException(nameof(sceneNavigator));
@@ -76,6 +87,11 @@ namespace Ccc.Infrastructure.Navigation
             if (startRequest == null)
             {
                 throw new ArgumentNullException(nameof(startRequest));
+            }
+
+            if (highScoreService == null)
+            {
+                throw new ArgumentNullException(nameof(highScoreService));
             }
 
             _currentScreen =
@@ -91,6 +107,11 @@ namespace Ccc.Infrastructure.Navigation
             IsBusy = _isBusy.ToReadOnlyReactiveProperty();
             ErrorMessage = _errorMessage.ToReadOnlyReactiveProperty();
             SelectedDifficulty = _selectedDifficulty.ToReadOnlyReactiveProperty();
+            SelectedHighScoreText = _selectedDifficulty
+                .Select(difficulty => highScoreService
+                    .GetHighScore(SelectedGameMode, difficulty)
+                    .ToString(CultureInfo.InvariantCulture))
+                .ToReadOnlyReactiveProperty();
         }
 
         /// <summary>
@@ -234,7 +255,7 @@ namespace Ccc.Infrastructure.Navigation
 
                 GameplayNavigationRequest request =
                     new GameplayNavigationRequest(
-                        GameMode.LifeEndless,
+                        SelectedGameMode,
                         _selectedDifficulty.Value,
                         optionSettings);
 
@@ -286,6 +307,7 @@ namespace Ccc.Infrastructure.Navigation
             IsBusy.Dispose();
             ErrorMessage.Dispose();
             SelectedDifficulty.Dispose();
+            SelectedHighScoreText.Dispose();
 
             _currentScreen.Dispose();
             _isBusy.Dispose();
