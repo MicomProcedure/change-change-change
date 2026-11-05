@@ -34,6 +34,7 @@ namespace Ccc.Infrastructure.Navigation
         private readonly ReactiveProperty<bool> _isBusy;
         private readonly ReactiveProperty<string> _errorMessage;
         private readonly ReactiveProperty<GameDifficulty> _selectedDifficulty;
+        private readonly ReactiveProperty<bool> _isResetConfirmationOpen;
         private readonly Subject<TitleScreenTransitionDirection> _screenTransitioned;
 
         private bool _isDisposed;
@@ -68,6 +69,11 @@ namespace Ccc.Infrastructure.Navigation
         /// 選択中のゲームモードと難易度のハイスコアを表示用の文字列で取得します。記録がない場合は0です。
         /// </summary>
         public ReadOnlyReactiveProperty<string> SelectedHighScoreText { get; }
+
+        /// <summary>
+        /// OptionMenu上のゲームリセット確認ポップアップが開いているかどうかを取得します。
+        /// </summary>
+        public ReadOnlyReactiveProperty<bool> IsResetConfirmationOpen { get; }
 
         /// <summary>
         /// TitleScreenModelを生成します。
@@ -109,6 +115,7 @@ namespace Ccc.Infrastructure.Navigation
             _isBusy = new ReactiveProperty<bool>(false);
             _errorMessage = new ReactiveProperty<string>(string.Empty);
             _selectedDifficulty = new ReactiveProperty<GameDifficulty>(InitialDifficulty);
+            _isResetConfirmationOpen = new ReactiveProperty<bool>(false);
             _screenTransitioned = new Subject<TitleScreenTransitionDirection>();
 
             CurrentScreen = _currentScreen.ToReadOnlyReactiveProperty();
@@ -121,6 +128,7 @@ namespace Ccc.Infrastructure.Navigation
                     .GetHighScore(SelectedGameMode, difficulty)
                     .ToString(CultureInfo.InvariantCulture))
                 .ToReadOnlyReactiveProperty();
+            IsResetConfirmationOpen = _isResetConfirmationOpen.ToReadOnlyReactiveProperty();
         }
 
         /// <summary>
@@ -242,25 +250,33 @@ namespace Ccc.Infrastructure.Navigation
         }
 
         /// <summary>
-        /// OptionMenuからゲームリセットの確認画面へ遷移します。
+        /// OptionMenu上にゲームリセットの確認ポップアップを開きます。
         /// </summary>
         public void OpenResetConfirmation()
         {
-            ChangeScreen(
-                TitleScreenState.OptionMenu,
-                TitleScreenState.ResetConfirmation,
-                TitleScreenTransitionDirection.Forward);
+            if (_isDisposed ||
+                _isBusy.Value ||
+                _currentScreen.Value != TitleScreenState.OptionMenu)
+            {
+                return;
+            }
+
+            _errorMessage.Value = string.Empty;
+            _isResetConfirmationOpen.Value = true;
         }
 
         /// <summary>
-        /// ゲームリセットの確認画面からOptionMenuへ戻ります。
+        /// ゲームリセットの確認ポップアップを閉じます。
         /// </summary>
         public void CloseResetConfirmation()
         {
-            ChangeScreen(
-                TitleScreenState.ResetConfirmation,
-                TitleScreenState.OptionMenu,
-                TitleScreenTransitionDirection.Backward);
+            if (_isDisposed || _isBusy.Value)
+            {
+                return;
+            }
+
+            _errorMessage.Value = string.Empty;
+            _isResetConfirmationOpen.Value = false;
         }
 
         /// <summary>
@@ -271,7 +287,7 @@ namespace Ccc.Infrastructure.Navigation
         {
             ThrowIfDisposed();
 
-            if (_currentScreen.Value != TitleScreenState.ResetConfirmation ||
+            if (!_isResetConfirmationOpen.Value ||
                 _isBusy.Value)
             {
                 return;
@@ -366,11 +382,13 @@ namespace Ccc.Infrastructure.Navigation
             ErrorMessage.Dispose();
             SelectedDifficulty.Dispose();
             SelectedHighScoreText.Dispose();
+            IsResetConfirmationOpen.Dispose();
 
             _currentScreen.Dispose();
             _isBusy.Dispose();
             _errorMessage.Dispose();
             _selectedDifficulty.Dispose();
+            _isResetConfirmationOpen.Dispose();
             _screenTransitioned.Dispose();
         }
 
@@ -381,6 +399,7 @@ namespace Ccc.Infrastructure.Navigation
         {
             if (_isDisposed ||
                 _isBusy.Value ||
+                _isResetConfirmationOpen.Value ||
                 _currentScreen.Value != expectedCurrentScreen)
             {
                 return;

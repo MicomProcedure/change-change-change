@@ -85,6 +85,7 @@ namespace Ccc.Infrastructure.Navigation
         private IDisposable _seVolumeChangeSubscription;
         private IDisposable _bgmVolumeChangeSubscription;
         private IDisposable _optionMenuSubscription;
+        private IDisposable _resetConfirmationSubscription;
         private bool _isInitialized;
 
         [Inject]
@@ -210,8 +211,13 @@ namespace Ccc.Infrastructure.Navigation
                 _optionMenuModel.Settings
                     .CombineLatest(
                         _model.IsBusy,
-                        (settings, isBusy) => OptionMenuViewStateDto.Create(settings, !isBusy))
+                        _model.IsResetConfirmationOpen,
+                        (settings, isBusy, isResetConfirmationOpen) =>
+                            OptionMenuViewStateDto.Create(settings, !isBusy && !isResetConfirmationOpen))
                     .Subscribe(RenderOptionMenu);
+
+            _resetConfirmationSubscription =
+                _model.IsResetConfirmationOpen.Subscribe(RenderResetConfirmation);
 
             RenderScreen(_model.CurrentScreen.CurrentValue);
             RenderBusyState(_model.IsBusy.CurrentValue);
@@ -232,6 +238,7 @@ namespace Ccc.Infrastructure.Navigation
             _seVolumeChangeSubscription?.Dispose();
             _bgmVolumeChangeSubscription?.Dispose();
             _optionMenuSubscription?.Dispose();
+            _resetConfirmationSubscription?.Dispose();
 
             if (!_isInitialized || _model == null)
             {
@@ -341,10 +348,11 @@ namespace Ccc.Infrastructure.Navigation
             RenderScreenRoot(
                 _tutorialRoot,
                 screenState == TitleScreenState.Tutorial);
+        }
 
-            RenderScreenRoot(
-                _resetConfirmationRoot,
-                screenState == TitleScreenState.ResetConfirmation);
+        private void RenderResetConfirmation(bool isOpen)
+        {
+            RenderScreenRoot(_resetConfirmationRoot, isOpen);
         }
 
         private void RenderBusyState(bool isBusy)

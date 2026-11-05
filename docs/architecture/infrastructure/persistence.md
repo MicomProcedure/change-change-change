@@ -103,8 +103,8 @@
 
 ## 6. ゲームリセット
 
-1. `OptionMenu` から確認画面（`ResetConfirmation`）へ遷移すること。
-2. 確認後に `ILocalDataEraser.EraseAll` を実行すること。
+1. `OptionMenu` 上に確認ポップアップを開くこと。画面状態は `OptionMenu` のまま変更しない。
+2. 確定後に `ILocalDataEraser.EraseAll` を実行すること。
 3. `TitleScene` を `TitleScreen` から読み込み直すこと。
 
 各 Model を個別に初期化せず、Scene の再読み込みで消去後の保存内容から再構築する。これにより、保存項目が増えてもリセット処理の変更を不要とし、音量は `TitleEntryPoint` の購読開始時に Audio へ反映される。

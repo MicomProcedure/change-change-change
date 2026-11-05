@@ -22,7 +22,7 @@
 
 | Unity Scene | Scene内の画面（Screen）構成 |
 | --- | --- |
-| `TitleScene` | `TitleScreen`、`MainMenu`、`Stage`、`Tutorial`、`OptionMenu`、`ResetConfirmation`、`Credit` |
+| `TitleScene` | `TitleScreen`、`MainMenu`、`Stage`、`Tutorial`、`OptionMenu`、`Credit` |
 | `GameScene` | `GameplayScreen`、`ResultScreen` |
 
 ```mermaid
@@ -36,9 +36,7 @@ stateDiagram-v2
    Tutorial --> Stage
    MainMenu --> OptionMenu
    OptionMenu --> MainMenu
-   OptionMenu --> ResetConfirmation
-   ResetConfirmation --> OptionMenu
-   ResetConfirmation --> TitleScreen: 全消去してTitleSceneをロード
+   OptionMenu --> TitleScreen: ゲームリセット（全消去してTitleSceneをロード）
    MainMenu --> Credit
    Credit --> MainMenu
 
@@ -51,6 +49,7 @@ stateDiagram-v2
 
 - アプリケーションの通常起動時は `TitleScreen` から開始すること。
 - GameScene から TitleScene へ戻った場合は `MainMenu` から開始すること。
+- ゲームリセットの確認は `OptionMenu` 上のポップアップとし、Screen に含めないこと。ポップアップが開いている間は Screen を遷移させないこと。
 - ゲームリセット後は `TitleScreen` から開始すること。詳細は [CCC ローカル永続化クラス設計](../infrastructure/persistence.md) を参照すること。
 - Stage のゲーム開始操作時は、ゲームモードを `LifeEndless`、難易度を Stage で選択中の値と指定した `GameplayStartRequest` を生成すること。
 - TitleScene 内の遷移は方向（`TitleScreenTransitionDirection`）を持つ。`Open*` / `EnterMainMenu` による遷移は `Forward`、`Close*` による遷移は `Backward` とすること。
