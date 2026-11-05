@@ -1,4 +1,6 @@
 using System;
+using System.Globalization;
+using Ccc.Core.UseCases;
 using Ccc.Presentation.Navigation;
 using Cysharp.Threading.Tasks;
 using R3;
@@ -57,6 +59,12 @@ namespace Ccc.Infrastructure.Navigation
         [SerializeField] private CycleSelectorView _seVolumeSelectorView;
         [SerializeField] private CycleSelectorView _bgmVolumeSelectorView;
 
+        [Header("バージョン表示")]
+        [Tooltip("アプリケーションバージョンを表示するText。タイトル画面とクレジットに配置する。")]
+        [SerializeField] private TMP_Text[] _versionTexts;
+        [Tooltip("バージョン表示の書式。{0}にアプリケーションバージョンが入る。")]
+        [SerializeField] private string _versionTextFormat = "v{0}";
+
         [Header("エラー表示")]
         [SerializeField] private TMP_Text _errorText;
 
@@ -66,6 +74,7 @@ namespace Ccc.Infrastructure.Navigation
 
         private TitleScreenModel _model;
         private IRuntimeMode _runtimeMode;
+        private IApplicationVersionProvider _applicationVersionProvider;
         private IDisposable _screenSubscription;
         private IDisposable _busySubscription;
         private IDisposable _errorSubscription;
@@ -82,11 +91,13 @@ namespace Ccc.Infrastructure.Navigation
         private void Construct(
             TitleScreenModel model,
             OptionMenuModel optionMenuModel,
-            IRuntimeMode runtimeMode)
+            IRuntimeMode runtimeMode,
+            IApplicationVersionProvider applicationVersionProvider)
         {
             _model = model;
             _optionMenuModel = optionMenuModel;
             _runtimeMode = runtimeMode;
+            _applicationVersionProvider = applicationVersionProvider;
         }
 
         private void Start()
@@ -205,6 +216,7 @@ namespace Ccc.Infrastructure.Navigation
             RenderScreen(_model.CurrentScreen.CurrentValue);
             RenderBusyState(_model.IsBusy.CurrentValue);
             RenderErrorMessage(_model.ErrorMessage.CurrentValue);
+            RenderApplicationVersion();
 
             _isInitialized = true;
         }
@@ -410,6 +422,27 @@ namespace Ccc.Infrastructure.Navigation
             _errorText.text = errorMessage;
         }
 
+        private void RenderApplicationVersion()
+        {
+            if (_versionTexts == null)
+            {
+                return;
+            }
+
+            string versionText = string.Format(
+                CultureInfo.InvariantCulture,
+                _versionTextFormat,
+                _applicationVersionProvider.CurrentVersion);
+
+            for (int index = 0; index < _versionTexts.Length; index++)
+            {
+                if (_versionTexts[index] != null)
+                {
+                    _versionTexts[index].text = versionText;
+                }
+            }
+        }
+
         private void HandleStartGameplay()
         {
             _model.StartGameplayAsync().Forget(HandleAsyncFailure);
@@ -436,6 +469,12 @@ namespace Ccc.Infrastructure.Navigation
             if (_optionMenuModel == null)
             {
                 LogMissingReference(nameof(_optionMenuModel));
+                return false;
+            }
+
+            if (_applicationVersionProvider == null)
+            {
+                LogMissingReference(nameof(_applicationVersionProvider));
                 return false;
             }
 
@@ -580,6 +619,11 @@ namespace Ccc.Infrastructure.Navigation
             if (_bgmVolumeSelectorView == null)
             {
                 LogMissingReference(nameof(_bgmVolumeSelectorView));
+            }
+
+            if (_versionTexts == null || _versionTexts.Length == 0)
+            {
+                LogMissingReference(nameof(_versionTexts));
             }
 
             if (_errorText == null)
