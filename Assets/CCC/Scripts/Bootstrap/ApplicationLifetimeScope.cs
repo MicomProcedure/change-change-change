@@ -57,6 +57,7 @@ namespace Ccc.Bootstrap
 
             builder.Register<IOptionSettingsStore, PlayerPrefsOptionSettingsStore>(Lifetime.Singleton);
             builder.Register<OptionAudioInitializer>(Lifetime.Singleton);
+            builder.Register<ILocalDataEraser, PlayerPrefsLocalDataEraser>(Lifetime.Singleton);
             RegisterHighScore(builder);
 
             builder.Register<ISceneNavigator, SceneNavigator>(Lifetime.Singleton);

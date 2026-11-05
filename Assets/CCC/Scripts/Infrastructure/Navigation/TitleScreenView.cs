@@ -26,7 +26,8 @@ namespace Ccc.Infrastructure.Navigation
         [SerializeField] private GameObject _optionMenuRoot;
         [SerializeField] private GameObject _creditRoot;
         [SerializeField] private GameObject _tutorialRoot;
-        
+        [SerializeField] private GameObject _resetConfirmationRoot;
+
 
         [Header("ボタン")]
         [SerializeField] private Button _enterMainMenuButton;
@@ -42,6 +43,9 @@ namespace Ccc.Infrastructure.Navigation
         [SerializeField] private Button _closeCreditButton;
         [SerializeField] private Button _openTutorialButton;
         [SerializeField] private Button _closeTutorialButton;
+        [SerializeField] private Button _openResetConfirmationButton;
+        [SerializeField] private Button _closeResetConfirmationButton;
+        [SerializeField] private Button _confirmGameResetButton;
 
         [Header("難易度選択")]
         [SerializeField] private CycleSelectorView _difficultySelectorView;
@@ -140,6 +144,21 @@ namespace Ccc.Infrastructure.Navigation
             if (_closeTutorialButton != null)
             {
                 _closeTutorialButton.onClick.AddListener(_model.CloseTutorial);
+            }
+
+            if (_openResetConfirmationButton != null)
+            {
+                _openResetConfirmationButton.onClick.AddListener(_model.OpenResetConfirmation);
+            }
+
+            if (_closeResetConfirmationButton != null)
+            {
+                _closeResetConfirmationButton.onClick.AddListener(_model.CloseResetConfirmation);
+            }
+
+            if (_confirmGameResetButton != null)
+            {
+                _confirmGameResetButton.onClick.AddListener(HandleConfirmGameReset);
             }
 
             if (_difficultySelectorView != null)
@@ -260,6 +279,24 @@ namespace Ccc.Infrastructure.Navigation
                     _model.CloseTutorial);
             }
 
+            if (_openResetConfirmationButton != null)
+            {
+                _openResetConfirmationButton.onClick.RemoveListener(
+                    _model.OpenResetConfirmation);
+            }
+
+            if (_closeResetConfirmationButton != null)
+            {
+                _closeResetConfirmationButton.onClick.RemoveListener(
+                    _model.CloseResetConfirmation);
+            }
+
+            if (_confirmGameResetButton != null)
+            {
+                _confirmGameResetButton.onClick.RemoveListener(
+                    HandleConfirmGameReset);
+            }
+
             if (_closeCreditButton != null)
             {
                 _closeCreditButton.onClick.RemoveListener(
@@ -292,6 +329,10 @@ namespace Ccc.Infrastructure.Navigation
             RenderScreenRoot(
                 _tutorialRoot,
                 screenState == TitleScreenState.Tutorial);
+
+            RenderScreenRoot(
+                _resetConfirmationRoot,
+                screenState == TitleScreenState.ResetConfirmation);
         }
 
         private void RenderBusyState(bool isBusy)
@@ -308,6 +349,9 @@ namespace Ccc.Infrastructure.Navigation
             SetInteractableIfAvailable(_closeStageButton, isInteractable);
             SetInteractableIfAvailable(_openTutorialButton, isInteractable);
             SetInteractableIfAvailable(_closeTutorialButton, isInteractable);
+            SetInteractableIfAvailable(_openResetConfirmationButton, isInteractable);
+            SetInteractableIfAvailable(_closeResetConfirmationButton, isInteractable);
+            SetInteractableIfAvailable(_confirmGameResetButton, isInteractable);
             RenderDifficulty(_model.SelectedDifficulty.CurrentValue);
         }
 
@@ -371,6 +415,11 @@ namespace Ccc.Infrastructure.Navigation
             _model.StartGameplayAsync().Forget(HandleAsyncFailure);
         }
 
+        private void HandleConfirmGameReset()
+        {
+            _model.ConfirmGameResetAsync().Forget(HandleAsyncFailure);
+        }
+
         private void HandleAsyncFailure(Exception exception)
         {
             Debug.LogException(exception);
@@ -418,6 +467,11 @@ namespace Ccc.Infrastructure.Navigation
              if (_tutorialRoot == null)
             {
                 LogMissingReference(nameof(_tutorialRoot));
+            }
+
+            if (_resetConfirmationRoot == null)
+            {
+                LogMissingReference(nameof(_resetConfirmationRoot));
             }
 
 
@@ -469,6 +523,21 @@ namespace Ccc.Infrastructure.Navigation
             if (_closeTutorialButton == null)
             {
                 LogMissingReference(nameof(_closeTutorialButton));
+            }
+
+            if (_openResetConfirmationButton == null)
+            {
+                LogMissingReference(nameof(_openResetConfirmationButton));
+            }
+
+            if (_closeResetConfirmationButton == null)
+            {
+                LogMissingReference(nameof(_closeResetConfirmationButton));
+            }
+
+            if (_confirmGameResetButton == null)
+            {
+                LogMissingReference(nameof(_confirmGameResetButton));
             }
 
 

@@ -20,12 +20,16 @@ namespace Ccc.Infrastructure.Navigation
         private const string GameplayLoadFailedErrorMessage =
             "ゲームを開始できませんでした。";
 
+        private const string GameResetLoadFailedErrorMessage =
+            "リセット後の画面を読み込めませんでした。";
+
         private const GameMode SelectedGameMode = GameMode.LifeEndless;
 
         private const GameDifficulty InitialDifficulty = GameDifficulty.Easy;
 
         private readonly ISceneNavigator _sceneNavigator;
         private readonly OptionMenuModel _optionMenuModel;
+        private readonly ILocalDataEraser _localDataEraser;
         private readonly ReactiveProperty<TitleScreenState> _currentScreen;
         private readonly ReactiveProperty<bool> _isBusy;
         private readonly ReactiveProperty<string> _errorMessage;
@@ -72,17 +76,22 @@ namespace Ccc.Infrastructure.Navigation
         /// <param name="optionMenuModel">Option設定を保持するModel。</param>
         /// <param name="startRequest">TitleScene開始Request。</param>
         /// <param name="highScoreService">ハイスコアの参照処理。</param>
+        /// <param name="localDataEraser">ローカルの永続化情報の消去処理。</param>
         public TitleScreenModel(
             ISceneNavigator sceneNavigator,
             OptionMenuModel optionMenuModel,
             TitleStartRequest startRequest,
-            HighScoreService highScoreService)
+            HighScoreService highScoreService,
+            ILocalDataEraser localDataEraser)
         {
             _sceneNavigator =
                 sceneNavigator ?? throw new ArgumentNullException(nameof(sceneNavigator));
 
             _optionMenuModel =
                 optionMenuModel ?? throw new ArgumentNullException(nameof(optionMenuModel));
+
+            _localDataEraser =
+                localDataEraser ?? throw new ArgumentNullException(nameof(localDataEraser));
 
             if (startRequest == null)
             {
@@ -233,6 +242,52 @@ namespace Ccc.Infrastructure.Navigation
         }
 
         /// <summary>
+        /// OptionMenuからゲームリセットの確認画面へ遷移します。
+        /// </summary>
+        public void OpenResetConfirmation()
+        {
+            ChangeScreen(
+                TitleScreenState.OptionMenu,
+                TitleScreenState.ResetConfirmation,
+                TitleScreenTransitionDirection.Forward);
+        }
+
+        /// <summary>
+        /// ゲームリセットの確認画面からOptionMenuへ戻ります。
+        /// </summary>
+        public void CloseResetConfirmation()
+        {
+            ChangeScreen(
+                TitleScreenState.ResetConfirmation,
+                TitleScreenState.OptionMenu,
+                TitleScreenTransitionDirection.Backward);
+        }
+
+        /// <summary>
+        /// ローカルの永続化情報を全て消去し、TitleSceneをタイトル画面から読み込み直します。
+        /// 全ての画面状態と音量を消去後の保存内容から再構築します。
+        /// </summary>
+        public async UniTask ConfirmGameResetAsync()
+        {
+            ThrowIfDisposed();
+
+            if (_currentScreen.Value != TitleScreenState.ResetConfirmation ||
+                _isBusy.Value)
+            {
+                return;
+            }
+
+            await LoadSceneWhileBusyAsync(
+                () =>
+                {
+                    _localDataEraser.EraseAll();
+                    return _sceneNavigator.LoadTitleAsync(
+                        new TitleStartRequest(TitleScreenState.TitleScreen));
+                },
+                GameResetLoadFailedErrorMessage);
+        }
+
+        /// <summary>
         /// StageからGameSceneを開始します。
         /// </summary>
         public async UniTask StartGameplayAsync()
@@ -245,22 +300,25 @@ namespace Ccc.Infrastructure.Navigation
                 return;
             }
 
+            await LoadSceneWhileBusyAsync(
+                () => _sceneNavigator.LoadGameplayAsync(
+                    new GameplayNavigationRequest(
+                        SelectedGameMode,
+                        _selectedDifficulty.Value,
+                        _optionMenuModel.Settings.CurrentValue)),
+                GameplayLoadFailedErrorMessage);
+        }
+
+        private async UniTask LoadSceneWhileBusyAsync(
+            Func<UniTask<SceneNavigationResult>> loadSceneAsync,
+            string loadFailedErrorMessage)
+        {
             _errorMessage.Value = string.Empty;
             _isBusy.Value = true;
 
             try
             {
-                OptionSettingsSnapshot optionSettings =
-                    _optionMenuModel.Settings.CurrentValue;
-
-                GameplayNavigationRequest request =
-                    new GameplayNavigationRequest(
-                        SelectedGameMode,
-                        _selectedDifficulty.Value,
-                        optionSettings);
-
-                SceneNavigationResult result =
-                    await _sceneNavigator.LoadGameplayAsync(request);
+                SceneNavigationResult result = await loadSceneAsync();
 
                 if (_isDisposed || result.IsSuccess)
                 {
@@ -271,7 +329,7 @@ namespace Ccc.Infrastructure.Navigation
                     result.FailureKind ==
                     SceneNavigationFailureKind.AlreadyLoading
                         ? AlreadyLoadingErrorMessage
-                        : GameplayLoadFailedErrorMessage;
+                        : loadFailedErrorMessage;
             }
             catch (Exception exception)
             {
@@ -279,7 +337,7 @@ namespace Ccc.Infrastructure.Navigation
 
                 if (!_isDisposed)
                 {
-                    _errorMessage.Value = GameplayLoadFailedErrorMessage;
+                    _errorMessage.Value = loadFailedErrorMessage;
                 }
             }
             finally

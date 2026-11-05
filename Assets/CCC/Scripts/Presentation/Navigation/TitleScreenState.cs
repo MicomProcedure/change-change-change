@@ -21,7 +21,9 @@ namespace Ccc.Presentation.Navigation
         Credit,
 
         /// <summary>チュートリアル画像を表示する画面です。</summary>
-        Tutorial
+        Tutorial,
 
+        /// <summary>ゲームリセットを実行するかどうかを確認する画面です。</summary>
+        ResetConfirmation
     }
 }
