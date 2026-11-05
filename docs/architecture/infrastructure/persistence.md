@@ -24,7 +24,12 @@
 | `HighScoreService` | `Ccc.Core.UseCases` | バージョン互換方針を適用したハイスコアの参照と更新 |
 | `IHighScoreStore` | `Ccc.Core.UseCases` | ハイスコア記録の保存先ポート |
 | `IHighScoreCompatibilityPolicy` / `HighScoreCompatibilityDecision` / `HighScoreCompatibilityAction` | `Ccc.Core.UseCases` | 保存済み記録の扱いを決定する方針と決定内容 |
-| `KeepAllHighScoreCompatibilityPolicy` | `Ccc.Core.UseCases` | 全ての記録を使い続ける現在の互換方針 |
+| `VersionEquivalenceGroups` | `Ccc.Core.Model` | 保存データを同一視するバージョングループ |
+| `VersionEquivalenceHighScoreCompatibilityPolicy` | `Ccc.Core.UseCases` | バージョングループに基づき、記録を同一視する互換方針 |
+| `KeepAllHighScoreCompatibilityPolicy` | `Ccc.Core.UseCases` | 判定せず全ての記録を使い続ける互換方針 |
+| `VersionEquivalenceEntryAsset` | `Ccc.Infrastructure.Assets` | 保存データの種類ごとの同一視設定をまとめる `ScriptableObject` |
+| `HighScoreVersionEquivalenceAsset` / `HighScoreVersionEquivalenceEntry` / `VersionGroup` | `Ccc.Infrastructure.Assets` | ゲームモードと難易度の組ごとの、ハイスコアの同一視設定 |
+| `VersionEquivalenceBuildValidator` | `Ccc.Editor` | ビルド時の設定検証と登録漏れの検出 |
 | `IApplicationVersionProvider` | `Ccc.Core.UseCases` | 実行中のアプリケーションバージョンの提供ポート |
 | `ILocalDataEraser` | `Ccc.Core.UseCases` | ローカルの永続化情報を全消去するポート |
 | `PlayerPrefsHighScoreStore` / `HighScoreRecordJsonCodec` | `Ccc.Infrastructure.Persistence` | PlayerPrefsへの保存と保存用JSONの変換 |
@@ -59,15 +64,39 @@
 
 ## 5. バージョン更新時の扱い
 
-`HighScoreService` は記録を読み込むたびに `IHighScoreCompatibilityPolicy` を適用する。更新時の扱いは、方針の実装を差し替えて選択すること。
+`HighScoreService` は記録を読み込むたびに `IHighScoreCompatibilityPolicy` を適用する。
 
 | 決定 | 動作 | 使用例 |
 | --- | --- | --- |
-| `Keep` | 記録をそのまま使い続ける | 通常の更新 |
-| `Discard` | 記録を削除し、記録なしとして扱う | 難易度の調整で、以前の記録と比較できなくなった場合 |
+| `Keep` | 記録をそのまま使い続ける | 達成時のバージョンと同一視する場合 |
+| `Ignore` | 記録を残したまま記録なしとして扱い、1以上のスコアで上書きする | 達成時のバージョンと同一視しない場合 |
+| `Discard` | 記録を削除し、記録なしとして扱う | 記録を確実に消したい場合 |
 | `Replace` | 変換後の記録を保存して使用する | スコアの定義が変わり、換算できる場合 |
 
-保存形式そのものを変更する場合は、`HighScoreRecordJsonCodec.CurrentFormatVersion` を増やし、旧形式の読み込みを同時に実装すること。
+### 5.1 バージョングループによる同一視
+
+`ApplicationLifetimeScope` に `VersionEquivalenceEntryAsset` を設定すると、`VersionEquivalenceHighScoreCompatibilityPolicy` を使用する。未設定の場合は `KeepAllHighScoreCompatibilityPolicy` を使用し、判定を行わない。
+
+- 記録の `appVersion` と実行中のバージョンが同じグループにある場合は `Keep`、それ以外は `Ignore` とすること。
+- 設定はゲームモードと難易度の組ごとに持つこと。
+- 同一視の設定を誤っても記録が失われないよう、`Discard` は使用しない。バージョンをグループへ追加すれば、残っている記録は再び使用される。
+- 同じバージョンは、未登録でも常に同一視すること。
+
+### 5.2 バージョン更新時の手順
+
+1. `HighScoreVersionEquivalenceAsset` の全ての組に、新しいバージョンを登録すること。スコアを引き継ぐ組は既存のグループへ、引き継がない組は新しいグループへ追加する。
+2. ビルドすると `VersionEquivalenceBuildValidator` が設定を検証し、不正な設定または未登録のバージョンがあればビルドを中止する。
+
+| 検出箇所 | 対象 | 動作 |
+| --- | --- | --- |
+| ビルド時 | 設定の不正、ビルド対象バージョンの未登録 | `BuildFailedException` でビルドを中止 |
+| 起動時 | 設定の不正 | `InvalidOperationException` で起動を中止 |
+| 起動時 | 実行中バージョンの未登録 | エラーログを出し、同じバージョンの記録だけを同一視して継続 |
+
+### 5.3 同一視では対応できない変更
+
+- スコアを換算する場合は、`Replace` を返す互換方針をコードで実装すること。
+- 保存形式そのものを変更する場合は、`HighScoreRecordJsonCodec.CurrentFormatVersion` を増やし、旧形式の読み込みを同時に実装すること。
 
 ---
 
@@ -92,7 +121,7 @@
 | 解決する型 | 実装 |
 | --- | --- |
 | `IHighScoreStore` | 通常は `PlayerPrefsHighScoreStore`、DebugMode は `NonPersistingHighScoreStore` |
-| `IHighScoreCompatibilityPolicy` | `KeepAllHighScoreCompatibilityPolicy` |
+| `IHighScoreCompatibilityPolicy` | `VersionEquivalenceEntryAsset` の設定時は `VersionEquivalenceHighScoreCompatibilityPolicy`、未設定時は `KeepAllHighScoreCompatibilityPolicy` |
 | `IApplicationVersionProvider` | `UnityApplicationVersionProvider` |
 | `ILocalDataEraser` | `PlayerPrefsLocalDataEraser` |
 | `HighScoreService` | `HighScoreService` |
