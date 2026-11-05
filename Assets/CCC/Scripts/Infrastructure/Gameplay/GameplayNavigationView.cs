@@ -13,6 +13,9 @@ namespace Ccc.Infrastructure.Gameplay
     public sealed class GameplayNavigationView : MonoBehaviour
     {
         [SerializeField] private TMP_Text _resultText;
+        [SerializeField] private TMP_Text _highScoreText;
+        [Tooltip("ハイスコアを更新したSessionのResult画面でのみ表示するGameObject。")]
+        [SerializeField] private GameObject _newHighScoreIndicator;
         [SerializeField] private Button _retryButton;
         [SerializeField] private Button _returnToMainMenuButton;
 
@@ -42,6 +45,16 @@ namespace Ccc.Infrastructure.Gameplay
             if (_resultText != null)
             {
                 _resultText.text = result.ResultText;
+            }
+
+            if (_highScoreText != null)
+            {
+                _highScoreText.text = result.HighScoreText;
+            }
+
+            if (_newHighScoreIndicator != null)
+            {
+                _newHighScoreIndicator.SetActive(result.IsNewHighScore);
             }
 
             gameObject.SetActive(true);

@@ -27,6 +27,7 @@ namespace Ccc.Presentation
         private readonly ISceneNavigator _sceneNavigator;
         private readonly GameplayNavigationRequest _gameplayRequest;
         private readonly GameplayConfig _gameplayConfig;
+        private readonly HighScoreService _highScoreService;
         private readonly IAudioPlayer _audio;
         private readonly MissionTextFormatter _missionTextFormatter;
         private readonly RationalDecimalFormatter _resultFormatter;
@@ -56,6 +57,7 @@ namespace Ccc.Presentation
         /// <param name="sceneNavigator">Scene遷移ポート。</param>
         /// <param name="gameplayRequest">現在のGameplay開始Request。</param>
         /// <param name="gameplayConfig">Gameplay設定。</param>
+        /// <param name="highScoreService">ハイスコアの記録処理。</param>
         /// <param name="audio">Audio再生ポート。</param>
         /// <param name="rationalFormatter">計算結果Formatter。</param>
         /// <param name="missionTextFormatter">Mission表示Formatter。</param>
@@ -66,6 +68,7 @@ namespace Ccc.Presentation
             ISceneNavigator sceneNavigator,
             GameplayNavigationRequest gameplayRequest,
             GameplayConfig gameplayConfig,
+            HighScoreService highScoreService,
             IAudioPlayer audio,
             RationalDecimalFormatter rationalFormatter,
             MissionTextFormatter missionTextFormatter)
@@ -75,6 +78,7 @@ namespace Ccc.Presentation
             _sceneNavigator = sceneNavigator ?? throw new ArgumentNullException(nameof(sceneNavigator));
             _gameplayRequest = gameplayRequest ?? throw new ArgumentNullException(nameof(gameplayRequest));
             _gameplayConfig = gameplayConfig ?? throw new ArgumentNullException(nameof(gameplayConfig));
+            _highScoreService = highScoreService ?? throw new ArgumentNullException(nameof(highScoreService));
             _audio = audio ?? throw new ArgumentNullException(nameof(audio));
             _missionTextFormatter = missionTextFormatter ?? throw new ArgumentNullException(nameof(missionTextFormatter));
             _resultFormatter = rationalFormatter ?? throw new ArgumentNullException(nameof(rationalFormatter));
@@ -253,7 +257,11 @@ namespace Ccc.Presentation
                     }
                     break;
                 case SessionEndedEvent endedEvent:
-                    _view.ShowResult(CreateResultViewStateDto(endedEvent.Result));
+                    HighScoreUpdateResult highScoreResult = _highScoreService.Record(
+                        _gameplayRequest.GameMode,
+                        _gameplayRequest.Difficulty,
+                        endedEvent.Result.CorrectAnswerCount);
+                    _view.ShowResult(CreateResultViewStateDto(endedEvent.Result, highScoreResult));
                     _audio.PlaySE(AudioKey.SEGameOver);
                     _audio.PlayBgm(AudioKey.BgmResult);
                     break;
@@ -473,11 +481,18 @@ namespace Ccc.Presentation
                    _latestState.Status == GameplayStatus.Playing;
         }
 
-        private GameplayResultViewStateDto CreateResultViewStateDto(SessionResult result)
+        private GameplayResultViewStateDto CreateResultViewStateDto(
+            SessionResult result,
+            HighScoreUpdateResult highScoreResult)
         {
             if (result == null)
             {
                 throw new ArgumentNullException(nameof(result));
+            }
+
+            if (highScoreResult == null)
+            {
+                throw new ArgumentNullException(nameof(highScoreResult));
             }
 
             string lastMissionText = _missionTextFormatter.Format(result.LastMission.Condition);
@@ -493,7 +508,10 @@ namespace Ccc.Presentation
                 $"Your Score: {result.CorrectAnswerCount}");
                 //$"最終Section: {result.FinalSection}");
 
-            return new GameplayResultViewStateDto(resultText);
+            return new GameplayResultViewStateDto(
+                resultText,
+                highScoreResult.HighScore.ToString(CultureInfo.InvariantCulture),
+                highScoreResult.IsNewHighScore);
         }
 
         private static string FormatExpression(Expression expression)
