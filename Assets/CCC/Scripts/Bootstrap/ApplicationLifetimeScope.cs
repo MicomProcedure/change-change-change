@@ -73,24 +73,18 @@ namespace Ccc.Bootstrap
 
         private void RegisterHighScore(IContainerBuilder builder)
         {
-            IApplicationVersionProvider versionProvider = new UnityApplicationVersionProvider();
-            builder.RegisterInstance<IApplicationVersionProvider>(versionProvider);
-            builder.RegisterInstance<IHighScoreCompatibilityPolicy>(
-                CreateHighScoreCompatibilityPolicy(versionProvider.CurrentVersion));
-
-            // DebugModeの動作確認で本番の記録を汚さないよう、読み込みのみ行う
-            IHighScoreStore playerPrefsStore = new PlayerPrefsHighScoreStore();
-            builder.RegisterInstance<IHighScoreStore>(
-                isDebugMode ? new NonPersistingHighScoreStore(playerPrefsStore) : playerPrefsStore);
-
+            builder.Register<IApplicationVersionProvider, UnityApplicationVersionProvider>(Lifetime.Singleton);
+            RegisterHighScoreCompatibilityPolicy(builder);
+            RegisterHighScoreStore(builder);
             builder.Register<HighScoreService>(Lifetime.Singleton);
         }
 
-        private IHighScoreCompatibilityPolicy CreateHighScoreCompatibilityPolicy(string currentVersion)
+        private void RegisterHighScoreCompatibilityPolicy(IContainerBuilder builder)
         {
             if (versionEquivalenceEntryAsset == null)
             {
-                return new KeepAllHighScoreCompatibilityPolicy();
+                builder.Register<IHighScoreCompatibilityPolicy, KeepAllHighScoreCompatibilityPolicy>(Lifetime.Singleton);
+                return;
             }
 
             IReadOnlyList<string> errors = versionEquivalenceEntryAsset.Validate();
@@ -100,6 +94,27 @@ namespace Ccc.Bootstrap
                     "Version equivalence validation failed: " + string.Join(" | ", errors));
             }
 
+            builder.Register<IHighScoreCompatibilityPolicy>(
+                resolver => CreateVersionEquivalencePolicy(
+                    resolver.Resolve<IApplicationVersionProvider>().CurrentVersion),
+                Lifetime.Singleton);
+        }
+
+        private void RegisterHighScoreStore(IContainerBuilder builder)
+        {
+            // DebugModeの動作確認で本番の記録を汚さないよう、メモリ上だけで保持する
+            if (isDebugMode)
+            {
+                builder.Register<IHighScoreStore, InMemoryHighScoreStore>(Lifetime.Singleton);
+            }
+            else
+            {
+                builder.Register<IHighScoreStore, PlayerPrefsHighScoreStore>(Lifetime.Singleton);
+            }
+        }
+
+        private IHighScoreCompatibilityPolicy CreateVersionEquivalencePolicy(string currentVersion)
+        {
             // 登録漏れはビルド時に検出する。実行時は同じバージョンの記録だけを同一視して継続する
             IReadOnlyList<string> unregisteredVersionErrors =
                 versionEquivalenceEntryAsset.FindUnregisteredVersionErrors(currentVersion);

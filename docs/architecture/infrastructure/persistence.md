@@ -33,7 +33,7 @@
 | `IApplicationVersionProvider` | `Ccc.Core.UseCases` | 実行中のアプリケーションバージョンの提供ポート |
 | `ILocalDataEraser` | `Ccc.Core.UseCases` | ローカルの永続化情報を全消去するポート |
 | `PlayerPrefsHighScoreStore` / `HighScoreRecordJsonCodec` | `Ccc.Infrastructure.Persistence` | PlayerPrefsへの保存と保存用JSONの変換 |
-| `NonPersistingHighScoreStore` | `Ccc.Infrastructure.Persistence` | 読み込みのみ委譲し、書き込みを永続化しない保存先 |
+| `InMemoryHighScoreStore` | `Ccc.Infrastructure.Persistence` | メモリ上だけで記録を保持する DebugMode 用の保存先 |
 | `UnityApplicationVersionProvider` | `Ccc.Infrastructure.Persistence` | `Application.version` の提供 |
 | `PlayerPrefsLocalDataEraser` | `Ccc.Infrastructure.Persistence` | `PlayerPrefs.DeleteAll` による全消去 |
 
@@ -45,7 +45,8 @@
 - 記録は `SessionEndedEvent` の受信時に行うこと。プレイ途中でメインメニューへ戻った場合は記録しない。
 - 既存のハイスコアを超えた場合のみ更新し、新記録として扱うこと。同点は更新せず、記録がない状態のスコア0も新記録にしない。
 - 記録がない場合のハイスコアは `0` として表示すること。
-- `ApplicationLifetimeScope` の DebugMode では `NonPersistingHighScoreStore` を登録し、記録を永続化しないこと。読み込みと新記録の判定は通常と同じように動作する。
+- `ApplicationLifetimeScope` の DebugMode では `InMemoryHighScoreStore` を登録し、記録を永続化しないこと。アプリケーションの実行中は記録を保持するため、新記録の判定と表示は通常と同じように確認できる。
+- DebugMode では実際の保存データを読み込まない。また、記録はゲームリセットでは消えず、アプリケーションの終了時に消える。
 
 ---
 
@@ -120,7 +121,7 @@
 
 | 解決する型 | 実装 |
 | --- | --- |
-| `IHighScoreStore` | 通常は `PlayerPrefsHighScoreStore`、DebugMode は `NonPersistingHighScoreStore` |
+| `IHighScoreStore` | 通常は `PlayerPrefsHighScoreStore`、DebugMode は `InMemoryHighScoreStore` |
 | `IHighScoreCompatibilityPolicy` | `VersionEquivalenceEntryAsset` の設定時は `VersionEquivalenceHighScoreCompatibilityPolicy`、未設定時は `KeepAllHighScoreCompatibilityPolicy` |
 | `IApplicationVersionProvider` | `UnityApplicationVersionProvider` |
 | `ILocalDataEraser` | `PlayerPrefsLocalDataEraser` |
