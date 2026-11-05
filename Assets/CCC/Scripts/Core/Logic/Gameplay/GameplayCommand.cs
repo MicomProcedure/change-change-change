@@ -26,22 +26,14 @@ namespace Ccc.Core.Logic
         public Expression SubmittedExpression { get; }
 
         /// <summary>
-        /// 提出時点の残り時間を取得します。
-        /// </summary>
-        public TimeSpan RemainingTime { get; }
-
-
-        /// <summary>
-        /// ミッション識別子、提出式の snapshot、提出時点の残り時間から Command を生成します。
+        /// ミッション識別子と提出式の snapshot から Command を生成します。
         /// </summary>
         /// <param name="missionId">提出対象のミッション識別子。</param>
         /// <param name="submittedExpression">入力時点で固定された提出式。</param>
-        /// <param name="remainingTime">提出時点の残り時間。</param>
-        public SubmitCommand(MissionId missionId, Expression submittedExpression, TimeSpan remainingTime)
+        public SubmitCommand(MissionId missionId, Expression submittedExpression)
         {
             MissionId = missionId;
             SubmittedExpression = submittedExpression;
-            RemainingTime = remainingTime;
         }
     }
 

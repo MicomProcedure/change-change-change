@@ -46,7 +46,6 @@ namespace Ccc.Presentation
         private bool _isStarted;
         private bool _isDisposed;
         private bool _isNavigationInProgress;
-        private int _timerSection;
 
         /// <summary>
         /// GameplayPresenterを生成します。
@@ -205,7 +204,6 @@ namespace Ccc.Presentation
             if (isMissionChanged)
             {
                 _hasTimerSnapshot = false;
-                _timerSection = state.Section;
                 StopTimeWarning();
             }
 
@@ -362,12 +360,8 @@ namespace Ccc.Presentation
                 : HiddenAnswerText;
             bool hasRemainingTime = timerSnapshot.HasValue &&
                                     timerSnapshot.Value.MissionId == gameplayState.CurrentMission.Id;
-            float remainingSeconds = hasRemainingTime
-                ? (float)timerSnapshot.Value.RemainingTime.TotalSeconds
-                : 0f;
-
-            TimeSpan sectionDuration = _gameplayConfig.Timer.GetDuration(_timerSection);
-            float sectionDurationSeconds = (float)sectionDuration.TotalSeconds;
+            // 残り時間が無効な場合はdefaultとし、すべての秒数を0として表示する
+            SectionTimerSnapshot currentSnapshot = hasRemainingTime ? timerSnapshot.Value : default;
 
             return new GameplayViewStateDto(
                 _gameplayRequest.GameMode.ToString(),
@@ -385,8 +379,11 @@ namespace Ccc.Presentation
                 OperatorChoiceCount,
                 answerText,
                 hasRemainingTime,
-                remainingSeconds,
-                sectionDurationSeconds,
+                (float)currentSnapshot.RemainingTime.TotalSeconds,
+                (float)currentSnapshot.NormalRemainingTime.TotalSeconds,
+                (float)currentSnapshot.NormalDuration.TotalSeconds,
+                (float)currentSnapshot.BonusRemainingTime.TotalSeconds,
+                (float)currentSnapshot.BonusDuration.TotalSeconds,
                 false,
                 gameplayState.IsAcceptingSubmit);
         }

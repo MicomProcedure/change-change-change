@@ -63,9 +63,24 @@ namespace Ccc.Presentation
         public float RemainingSeconds { get; }
 
         /// <summary>
-        /// 現在Sectionの制限時間を秒単位で取得します。
+        /// 通常時間の残り秒数を取得します。
         /// </summary>
-        public float SectionDurationSeconds { get; }
+        public float NormalRemainingSeconds { get; }
+
+        /// <summary>
+        /// 開始時の通常時間を秒単位で取得します。
+        /// </summary>
+        public float NormalDurationSeconds { get; }
+
+        /// <summary>
+        /// ボーナス時間の残り秒数を取得します。
+        /// </summary>
+        public float BonusRemainingSeconds { get; }
+
+        /// <summary>
+        /// 開始時のボーナス時間を秒単位で取得します。
+        /// </summary>
+        public float BonusDurationSeconds { get; }
 
         /// <summary>
         /// 時間警告中かどうかを取得します。
@@ -120,12 +135,15 @@ namespace Ccc.Presentation
         /// <param name="operatorChoiceCount">演算子の選択肢の総数。</param>
         /// <param name="answerText">答えの表示文言。</param>
         /// <param name="hasRemainingTime">残り時間が有効かどうか。</param>
-        /// <param name="remainingSeconds">残り秒数。</param>
-        /// <param name="sectionDurationSeconds">現在Sectionの制限時間。</param>
+        /// <param name="remainingSeconds">ボーナス込みの残り秒数。</param>
+        /// <param name="normalRemainingSeconds">通常時間の残り秒数。</param>
+        /// <param name="normalDurationSeconds">開始時の通常時間の秒数。</param>
+        /// <param name="bonusRemainingSeconds">ボーナス時間の残り秒数。</param>
+        /// <param name="bonusDurationSeconds">開始時のボーナス時間の秒数。</param>
         /// <param name="isTimeWarning">時間警告中かどうか。</param>
         /// <param name="canSubmit">式を提出できるかどうか。</param>
         /// <exception cref="ArgumentNullException">文字列引数のいずれかがnullの場合。</exception>
-        /// <exception cref="ArgumentOutOfRangeException">残り秒数が不正な場合。</exception>
+        /// <exception cref="ArgumentOutOfRangeException">秒数のいずれかが有限の0以上でない場合。</exception>
         public GameplayViewStateDto(
             string gameModeText,
             string difficultyText,
@@ -143,7 +161,10 @@ namespace Ccc.Presentation
             string answerText,
             bool hasRemainingTime,
             float remainingSeconds,
-            float sectionDurationSeconds,
+            float normalRemainingSeconds,
+            float normalDurationSeconds,
+            float bonusRemainingSeconds,
+            float bonusDurationSeconds,
             bool isTimeWarning,
             bool canSubmit)
         {
@@ -182,25 +203,11 @@ namespace Ccc.Presentation
                 throw new ArgumentNullException(nameof(answerText));
             }
 
-            if (float.IsNaN(remainingSeconds) ||
-                float.IsInfinity(remainingSeconds) ||
-                remainingSeconds < 0f)
-            {
-                throw new ArgumentOutOfRangeException(
-                    nameof(remainingSeconds),
-                    remainingSeconds,
-                    "Remaining seconds must be finite and zero or positive.");
-            }
-
-            if (float.IsNaN(sectionDurationSeconds) ||
-                float.IsInfinity(sectionDurationSeconds) ||
-                sectionDurationSeconds <= 0f)
-            {
-                throw new ArgumentOutOfRangeException(
-                    nameof(sectionDurationSeconds),
-                    sectionDurationSeconds,
-                    "Section duration must be finite and positive.");
-            }
+            ThrowIfInvalidSeconds(remainingSeconds, nameof(remainingSeconds));
+            ThrowIfInvalidSeconds(normalRemainingSeconds, nameof(normalRemainingSeconds));
+            ThrowIfInvalidSeconds(normalDurationSeconds, nameof(normalDurationSeconds));
+            ThrowIfInvalidSeconds(bonusRemainingSeconds, nameof(bonusRemainingSeconds));
+            ThrowIfInvalidSeconds(bonusDurationSeconds, nameof(bonusDurationSeconds));
 
             GameModeText = gameModeText;
             DifficultyText = difficultyText;
@@ -218,9 +225,23 @@ namespace Ccc.Presentation
             AnswerText = answerText;
             HasRemainingTime = hasRemainingTime;
             RemainingSeconds = hasRemainingTime ? remainingSeconds : 0f;
-            SectionDurationSeconds = sectionDurationSeconds;
+            NormalRemainingSeconds = normalRemainingSeconds;
+            NormalDurationSeconds = normalDurationSeconds;
+            BonusRemainingSeconds = bonusRemainingSeconds;
+            BonusDurationSeconds = bonusDurationSeconds;
             IsTimeWarning = isTimeWarning;
             CanSubmit = canSubmit;
+        }
+
+        private static void ThrowIfInvalidSeconds(float seconds, string parameterName)
+        {
+            if (float.IsNaN(seconds) || float.IsInfinity(seconds) || seconds < 0f)
+            {
+                throw new ArgumentOutOfRangeException(
+                    parameterName,
+                    seconds,
+                    "Seconds must be finite and zero or positive.");
+            }
         }
     }
 }

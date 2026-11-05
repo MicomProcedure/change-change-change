@@ -1203,15 +1203,17 @@ namespace Ccc.Tests
             /// <summary>
             /// テスト用のためTimer開始を記録しません。
             /// </summary>
-            public void Start(MissionId missionId, TimeSpan duration)
+            public void Start(MissionId missionId, TimeSpan normalDuration, TimeSpan bonusDuration)
             {
             }
 
             /// <summary>
-            /// テスト用のためTimer停止を記録しません。
+            /// テスト用のためTimer停止を記録せず、常に停止しなかったものとして扱います。
             /// </summary>
-            public void Stop(MissionId missionId)
+            public bool TryStop(MissionId missionId, out SectionTimerSnapshot stoppedSnapshot)
             {
+                stoppedSnapshot = default;
+                return false;
             }
 
             /// <summary>

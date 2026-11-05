@@ -5,7 +5,6 @@ namespace Ccc.Core.Logic
 {
     /// <summary>
     /// 提出結果から、次に提示するMissionへ付与するボーナス時間を算出します。
-    /// ボーナスは通常時間より先に消費される前提で、残り時間のうち通常時間を超える分を未消費ボーナスとみなします。
     /// </summary>
     public static class BonusTimeCalculator
     {
@@ -13,17 +12,17 @@ namespace Ccc.Core.Logic
         /// 次に提示するMissionへ付与するボーナス時間を算出します。
         /// </summary>
         /// <param name="timerConfig">タイマー設定。</param>
-        /// <param name="currentSection">提出時点のSection。</param>
-        /// <param name="remainingTime">提出時点の残り時間（ボーナス込み）。</param>
+        /// <param name="normalRemainingTime">提出時点の通常時間の残り。</param>
+        /// <param name="bonusRemainingTime">提出時点のボーナス時間の残り。</param>
         /// <param name="isSuccess">提出が成功したかどうか。</param>
         /// <param name="trigger">提出のきっかけ。</param>
         /// <returns>次に提示するMissionへ付与するボーナス時間。</returns>
         /// <exception cref="ArgumentNullException"><paramref name="timerConfig"/> が null の場合。</exception>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="remainingTime"/> が負の場合。</exception>
+        /// <exception cref="ArgumentOutOfRangeException">残り時間のいずれかが負の場合。</exception>
         public static TimeSpan CalculateNextBonusDuration(
             TimerConfig timerConfig,
-            int currentSection,
-            TimeSpan remainingTime,
+            TimeSpan normalRemainingTime,
+            TimeSpan bonusRemainingTime,
             bool isSuccess,
             SubmissionTrigger trigger)
         {
@@ -32,26 +31,23 @@ namespace Ccc.Core.Logic
                 throw new ArgumentNullException(nameof(timerConfig));
             }
 
-            if (remainingTime < TimeSpan.Zero)
+            if (normalRemainingTime < TimeSpan.Zero)
             {
-                throw new ArgumentOutOfRangeException(nameof(remainingTime), remainingTime, "Remaining time must be zero or positive.");
+                throw new ArgumentOutOfRangeException(nameof(normalRemainingTime), normalRemainingTime, "Remaining time must be zero or positive.");
             }
 
-            TimeSpan currentDuration = timerConfig.GetDuration(currentSection);
-            TimeSpan unusedBonus = remainingTime > currentDuration
-                ? remainingTime - currentDuration
-                : TimeSpan.Zero;
+            if (bonusRemainingTime < TimeSpan.Zero)
+            {
+                throw new ArgumentOutOfRangeException(nameof(bonusRemainingTime), bonusRemainingTime, "Remaining time must be zero or positive.");
+            }
 
             if (!isSuccess)
             {
                 return timerConfig.IsBonusCarryOverOnFailureEnabled
-                    ? ClampBonusDuration(timerConfig, unusedBonus)
+                    ? ClampBonusDuration(timerConfig, bonusRemainingTime)
                     : TimeSpan.Zero;
             }
 
-            TimeSpan normalRemainingTime = remainingTime < currentDuration
-                ? remainingTime
-                : currentDuration;
             TimeSpan earnedBonus = Multiply(normalRemainingTime, timerConfig.BonusRatio);
             if (trigger == SubmissionTrigger.ManualSubmit)
             {
@@ -59,7 +55,7 @@ namespace Ccc.Core.Logic
             }
 
             TimeSpan nextBonus = timerConfig.IsBonusCarryOverOnSuccessEnabled
-                ? earnedBonus + unusedBonus
+                ? earnedBonus + bonusRemainingTime
                 : earnedBonus;
 
             return ClampBonusDuration(timerConfig, nextBonus);
