@@ -94,6 +94,8 @@ namespace Ccc.Core.UseCases
                 case HighScoreCompatibilityAction.Replace:
                     _store.Save(gameMode, difficulty, decision.ReplacementRecord);
                     return decision.ReplacementRecord.Score;
+                case HighScoreCompatibilityAction.Ignore:
+                    return NoRecordHighScore;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(decision), decision.Action, null);
             }

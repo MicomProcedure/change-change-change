@@ -190,6 +190,66 @@ namespace Ccc.Tests
         }
 
         /// <summary>
+        /// 互換方針がIgnoreの場合、記録を残したまま0を返すことを検証します。
+        /// </summary>
+        [Test]
+        public void GetHighScore_WhenPolicyIgnores_ShouldReturnZeroAndKeepRecord()
+        {
+            var store = new InMemoryHighScoreStore();
+            var existingRecord = new HighScoreRecord(5, OldAppVersion);
+            store.Save(TargetGameMode, TargetDifficulty, existingRecord);
+            HighScoreService service = CreateService(
+                store,
+                new StubCompatibilityPolicy(HighScoreCompatibilityDecision.Ignore()));
+
+            int highScore = service.GetHighScore(TargetGameMode, TargetDifficulty);
+
+            Assert.That(highScore, Is.EqualTo(0));
+            Assert.That(store.Get(TargetGameMode, TargetDifficulty), Is.SameAs(existingRecord));
+        }
+
+        /// <summary>
+        /// 無視対象の記録より低いスコアでも、1以上なら新記録として上書きすることを検証します。
+        /// </summary>
+        [Test]
+        public void Record_WhenPolicyIgnoresExistingRecord_ShouldOverwriteWithPositiveScore()
+        {
+            var store = new InMemoryHighScoreStore();
+            store.Save(TargetGameMode, TargetDifficulty, new HighScoreRecord(5, OldAppVersion));
+            HighScoreService service = CreateService(
+                store,
+                new StubCompatibilityPolicy(HighScoreCompatibilityDecision.Ignore()));
+
+            HighScoreUpdateResult result = service.Record(TargetGameMode, TargetDifficulty, 1);
+
+            Assert.That(result.IsNewHighScore, Is.True);
+            Assert.That(result.HighScore, Is.EqualTo(1));
+            HighScoreRecord savedRecord = store.Get(TargetGameMode, TargetDifficulty);
+            Assert.That(savedRecord.Score, Is.EqualTo(1));
+            Assert.That(savedRecord.AppVersion, Is.EqualTo(CurrentAppVersion));
+        }
+
+        /// <summary>
+        /// 無視対象の記録はスコア0では上書きせず、残したままにすることを検証します。
+        /// </summary>
+        [Test]
+        public void Record_WhenPolicyIgnoresExistingRecordAndScoreIsZero_ShouldKeepRecord()
+        {
+            var store = new InMemoryHighScoreStore();
+            var existingRecord = new HighScoreRecord(5, OldAppVersion);
+            store.Save(TargetGameMode, TargetDifficulty, existingRecord);
+            HighScoreService service = CreateService(
+                store,
+                new StubCompatibilityPolicy(HighScoreCompatibilityDecision.Ignore()));
+
+            HighScoreUpdateResult result = service.Record(TargetGameMode, TargetDifficulty, 0);
+
+            Assert.That(result.IsNewHighScore, Is.False);
+            Assert.That(result.HighScore, Is.EqualTo(0));
+            Assert.That(store.Get(TargetGameMode, TargetDifficulty), Is.SameAs(existingRecord));
+        }
+
+        /// <summary>
         /// 互換方針がReplaceの場合、変換後の記録を保存して返すことを検証します。
         /// </summary>
         [Test]

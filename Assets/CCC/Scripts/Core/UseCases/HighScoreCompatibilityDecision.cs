@@ -45,6 +45,15 @@ namespace Ccc.Core.UseCases
         }
 
         /// <summary>
+        /// 記録を残したまま、記録なしとして扱う決定を生成します。
+        /// </summary>
+        /// <returns>Ignoreの決定。</returns>
+        public static HighScoreCompatibilityDecision Ignore()
+        {
+            return new HighScoreCompatibilityDecision(HighScoreCompatibilityAction.Ignore, null);
+        }
+
+        /// <summary>
         /// 記録を書き換える決定を生成します。
         /// </summary>
         /// <param name="replacementRecord">変換後の記録。</param>

@@ -18,6 +18,11 @@ namespace Ccc.Core.UseCases
         /// <summary>
         /// 記録を変換後の内容へ書き換えます。
         /// </summary>
-        Replace
+        Replace,
+
+        /// <summary>
+        /// 記録を残したまま、記録なしとして扱います。新記録で上書きされます。
+        /// </summary>
+        Ignore
     }
 }
