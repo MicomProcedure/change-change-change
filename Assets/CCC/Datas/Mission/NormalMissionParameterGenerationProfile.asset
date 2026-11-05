@@ -376,3 +376,136 @@ MonoBehaviour:
       minimum: 0
       maximum: 24
       step: 1
+  - kind: 19
+    isEnabled: 1
+    appliesMatchRatioRange: 1
+    generatesNegated: 1
+    maximumCandidateCount: 46
+    parameterA:
+      isConfigured: 1
+      mode: 0
+      explicitValues: 040000000600000008000000090000000a0000000c0000000f000000100000001400000018000000190000001b0000001e00000020000000240000003000000031000000320000003c000000400000004b0000005100000064000000
+      minimum: 0
+      maximum: 0
+      step: 1
+    parameterB:
+      isConfigured: 0
+      mode: 0
+      explicitValues: 
+      minimum: 0
+      maximum: 0
+      step: 1
+  - kind: 20
+    isEnabled: 1
+    appliesMatchRatioRange: 1
+    generatesNegated: 1
+    maximumCandidateCount: 8
+    parameterA:
+      isConfigured: 1
+      mode: 0
+      explicitValues: 02000000030000000400000005000000
+      minimum: 0
+      maximum: 0
+      step: 1
+    parameterB:
+      isConfigured: 0
+      mode: 0
+      explicitValues: 
+      minimum: 0
+      maximum: 0
+      step: 1
+  - kind: 21
+    isEnabled: 0
+    appliesMatchRatioRange: 1
+    generatesNegated: 0
+    maximumCandidateCount: 2
+    parameterA:
+      isConfigured: 0
+      mode: 0
+      explicitValues: 
+      minimum: 0
+      maximum: 0
+      step: 1
+    parameterB:
+      isConfigured: 0
+      mode: 0
+      explicitValues: 
+      minimum: 0
+      maximum: 0
+      step: 1
+  - kind: 22
+    isEnabled: 1
+    appliesMatchRatioRange: 1
+    generatesNegated: 1
+    maximumCandidateCount: 2
+    parameterA:
+      isConfigured: 0
+      mode: 0
+      explicitValues: 
+      minimum: 0
+      maximum: 0
+      step: 1
+    parameterB:
+      isConfigured: 0
+      mode: 0
+      explicitValues: 
+      minimum: 0
+      maximum: 0
+      step: 1
+  - kind: 23
+    isEnabled: 1
+    appliesMatchRatioRange: 1
+    generatesNegated: 1
+    maximumCandidateCount: 20
+    parameterA:
+      isConfigured: 1
+      mode: 1
+      explicitValues: 
+      minimum: 0
+      maximum: 9
+      step: 1
+    parameterB:
+      isConfigured: 0
+      mode: 0
+      explicitValues: 
+      minimum: 0
+      maximum: 0
+      step: 1
+  - kind: 24
+    isEnabled: 1
+    appliesMatchRatioRange: 1
+    generatesNegated: 1
+    maximumCandidateCount: 18
+    parameterA:
+      isConfigured: 1
+      mode: 1
+      explicitValues: 
+      minimum: 1
+      maximum: 9
+      step: 1
+    parameterB:
+      isConfigured: 0
+      mode: 0
+      explicitValues: 
+      minimum: 0
+      maximum: 0
+      step: 1
+  - kind: 25
+    isEnabled: 0
+    appliesMatchRatioRange: 1
+    generatesNegated: 1
+    maximumCandidateCount: 2
+    parameterA:
+      isConfigured: 0
+      mode: 0
+      explicitValues: 
+      minimum: 0
+      maximum: 0
+      step: 1
+    parameterB:
+      isConfigured: 0
+      mode: 0
+      explicitValues: 
+      minimum: 0
+      maximum: 0
+      step: 1

@@ -19,7 +19,7 @@ Session 開始時に、ゲームモードおよび難易度設定（`GameDifficu
 
 ## MissionパラメータSource
 
-MissionパラメータSourceと`GameDifficulty`は独立した概念とする。製品の`Normal`は`Automatic`を使用し、到達可能結果と`MissionParameterGenerationProfileAsset`から全19 Kindを生成対象とする。`PresetDebug`は新Mode・新Missionの限定確認専用で、DebugMode以外では設定エラーとする。
+MissionパラメータSourceと`GameDifficulty`は独立した概念とする。製品の`Normal`は`Automatic`を使用し、到達可能結果と`MissionParameterGenerationProfileAsset`から、Profileで有効化したKindを生成対象とする。`PresetDebug`は新Mode・新Missionの限定確認専用で、DebugMode以外では設定エラーとする。
 
 Session中の抽選はSourceによらず、確定済み`MissionCatalog`、Section、現在式、直前Missionを入力とする同一アルゴリズムを使用する。
 

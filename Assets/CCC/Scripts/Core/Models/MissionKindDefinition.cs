@@ -13,11 +13,18 @@ namespace Ccc.Core.Model
         /// <summary>条件が保持するパラメータ構造を取得します。</summary>
         public MissionParameterStructure ParameterStructure { get; }
 
-        /// <summary>肯定条件が固定Tierを持つかを取得します。</summary>
-        public bool HasFixedPositiveTier { get; }
+        /// <summary>肯定条件のTierを確定する規則を取得します。</summary>
+        public MissionPositiveTierRule PositiveTierRule { get; }
 
-        /// <summary>肯定条件の固定Tierを取得します。Betweenでは0です。</summary>
-        public int FixedPositiveTier { get; }
+        /// <summary>
+        /// 肯定条件のTierを取得します。固定規則では固定Tier、それ以外の規則では判定基準を満たす場合のTierです。
+        /// </summary>
+        public int PositiveTier { get; }
+
+        /// <summary>
+        /// 判定基準を満たさない場合の肯定条件のTierを取得します。固定規則では0です。
+        /// </summary>
+        public int CriterionUnmetPositiveTier { get; }
 
         /// <summary>Negated候補の生成が許可されるかを取得します。</summary>
         public bool CanGenerateNegated { get; }
@@ -28,7 +35,9 @@ namespace Ccc.Core.Model
         internal MissionKindDefinition(
             MissionKind kind,
             MissionParameterStructure parameterStructure,
-            int fixedPositiveTier,
+            MissionPositiveTierRule positiveTierRule,
+            int positiveTier,
+            int criterionUnmetPositiveTier,
             bool canGenerateNegated,
             int negatedTier)
         {
@@ -45,13 +54,34 @@ namespace Ccc.Core.Model
                     null);
             }
 
-            bool isBetween = kind == MissionKind.Between;
-            if ((isBetween && fixedPositiveTier != 0) ||
-                (!isBetween && fixedPositiveTier <= 0))
+            if (!Enum.IsDefined(typeof(MissionPositiveTierRule), positiveTierRule))
             {
                 throw new ArgumentOutOfRangeException(
-                    nameof(fixedPositiveTier),
-                    fixedPositiveTier,
+                    nameof(positiveTierRule),
+                    positiveTierRule,
+                    null);
+            }
+
+            if (positiveTierRule == MissionPositiveTierRule.ParameterReachability &&
+                parameterStructure != MissionParameterStructure.Single)
+            {
+                throw new ArgumentException(
+                    "Parameter reachability tier rule requires a single-parameter MissionKind.",
+                    nameof(positiveTierRule));
+            }
+
+            if (positiveTier <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(positiveTier), positiveTier, null);
+            }
+
+            bool isFixed = positiveTierRule == MissionPositiveTierRule.Fixed;
+            if ((isFixed && criterionUnmetPositiveTier != 0) ||
+                (!isFixed && criterionUnmetPositiveTier <= 0))
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(criterionUnmetPositiveTier),
+                    criterionUnmetPositiveTier,
                     null);
             }
 
@@ -63,8 +93,9 @@ namespace Ccc.Core.Model
 
             Kind = kind;
             ParameterStructure = parameterStructure;
-            HasFixedPositiveTier = !isBetween;
-            FixedPositiveTier = fixedPositiveTier;
+            PositiveTierRule = positiveTierRule;
+            PositiveTier = positiveTier;
+            CriterionUnmetPositiveTier = criterionUnmetPositiveTier;
             CanGenerateNegated = canGenerateNegated;
             NegatedTier = negatedTier;
         }

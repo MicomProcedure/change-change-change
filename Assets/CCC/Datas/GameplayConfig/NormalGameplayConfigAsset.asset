@@ -26,7 +26,7 @@ MonoBehaviour:
   manualSubmitBonusSeconds: 0.5
   isBonusCarryOverOnSuccessEnabled: 0
   isBonusCarryOverOnFailureEnabled: 0
-  tierStartSections: 01000000050000000a0000000f000000
+  tierStartSections: 01000000060000000c00000012000000
   showCurrentAnswer: 0
   minimumExpressionMatchRatio: 0.01
   maximumExpressionMatchRatio: 0.6
@@ -34,7 +34,7 @@ MonoBehaviour:
   zeroAndPrimeMinimumExpressionMatchCount: 1
   currentTierDrawWeight: 0.4
   lowerTierDrawWeight: 0.6
-  currentExpressionSatisfiedMissionSelectionRatio: 0.1
+  currentExpressionSatisfiedMissionSelectionRatio: 0.08
   targetExpressionMatchRatio: 0.25
   targetExpressionMatchRatioReductionPerSection: 0.009
   minimumTargetExpressionMatchRatio: 0.01
