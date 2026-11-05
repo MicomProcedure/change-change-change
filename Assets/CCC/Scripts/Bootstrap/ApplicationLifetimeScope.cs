@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Ccc.Bootstrap.Log;
+using Ccc.Core.UseCases;
 using Ccc.Infrastructure.Audio;
 using Ccc.Infrastructure.Logging;
+using Ccc.Infrastructure.Persistence;
 using Ccc.Infrastructure.Platform;
 using Ccc.Presentation.Audio;
 using Ccc.Infrastructure.Navigation;
@@ -55,6 +57,7 @@ namespace Ccc.Bootstrap
 
             builder.Register<IOptionSettingsStore, PlayerPrefsOptionSettingsStore>(Lifetime.Singleton);
             builder.Register<OptionAudioInitializer>(Lifetime.Singleton);
+            RegisterHighScore(builder);
 
             builder.Register<ISceneNavigator, SceneNavigator>(Lifetime.Singleton);
             builder.RegisterInstance(new TitleStartRequest(startingTitleScreenState));
@@ -62,6 +65,19 @@ namespace Ccc.Bootstrap
             RegisterLogging(builder);
 
             builder.RegisterEntryPoint<ApplicationEntryPoint>();
+        }
+
+        private void RegisterHighScore(IContainerBuilder builder)
+        {
+            builder.Register<IApplicationVersionProvider, UnityApplicationVersionProvider>(Lifetime.Singleton);
+            builder.Register<IHighScoreCompatibilityPolicy, KeepAllHighScoreCompatibilityPolicy>(Lifetime.Singleton);
+
+            // DebugModeの動作確認で本番の記録を汚さないよう、読み込みのみ行う
+            IHighScoreStore playerPrefsStore = new PlayerPrefsHighScoreStore();
+            builder.RegisterInstance<IHighScoreStore>(
+                isDebugMode ? new NonPersistingHighScoreStore(playerPrefsStore) : playerPrefsStore);
+
+            builder.Register<HighScoreService>(Lifetime.Singleton);
         }
 
         private void RegisterSceneCatalog(IContainerBuilder builder)
