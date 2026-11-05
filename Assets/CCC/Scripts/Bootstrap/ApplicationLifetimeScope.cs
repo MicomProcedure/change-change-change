@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Ccc.Bootstrap.Log;
 using Ccc.Core.UseCases;
+using Ccc.Infrastructure.Assets;
 using Ccc.Infrastructure.Audio;
 using Ccc.Infrastructure.Logging;
 using Ccc.Infrastructure.Persistence;
@@ -29,6 +30,8 @@ namespace Ccc.Bootstrap
         [SerializeField] private TitleScreenState startingTitleScreenState = TitleScreenState.MainMenu;
         [SerializeField] private LogSettingsAsset logSettingsAsset;
         [SerializeField] private SceneCatalogAsset sceneCatalogAsset;
+        [Tooltip("保存データを同一視するバージョンの設定。未設定の場合は判定せず、全てのハイスコアを使い続ける。")]
+        [SerializeField] private VersionEquivalenceEntryAsset versionEquivalenceEntryAsset;
         [Tooltip("Editor実行時にのみ適用するプラットフォーム。Autoは起動時のSceneから判定し、特定できなければMobileとして扱う。")]
         [SerializeField] private PlayPlatformOverride editorPlayPlatformOverride = PlayPlatformOverride.Auto;
 
@@ -70,8 +73,10 @@ namespace Ccc.Bootstrap
 
         private void RegisterHighScore(IContainerBuilder builder)
         {
-            builder.Register<IApplicationVersionProvider, UnityApplicationVersionProvider>(Lifetime.Singleton);
-            builder.Register<IHighScoreCompatibilityPolicy, KeepAllHighScoreCompatibilityPolicy>(Lifetime.Singleton);
+            IApplicationVersionProvider versionProvider = new UnityApplicationVersionProvider();
+            builder.RegisterInstance<IApplicationVersionProvider>(versionProvider);
+            builder.RegisterInstance<IHighScoreCompatibilityPolicy>(
+                CreateHighScoreCompatibilityPolicy(versionProvider.CurrentVersion));
 
             // DebugModeの動作確認で本番の記録を汚さないよう、読み込みのみ行う
             IHighScoreStore playerPrefsStore = new PlayerPrefsHighScoreStore();
@@ -79,6 +84,31 @@ namespace Ccc.Bootstrap
                 isDebugMode ? new NonPersistingHighScoreStore(playerPrefsStore) : playerPrefsStore);
 
             builder.Register<HighScoreService>(Lifetime.Singleton);
+        }
+
+        private IHighScoreCompatibilityPolicy CreateHighScoreCompatibilityPolicy(string currentVersion)
+        {
+            if (versionEquivalenceEntryAsset == null)
+            {
+                return new KeepAllHighScoreCompatibilityPolicy();
+            }
+
+            IReadOnlyList<string> errors = versionEquivalenceEntryAsset.Validate();
+            if (errors.Count > 0)
+            {
+                throw new InvalidOperationException(
+                    "Version equivalence validation failed: " + string.Join(" | ", errors));
+            }
+
+            // 登録漏れはビルド時に検出する。実行時は同じバージョンの記録だけを同一視して継続する
+            IReadOnlyList<string> unregisteredVersionErrors =
+                versionEquivalenceEntryAsset.FindUnregisteredVersionErrors(currentVersion);
+            for (int index = 0; index < unregisteredVersionErrors.Count; index++)
+            {
+                UnityEngine.Debug.LogError(unregisteredVersionErrors[index]);
+            }
+
+            return versionEquivalenceEntryAsset.CreateHighScoreCompatibilityPolicy();
         }
 
         private void RegisterSceneCatalog(IContainerBuilder builder)
