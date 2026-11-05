@@ -251,7 +251,7 @@ namespace Ccc.Infrastructure.Navigation
             try
             {
                 OptionSettingsSnapshot optionSettings =
-                    _optionMenuModel.CreateSnapshot();
+                    _optionMenuModel.Settings.CurrentValue;
 
                 GameplayNavigationRequest request =
                     new GameplayNavigationRequest(

@@ -70,9 +70,8 @@ namespace Ccc.Infrastructure.Navigation
         private IDisposable _highScoreSubscription;
         private OptionMenuModel _optionMenuModel;
         private IDisposable _seVolumeChangeSubscription;
-        private IDisposable _seVolumeSubscription;
         private IDisposable _bgmVolumeChangeSubscription;
-        private IDisposable _bgmVolumeSubscription;
+        private IDisposable _optionMenuSubscription;
         private bool _isInitialized;
 
         [Inject]
@@ -177,11 +176,12 @@ namespace Ccc.Infrastructure.Navigation
                 _model.SelectedHighScoreText.Subscribe(RenderHighScore);
 
 
-            _seVolumeSubscription =
-                _optionMenuModel.SEVolumeLevel.Subscribe(RenderSEVolumeLevel);
-
-            _bgmVolumeSubscription =
-                _optionMenuModel.BgmVolumeLevel.Subscribe(RenderBgmVolumeLevel);
+            _optionMenuSubscription =
+                _optionMenuModel.Settings
+                    .CombineLatest(
+                        _model.IsBusy,
+                        (settings, isBusy) => OptionMenuViewStateDto.Create(settings, !isBusy))
+                    .Subscribe(RenderOptionMenu);
 
             RenderScreen(_model.CurrentScreen.CurrentValue);
             RenderBusyState(_model.IsBusy.CurrentValue);
@@ -198,10 +198,9 @@ namespace Ccc.Infrastructure.Navigation
             _difficultySubscription?.Dispose();
             _difficultyChangeSubscription?.Dispose();
             _highScoreSubscription?.Dispose();
-            _seVolumeSubscription?.Dispose();
             _seVolumeChangeSubscription?.Dispose();
-            _bgmVolumeSubscription?.Dispose();
             _bgmVolumeChangeSubscription?.Dispose();
+            _optionMenuSubscription?.Dispose();
 
             if (!_isInitialized || _model == null)
             {
@@ -310,8 +309,6 @@ namespace Ccc.Infrastructure.Navigation
             SetInteractableIfAvailable(_openTutorialButton, isInteractable);
             SetInteractableIfAvailable(_closeTutorialButton, isInteractable);
             RenderDifficulty(_model.SelectedDifficulty.CurrentValue);
-            RenderSEVolumeLevel(_optionMenuModel.SEVolumeLevel.CurrentValue);
-            RenderBgmVolumeLevel(_optionMenuModel.BgmVolumeLevel.CurrentValue);
         }
 
         private void RenderDifficulty(GameDifficulty difficulty)
@@ -342,30 +339,18 @@ namespace Ccc.Infrastructure.Navigation
             }
         }
 
-        private void RenderSEVolumeLevel(int volumeLevel)
+        private void RenderOptionMenu(OptionMenuViewStateDto viewState)
         {
-            RenderVolumeLevel(_seVolumeSelectorView, volumeLevel);
+            RenderSelector(_seVolumeSelectorView, viewState.SEVolumeSelector);
+            RenderSelector(_bgmVolumeSelectorView, viewState.BgmVolumeSelector);
         }
 
-        private void RenderBgmVolumeLevel(int volumeLevel)
+        private static void RenderSelector(CycleSelectorView selectorView, CycleSelectorStateDto selectorState)
         {
-            RenderVolumeLevel(_bgmVolumeSelectorView, volumeLevel);
-        }
-
-        private void RenderVolumeLevel(CycleSelectorView selectorView, int volumeLevel)
-        {
-            if (selectorView == null)
+            if (selectorView != null)
             {
-                return;
+                selectorView.Render(selectorState);
             }
-
-            // 音量は最小レベル（ミュート）を丸に含めず、最小レベルの時はどの丸も塗りつぶさない
-            selectorView.Render(
-                new CycleSelectorStateDto(
-                    volumeLevel.ToString(),
-                    !_model.IsBusy.CurrentValue,
-                    volumeLevel - OptionVolumeLevels.Min - 1,
-                    OptionVolumeLevels.Count - 1));
         }
 
         private void RenderErrorMessage(string errorMessage)
