@@ -4,6 +4,7 @@ using Ccc.Core.Model;
 using Ccc.Presentation;
 using Ccc.Presentation.Audio;
 using Ccc.Presentation.Navigation;
+using Ccc.Presentation.ScoreRank;
 using UnityEngine;
 
 namespace Ccc.Infrastructure.Assets
@@ -17,42 +18,46 @@ namespace Ccc.Infrastructure.Assets
         private const AudioKey DefaultGameplayBgmKey = AudioKey.BgmGameplayNormal;
 
         [SerializeField]
-        private string displayName;
+        private string _displayName;
 
         [SerializeField]
-        private GameMode gameMode;
+        private GameMode _gameMode;
 
         [SerializeField]
-        private GameDifficulty difficulty;
+        private GameDifficulty _difficulty;
 
         [SerializeField]
-        private GameplayConfigAsset gameplayConfigAsset;
+        private GameplayConfigAsset _gameplayConfigAsset;
 
         [SerializeField]
-        private MissionParameterSourceMode missionParameterSourceMode =
+        private MissionParameterSourceMode _missionParameterSourceMode =
             MissionParameterSourceMode.Automatic;
 
         [SerializeField]
-        private MissionParameterGenerationProfileAsset missionParameterGenerationProfileAsset;
+        private MissionParameterGenerationProfileAsset _missionParameterGenerationProfileAsset;
 
         [SerializeField]
-        private MissionPresetAsset missionPresetAsset;
+        private MissionPresetAsset _missionPresetAsset;
 
         [SerializeField]
-        private MissionTextAsset missionTextAsset;
+        private MissionTextAsset _missionTextAsset;
 
         [SerializeField]
-        private AudioKey gameplayBgmKey = DefaultGameplayBgmKey;
+        private AudioKey _gameplayBgmKey = DefaultGameplayBgmKey;
 
         [SerializeField]
-        private ExpressionDisplayStyle expressionDisplayStyle;
+        private ExpressionDisplayStyle _expressionDisplayStyle;
+
+        [Tooltip("評価段階ごとに必要なスコア。低い段階から順に、1以上で厳密に増加する値を設定する。要素数が評価段階の数になる。")]
+        [SerializeField]
+        private List<int> _scoreRankThresholds = new List<int>();
 
         /// <summary>
         /// Inspectorやデバッグログで使用する表示名を取得します。
         /// </summary>
         public string DisplayName
         {
-            get { return string.IsNullOrWhiteSpace(displayName) ? name : displayName; }
+            get { return string.IsNullOrWhiteSpace(_displayName) ? name : _displayName; }
         }
 
         /// <summary>
@@ -60,7 +65,7 @@ namespace Ccc.Infrastructure.Assets
         /// </summary>
         public GameMode GameMode
         {
-            get { return gameMode; }
+            get { return _gameMode; }
         }
 
         /// <summary>
@@ -68,7 +73,7 @@ namespace Ccc.Infrastructure.Assets
         /// </summary>
         public GameDifficulty Difficulty
         {
-            get { return difficulty; }
+            get { return _difficulty; }
         }
 
         /// <summary>
@@ -76,7 +81,7 @@ namespace Ccc.Infrastructure.Assets
         /// </summary>
         public GameplayConfigAsset GameplayConfigAsset
         {
-            get { return gameplayConfigAsset; }
+            get { return _gameplayConfigAsset; }
         }
 
         /// <summary>
@@ -84,7 +89,7 @@ namespace Ccc.Infrastructure.Assets
         /// </summary>
         public MissionParameterSourceMode MissionParameterSourceMode
         {
-            get { return missionParameterSourceMode; }
+            get { return _missionParameterSourceMode; }
         }
 
         /// <summary>
@@ -92,7 +97,7 @@ namespace Ccc.Infrastructure.Assets
         /// </summary>
         public MissionParameterGenerationProfileAsset MissionParameterGenerationProfileAsset
         {
-            get { return missionParameterGenerationProfileAsset; }
+            get { return _missionParameterGenerationProfileAsset; }
         }
 
         /// <summary>
@@ -100,7 +105,7 @@ namespace Ccc.Infrastructure.Assets
         /// </summary>
         public MissionPresetAsset MissionPresetAsset
         {
-            get { return missionPresetAsset; }
+            get { return _missionPresetAsset; }
         }
 
         /// <summary>
@@ -109,7 +114,7 @@ namespace Ccc.Infrastructure.Assets
         /// </summary>
         public MissionTextAsset MissionTextAsset
         {
-            get { return missionTextAsset; }
+            get { return _missionTextAsset; }
         }
 
         /// <summary>
@@ -117,7 +122,7 @@ namespace Ccc.Infrastructure.Assets
         /// </summary>
         public AudioKey GameplayBgmKey
         {
-            get { return gameplayBgmKey; }
+            get { return _gameplayBgmKey; }
         }
 
         /// <summary>
@@ -125,7 +130,7 @@ namespace Ccc.Infrastructure.Assets
         /// </summary>
         public ExpressionDisplayStyle ExpressionDisplayStyle
         {
-            get { return expressionDisplayStyle; }
+            get { return _expressionDisplayStyle; }
         }
 
         /// <summary>
@@ -135,49 +140,59 @@ namespace Ccc.Infrastructure.Assets
         public IReadOnlyList<string> Validate()
         {
             var errors = new List<string>();
-            if (!Enum.IsDefined(typeof(GameMode), gameMode))
+            if (!Enum.IsDefined(typeof(GameMode), _gameMode))
             {
-                errors.Add($"GameMode is undefined: {gameMode}.");
+                errors.Add($"GameMode is undefined: {_gameMode}.");
             }
 
-            if (!Enum.IsDefined(typeof(GameDifficulty), difficulty))
+            if (!Enum.IsDefined(typeof(GameDifficulty), _difficulty))
             {
-                errors.Add($"GameDifficulty is undefined: {difficulty}.");
+                errors.Add($"GameDifficulty is undefined: {_difficulty}.");
             }
 
-            if (gameplayConfigAsset == null)
+            if (_gameplayConfigAsset == null)
             {
                 errors.Add("Gameplay config asset is missing.");
             }
 
             if (!Enum.IsDefined(
                     typeof(MissionParameterSourceMode),
-                    missionParameterSourceMode))
+                    _missionParameterSourceMode))
             {
                 errors.Add(
-                    $"Mission parameter source mode is undefined: {missionParameterSourceMode}.");
+                    $"Mission parameter source mode is undefined: {_missionParameterSourceMode}.");
             }
 
-            if (missionParameterGenerationProfileAsset == null)
+            if (_missionParameterGenerationProfileAsset == null)
             {
                 errors.Add("Mission parameter generation profile asset is missing.");
             }
 
-            if (missionParameterSourceMode == MissionParameterSourceMode.PresetDebug &&
-                missionPresetAsset == null)
+            if (_missionParameterSourceMode == MissionParameterSourceMode.PresetDebug &&
+                _missionPresetAsset == null)
             {
                 errors.Add("PresetDebug requires a Mission preset asset.");
             }
 
-            if (!Enum.IsDefined(typeof(AudioKey), gameplayBgmKey) ||
-                gameplayBgmKey == AudioKey.None)
+            if (!Enum.IsDefined(typeof(AudioKey), _gameplayBgmKey) ||
+                _gameplayBgmKey == AudioKey.None)
             {
-                errors.Add($"Gameplay BGM key is not configured: {gameplayBgmKey}.");
+                errors.Add($"Gameplay BGM key is not configured: {_gameplayBgmKey}.");
             }
 
-            if (!Enum.IsDefined(typeof(ExpressionDisplayStyle), expressionDisplayStyle))
+            if (!Enum.IsDefined(typeof(ExpressionDisplayStyle), _expressionDisplayStyle))
             {
-                errors.Add($"Expression display style is undefined: {expressionDisplayStyle}.");
+                errors.Add($"Expression display style is undefined: {_expressionDisplayStyle}.");
+            }
+
+            // 基準の規則はScoreRankThresholds自身が持つため、生成を試みて違反を検出する
+            try
+            {
+                CreateScoreRankThresholds();
+            }
+            catch (ArgumentException exception)
+            {
+                errors.Add($"Score rank thresholds are invalid: {exception.Message}");
             }
 
             return errors;
@@ -198,17 +213,17 @@ namespace Ccc.Infrastructure.Assets
                 throw new ArgumentNullException(nameof(config));
             }
 
-            if (missionParameterGenerationProfileAsset == null)
+            if (_missionParameterGenerationProfileAsset == null)
             {
                 throw new InvalidOperationException(
                     "GameplayConfigEntry has no MissionParameterGenerationProfileAsset.");
             }
 
             MissionParameterGenerationSettings generationSettings =
-                missionParameterGenerationProfileAsset.CreateGenerationSettings();
+                _missionParameterGenerationProfileAsset.CreateGenerationSettings();
             MissionCatalogEvaluationPolicy evaluationPolicy =
-                missionParameterGenerationProfileAsset.CreateEvaluationPolicy(config);
-            switch (missionParameterSourceMode)
+                _missionParameterGenerationProfileAsset.CreateEvaluationPolicy(config);
+            switch (_missionParameterSourceMode)
             {
                 case MissionParameterSourceMode.Automatic:
                     return MissionCatalogPreparationSettings.CreateAutomatic(
@@ -216,7 +231,7 @@ namespace Ccc.Infrastructure.Assets
                         evaluationPolicy);
 
                 case MissionParameterSourceMode.PresetDebug:
-                    if (missionPresetAsset == null)
+                    if (_missionPresetAsset == null)
                     {
                         throw new InvalidOperationException(
                             "GameplayConfigEntry has no MissionPresetAsset for PresetDebug.");
@@ -225,14 +240,24 @@ namespace Ccc.Infrastructure.Assets
                     return MissionCatalogPreparationSettings.CreatePresetDebug(
                         generationSettings,
                         evaluationPolicy,
-                        missionPresetAsset.CreateCandidates());
+                        _missionPresetAsset.CreateCandidates());
 
                 default:
                     throw new ArgumentOutOfRangeException(
-                        nameof(missionParameterSourceMode),
-                        missionParameterSourceMode,
+                        nameof(_missionParameterSourceMode),
+                        _missionParameterSourceMode,
                         null);
             }
+        }
+
+        /// <summary>
+        /// Inspectorで設定された必要スコアから評価段階の基準を生成します。
+        /// </summary>
+        /// <returns>評価段階の基準。</returns>
+        /// <exception cref="ArgumentException">必要スコアが未設定、または基準の規則に違反している場合。</exception>
+        public ScoreRankThresholds CreateScoreRankThresholds()
+        {
+            return new ScoreRankThresholds(_scoreRankThresholds);
         }
 
         /// <summary>
@@ -247,7 +272,7 @@ namespace Ccc.Infrastructure.Assets
                 return false;
             }
 
-            return gameMode == request.GameMode && difficulty == request.Difficulty;
+            return _gameMode == request.GameMode && _difficulty == request.Difficulty;
         }
 
         /// <summary>
@@ -257,8 +282,8 @@ namespace Ccc.Infrastructure.Assets
         public GameplayNavigationRequest CreateDefaultRequest()
         {
             return new GameplayNavigationRequest(
-                gameMode,
-                difficulty,
+                _gameMode,
+                _difficulty,
                 new OptionSettingsSnapshot(
                     OptionVolumeLevels.Default,
                     OptionVolumeLevels.Default));
@@ -279,8 +304,8 @@ namespace Ccc.Infrastructure.Assets
             }
 
             return new GameplayNavigationRequest(
-                gameMode,
-                difficulty,
+                _gameMode,
+                _difficulty,
                 optionSettings);
         }
     }

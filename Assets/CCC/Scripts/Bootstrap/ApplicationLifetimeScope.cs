@@ -12,6 +12,7 @@ using Ccc.Presentation.Audio;
 using Ccc.Infrastructure.Navigation;
 using Ccc.Presentation;
 using Ccc.Presentation.Navigation;
+using Ccc.Presentation.ScoreRank;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using VContainer;
@@ -32,6 +33,8 @@ namespace Ccc.Bootstrap
         [SerializeField] private TitleScreenState _startingTitleScreenState = TitleScreenState.MainMenu;
         [SerializeField] private LogSettingsAsset _logSettingsAsset;
         [SerializeField] private SceneCatalogAsset _sceneCatalogAsset;
+        [Tooltip("GameModeとGameDifficultyの組ごとのGameplay設定。GameSceneの起動設定と、各画面で参照する評価段階の基準の取得元になる。")]
+        [SerializeField] private GameplayConfigCatalogAsset _gameplayConfigCatalogAsset;
         [Tooltip("保存データを同一視するバージョンの設定。未設定の場合は判定せず、全てのハイスコアを使い続ける。")]
         [SerializeField] private VersionEquivalenceEntryAsset _versionEquivalenceEntryAsset;
         [Tooltip("Editor実行時にのみ適用するプラットフォーム。Autoは起動時のSceneから判定し、特定できなければMobileとして扱う。")]
@@ -45,6 +48,7 @@ namespace Ccc.Bootstrap
         {
             builder.RegisterInstance<IRuntimeMode>(new RuntimeMode(_isDebugMode));
             RegisterSceneCatalog(builder);
+            RegisterGameplayConfigCatalog(builder);
             RegisterPlayPlatform(builder);
 
             if (_audioPlayer != null)
@@ -151,6 +155,25 @@ namespace Ccc.Bootstrap
             }
 
             builder.RegisterInstance(_sceneCatalogAsset);
+        }
+
+        private void RegisterGameplayConfigCatalog(IContainerBuilder builder)
+        {
+            if (_gameplayConfigCatalogAsset == null)
+            {
+                throw new InvalidOperationException(
+                    "ApplicationLifetimeScope requires a GameplayConfigCatalogAsset reference.");
+            }
+
+            IReadOnlyList<string> errors = _gameplayConfigCatalogAsset.Validate();
+            if (errors.Count > 0)
+            {
+                throw new InvalidOperationException(
+                    "Gameplay config catalog validation failed: " + string.Join(" | ", errors));
+            }
+
+            builder.RegisterInstance(_gameplayConfigCatalogAsset);
+            builder.Register<IScoreRankThresholdsProvider, CatalogScoreRankThresholdsProvider>(Lifetime.Singleton);
         }
 
         private void RegisterPlayPlatform(IContainerBuilder builder)

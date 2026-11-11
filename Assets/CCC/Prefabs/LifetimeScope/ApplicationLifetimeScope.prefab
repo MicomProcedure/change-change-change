@@ -503,5 +503,6 @@ MonoBehaviour:
   _startingTitleScreenState: 1
   _logSettingsAsset: {fileID: 11400000, guid: dcd72eb398ccbd24c91c2b4b734ee4ee, type: 2}
   _sceneCatalogAsset: {fileID: 11400000, guid: 3c7d15df3744db74d9117bd1a15df154, type: 2}
+  _gameplayConfigCatalogAsset: {fileID: 11400000, guid: f863cd1c9be2f49548ffe7465c807a31, type: 2}
   _versionEquivalenceEntryAsset: {fileID: 11400000, guid: 46feb4f4bd37d8d49a1a350c24c62151, type: 2}
   _editorPlayPlatformOverride: 0
