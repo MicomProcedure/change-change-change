@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e2407a1dd4a34b5a96f3231d3ebc7387, type: 3}
   m_Name: VersionEquivalenceEntryAsset
   m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.Assets.VersionEquivalenceEntryAsset
-  _highScore: {fileID: 0}
+  _highScore: {fileID: 11400000, guid: 1d40b48b4e4325b42a6ba45b10284ad1, type: 2}

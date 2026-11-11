@@ -12,4 +12,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f8f57d4bda7d44598870389087050c4f, type: 3}
   m_Name: HighScoreVersionEquivalence
   m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.Assets.HighScoreVersionEquivalenceAsset
-  _entries: []
+  _entries:
+  - _gameMode: 0
+    _difficulty: 0
+    _versionGroups:
+    - _versions:
+      - 1.0.0
+      - 1.0.1
+  - _gameMode: 0
+    _difficulty: 1
+    _versionGroups:
+    - _versions:
+      - 1.0.0
+      - 1.0.1
+  - _gameMode: 0
+    _difficulty: 2
+    _versionGroups:
+    - _versions:
+      - 1.0.0
+    - _versions:
+      - 1.0.1
