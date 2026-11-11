@@ -36,7 +36,7 @@ stateDiagram-v2
    Tutorial --> Stage
    MainMenu --> OptionMenu
    OptionMenu --> MainMenu
-   OptionMenu --> MainMenu: ゲームリセット（全消去してTitleSceneをロード）
+   OptionMenu --> MainMenu: ゲームリセット（全消去しApplicationLifetimeScopeを作り直してTitleSceneをロード）
    MainMenu --> Credit
    Credit --> MainMenu
 
@@ -74,6 +74,7 @@ stateDiagram-v2
 | `ApplicationLifetimeScope` | `Ccc.Bootstrap` | アプリケーション共通のシングルトンコンポーネント登録 |
 | `TitleLifetimeScope` / `GameplayLifetimeScope` | `Ccc.Bootstrap` | 各シーンの DI 依存関係登録 |
 | `TitleEntryPoint` | `Ccc.Bootstrap` | TitleScene 開始時の初期処理（購読開始と Title BGM 再生） |
+| `IGameResetter` / `ApplicationScopeGameResetter` | `Ccc.Presentation.Navigation` / `Ccc.Bootstrap` | `ApplicationLifetimeScope` を作り直して TitleScene を読み込み直すゲームリセット |
 
 ---
 
@@ -84,6 +85,8 @@ classDiagram
 direction LR
 class ApplicationLifetimeScope
 class SceneNavigator
+class IGameResetter
+class ApplicationScopeGameResetter
 class TitleLifetimeScope
 class GameplayLifetimeScope
 class TitleScreenModel
@@ -122,6 +125,10 @@ TitleScreenView --> OptionMenuModel
 TitleScreenView o-- CycleSelectorView
 TitleScreenModel --> OptionMenuModel : settings snapshot
 TitleScreenModel --> SceneNavigator
+TitleScreenModel --> IGameResetter : ResetAsync
+ApplicationScopeGameResetter ..|> IGameResetter
+ApplicationLifetimeScope o-- ApplicationScopeGameResetter : singleton
+ApplicationScopeGameResetter --> SceneNavigator : rebuilt scope
 TitleEntryPoint --> TitleScreenTransitionSoundPlayer : StartSubscription
 TitleEntryPoint --> OptionVolumeAudioSynchronizer : StartSubscription
 TitleEntryPoint --> TitleSelectorChangeSoundPlayer : StartSubscription

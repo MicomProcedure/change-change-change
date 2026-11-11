@@ -30,7 +30,7 @@ namespace Ccc.Infrastructure.Navigation
 
         private readonly ISceneNavigator _sceneNavigator;
         private readonly OptionMenuModel _optionMenuModel;
-        private readonly ILocalDataEraser _localDataEraser;
+        private readonly IGameResetter _gameResetter;
         private readonly ReactiveProperty<TitleScreenState> _currentScreen;
         private readonly ReactiveProperty<bool> _isBusy;
         private readonly ReactiveProperty<string> _errorMessage;
@@ -89,14 +89,14 @@ namespace Ccc.Infrastructure.Navigation
         /// <param name="startRequest">TitleScene開始Request。</param>
         /// <param name="highScoreService">ハイスコアの参照処理。</param>
         /// <param name="scoreRankThresholdsProvider">ハイスコアの評価段階の基準を提供するポート。</param>
-        /// <param name="localDataEraser">ローカルの永続化情報の消去処理。</param>
+        /// <param name="gameResetter">ゲームリセット処理。</param>
         public TitleScreenModel(
             ISceneNavigator sceneNavigator,
             OptionMenuModel optionMenuModel,
             TitleStartRequest startRequest,
             HighScoreService highScoreService,
             IScoreRankThresholdsProvider scoreRankThresholdsProvider,
-            ILocalDataEraser localDataEraser)
+            IGameResetter gameResetter)
         {
             _sceneNavigator =
                 sceneNavigator ?? throw new ArgumentNullException(nameof(sceneNavigator));
@@ -104,8 +104,8 @@ namespace Ccc.Infrastructure.Navigation
             _optionMenuModel =
                 optionMenuModel ?? throw new ArgumentNullException(nameof(optionMenuModel));
 
-            _localDataEraser =
-                localDataEraser ?? throw new ArgumentNullException(nameof(localDataEraser));
+            _gameResetter =
+                gameResetter ?? throw new ArgumentNullException(nameof(gameResetter));
 
             if (startRequest == null)
             {
@@ -298,8 +298,8 @@ namespace Ccc.Infrastructure.Navigation
         }
 
         /// <summary>
-        /// ローカルの永続化情報を全て消去し、TitleSceneをメインメニューから読み込み直します。
-        /// 全ての画面状態と音量を消去後の保存内容から再構築します。
+        /// ローカルの永続化情報を全て消去し、アプリケーションを起動直後と同じ状態に戻してから、
+        /// TitleSceneをメインメニューから読み込み直します。
         /// </summary>
         public async UniTask ConfirmGameResetAsync()
         {
@@ -312,12 +312,8 @@ namespace Ccc.Infrastructure.Navigation
             }
 
             await LoadSceneWhileBusyAsync(
-                () =>
-                {
-                    _localDataEraser.EraseAll();
-                    return _sceneNavigator.LoadTitleAsync(
-                        new TitleStartRequest(TitleScreenState.MainMenu));
-                },
+                () => _gameResetter.ResetAsync(
+                    new TitleStartRequest(TitleScreenState.MainMenu)),
                 GameResetLoadFailedErrorMessage);
         }
 

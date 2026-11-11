@@ -38,6 +38,8 @@
 | `DebugHighScoreEntry` | `Ccc.Infrastructure.Persistence` | DebugMode の起動時に保存先へ入れる、ゲームモードと難易度の組ごとのハイスコア設定 |
 | `UnityApplicationVersionProvider` | `Ccc.Infrastructure.Persistence` | `Application.version` の提供 |
 | `PlayerPrefsLocalDataEraser` | `Ccc.Infrastructure.Persistence` | `PlayerPrefs.DeleteAll` による全消去 |
+| `IGameResetter` | `Ccc.Presentation.Navigation` | 永続化情報を消去し、アプリケーションを起動直後の状態から再構築するポート |
+| `ApplicationScopeGameResetter` | `Ccc.Bootstrap` | 表示中の Scene と `ApplicationLifetimeScope` を破棄して作り直すゲームリセット |
 
 ---
 
@@ -48,7 +50,7 @@
 - 既存のハイスコアを超えた場合のみ更新し、新記録として扱うこと。同点は更新せず、記録がない状態のスコア0も新記録にしない。
 - 記録がない場合のハイスコアは `0` として表示すること。
 - `ApplicationLifetimeScope` の DebugMode では `InMemoryHighScoreStore` を登録し、記録を永続化しないこと。アプリケーションの実行中は記録を保持するため、新記録の判定と表示は通常と同じように確認できる。
-- DebugMode では実際の保存データを読み込まない。また、記録はゲームリセットでは消えず、アプリケーションの終了時に消える。
+- DebugMode では実際の保存データを読み込まない。記録はアプリケーションの終了時に消え、ゲームリセットでは `_debugHighScoreEntries` に指定した起動時の記録に戻る。
 - DebugMode では `ApplicationLifetimeScope` の `_debugHighScoreEntries` に指定した記録を、起動時のハイスコアとして保持すること。記録のバージョンには実行中のアプリケーションバージョンを設定し、指定のない組は記録なしとする。同じ組を複数指定した場合は後の指定を使う。通常モードではこの設定を使わないこと。
 
 ---
@@ -106,15 +108,46 @@
 
 ## 6. ゲームリセット
 
+ゲームリセットは、アプリケーションを起動直後と同じ状態に戻す操作とする。各 Model や Application Scope のサービスを個別に初期化せず、表示中の Scene と `ApplicationLifetimeScope` を破棄して作り直すことで、消去後の保存内容から全ての状態を再構築する。これにより、保存項目や Application Scope に状態を持つサービス（BGM の再生状態など）が増えても、リセット処理の変更を不要とする。
+
+### 6.1 手順
+
 1. `OptionMenu` 上に確認ポップアップを開くこと。画面状態は `OptionMenu` のまま変更しない。
-2. 確定後に `ILocalDataEraser.EraseAll` を実行すること。
-3. `TitleScene` を `MainMenu` から読み込み直すこと。
+2. 確定後、`TitleScreenModel` は `IGameResetter.ResetAsync` に `MainMenu` から開始する `TitleStartRequest` を渡すこと。
+3. `ApplicationScopeGameResetter` は次の順に処理すること。
+   1. `ApplicationLifetimeScope` が VContainerSettings の RootLifetimeScope として作り直せることを確認する。確認できない場合は何も破棄せずに `InvalidOperationException` を送出し、`OptionMenu` にエラーを表示する。
+   2. 空の一時 Scene を作成してアクティブにし、表示中の Scene を全てアンロードする。子の Scope を親より先に破棄するためである。
+   3. `ApplicationLifetimeScope` を破棄し、GameObject の破棄が完了する次のフレームまで待つ。
+   4. `ILocalDataEraser.EraseAll` を実行する。全てのオブジェクトを破棄した後に消去するため、破棄処理による保存が消去後に残ることはない。
+   5. VContainerSettings から `ApplicationLifetimeScope` を作り直す。`LifetimeScope.Enqueue` で渡す `TitleStartRequest` が `ApplicationLifetimeScope` にも登録されないよう、`TitleScene` の読み込みより先に作り直すこと。
+   6. 作り直した `ApplicationLifetimeScope` の `ISceneNavigator` で `TitleScene` を読み込む。
 
-各 Model を個別に初期化せず、Scene の再読み込みで消去後の保存内容から再構築する。これにより、保存項目が増えてもリセット処理の変更を不要とし、音量は `TitleEntryPoint` の購読開始時に Audio へ反映される。
+音量は作り直した `ApplicationEntryPoint` と `TitleEntryPoint` の購読開始時に Audio へ反映され、Title BGM は先頭から再生される。
 
+### 6.2 制約
+
+- 表示中の Scene のアンロードを始めた後は元の画面に戻れないため、失敗した場合はエラーを画面に表示できない。例外をログに出力し、画面は一時 Scene のまま停止する。
+- 一時 Scene にはカメラがないため、表示中の Scene のアンロードから `TitleScene` の読み込み完了までは何も描画されない。
+- 作り直した Scope からの `ISceneNavigator` の取り出しは、Scope を作り直す `ApplicationScopeGameResetter` に限って許可する Service Locator の例外とする。
+- Editor のファイルログは `ApplicationLifetimeScope` と共に作り直されるため、リセットのたびに別ファイルになる。
+- `ApplicationLifetimeScope` は一時 Scene がアクティブな状態で作り直されるため、Editor の `PlayPlatformOverride.Auto` は起動時の Scene から判定できず、既定の Mobile になる。Editor で `GameSceneForPC` から再生した場合は、リセットの前後で PlayPlatform が変わる。
 - `PlayerPrefs.DeleteAll` は、Unity が PlayerPrefs へ保存するウィンドウサイズなどの情報も消去する。
 - `Logs/Ccc` のログと診断CSVはゲームデータではないため、消去の対象外とする。
 - PlayerPrefs 以外の保存手段を追加する場合は、`ILocalDataEraser` の実装でその保存先も消去すること。
+
+### 6.3 申し送り事項：Bootstrap シーンへの移行
+
+現在の方式は、Root の破棄が次のフレームまで遅延すること、`LifetimeScope.Enqueue` が Root の組み立てにも適用されることなど、VContainer の内部挙動に依存している。6.2 の制約もこの方式に由来する。
+
+`ApplicationLifetimeScope` を常駐の Bootstrap シーンに置き、`TitleScene` と GameScene を加算読み込みする構成に移行すれば、ゲームリセットは「表示中の Scene をアンロードし、Bootstrap シーンを Single で読み込み直す」だけになり、起動と同じ経路で Application Scope を構築できる。移行には次の対応が必要になる。
+
+- `SceneNavigator` を、加算読み込み・前の Scene のアンロード・アクティブ Scene の切り替えに対応させる。
+- VContainerSettings の RootLifetimeScope 指定をやめ、Bootstrap シーン上の Scope を親にする。
+- Editor で任意の Scene から再生したとき、Bootstrap シーンを先に読み込む仕組みを用意する。GameScene の直接再生を維持するためである。
+- Editor の PlayPlatform 判定を、再生を開始した Scene から行うよう作り直す。
+- 必要に応じて Bootstrap シーンにフェードや読み込み画面を常駐させ、遷移中の暗転を隠す。
+
+対応は [Issue #60](https://github.com/MicomProcedure/change-change-change/issues/60) で管理する。
 
 ---
 
@@ -129,3 +162,4 @@
 | `IApplicationVersionProvider` | `UnityApplicationVersionProvider` |
 | `ILocalDataEraser` | `PlayerPrefsLocalDataEraser` |
 | `HighScoreService` | `HighScoreService` |
+| `IGameResetter` | `ApplicationScopeGameResetter` |
