@@ -20,6 +20,7 @@
 ## 難易度選択画面
 
 - 選択中の `GameMode` と `GameDifficulty` のハイスコア（記録がない場合は `0`）
+- 選択中の `GameMode` と `GameDifficulty` のハイスコアで到達した評価段階（ScoreRank）の数。基準は結果画面と同じものを使うこと。
 
 ## クレジット画面
 

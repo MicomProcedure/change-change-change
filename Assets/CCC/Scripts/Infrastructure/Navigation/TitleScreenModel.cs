@@ -3,6 +3,7 @@ using System.Globalization;
 using Ccc.Core.Model;
 using Ccc.Core.UseCases;
 using Ccc.Presentation.Navigation;
+using Ccc.Presentation.ScoreRank;
 using Cysharp.Threading.Tasks;
 using R3;
 using UnityEngine;
@@ -71,6 +72,11 @@ namespace Ccc.Infrastructure.Navigation
         public ReadOnlyReactiveProperty<string> SelectedHighScoreText { get; }
 
         /// <summary>
+        /// 選択中のゲームモードと難易度のハイスコアで到達した評価段階の数を取得します。記録がない場合は0です。
+        /// </summary>
+        public ReadOnlyReactiveProperty<int> SelectedHighScoreAchievedRankCount { get; }
+
+        /// <summary>
         /// OptionMenu上のゲームリセット確認ポップアップが開いているかどうかを取得します。
         /// </summary>
         public ReadOnlyReactiveProperty<bool> IsResetConfirmationOpen { get; }
@@ -82,12 +88,14 @@ namespace Ccc.Infrastructure.Navigation
         /// <param name="optionMenuModel">Option設定を保持するModel。</param>
         /// <param name="startRequest">TitleScene開始Request。</param>
         /// <param name="highScoreService">ハイスコアの参照処理。</param>
+        /// <param name="scoreRankThresholdsProvider">ハイスコアの評価段階の基準を提供するポート。</param>
         /// <param name="localDataEraser">ローカルの永続化情報の消去処理。</param>
         public TitleScreenModel(
             ISceneNavigator sceneNavigator,
             OptionMenuModel optionMenuModel,
             TitleStartRequest startRequest,
             HighScoreService highScoreService,
+            IScoreRankThresholdsProvider scoreRankThresholdsProvider,
             ILocalDataEraser localDataEraser)
         {
             _sceneNavigator =
@@ -109,6 +117,11 @@ namespace Ccc.Infrastructure.Navigation
                 throw new ArgumentNullException(nameof(highScoreService));
             }
 
+            if (scoreRankThresholdsProvider == null)
+            {
+                throw new ArgumentNullException(nameof(scoreRankThresholdsProvider));
+            }
+
             _currentScreen =
                 new ReactiveProperty<TitleScreenState>(startRequest.InitialScreen);
 
@@ -127,6 +140,11 @@ namespace Ccc.Infrastructure.Navigation
                 .Select(difficulty => highScoreService
                     .GetHighScore(SelectedGameMode, difficulty)
                     .ToString(CultureInfo.InvariantCulture))
+                .ToReadOnlyReactiveProperty();
+            SelectedHighScoreAchievedRankCount = _selectedDifficulty
+                .Select(difficulty => scoreRankThresholdsProvider
+                    .Get(SelectedGameMode, difficulty)
+                    .CountAchievedRanks(highScoreService.GetHighScore(SelectedGameMode, difficulty)))
                 .ToReadOnlyReactiveProperty();
             IsResetConfirmationOpen = _isResetConfirmationOpen.ToReadOnlyReactiveProperty();
         }
@@ -382,6 +400,7 @@ namespace Ccc.Infrastructure.Navigation
             ErrorMessage.Dispose();
             SelectedDifficulty.Dispose();
             SelectedHighScoreText.Dispose();
+            SelectedHighScoreAchievedRankCount.Dispose();
             IsResetConfirmationOpen.Dispose();
 
             _currentScreen.Dispose();

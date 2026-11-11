@@ -54,6 +54,8 @@ namespace Ccc.Infrastructure.Navigation
         [SerializeField] private DifficultyDescriptionView _difficultyDescriptionView;
         [SerializeField] private TutorialPageView _tutorialPageView;
         [SerializeField] private TMP_Text _highScoreText;
+        [Tooltip("選択中の難易度のハイスコアで到達した評価段階の数を表示するView。")]
+        [SerializeField] private ScoreStarsView _highScoreStarsView;
 
         [Header("音量設定")]
         [SerializeField] private CycleSelectorView _seVolumeSelectorView;
@@ -81,6 +83,7 @@ namespace Ccc.Infrastructure.Navigation
         private IDisposable _difficultyChangeSubscription;
         private IDisposable _difficultySubscription;
         private IDisposable _highScoreSubscription;
+        private IDisposable _highScoreRankSubscription;
         private OptionMenuModel _optionMenuModel;
         private IDisposable _seVolumeChangeSubscription;
         private IDisposable _bgmVolumeChangeSubscription;
@@ -206,6 +209,9 @@ namespace Ccc.Infrastructure.Navigation
             _highScoreSubscription =
                 _model.SelectedHighScoreText.Subscribe(RenderHighScore);
 
+            _highScoreRankSubscription =
+                _model.SelectedHighScoreAchievedRankCount.Subscribe(RenderHighScoreRank);
+
 
             _optionMenuSubscription =
                 _optionMenuModel.Settings
@@ -235,6 +241,7 @@ namespace Ccc.Infrastructure.Navigation
             _difficultySubscription?.Dispose();
             _difficultyChangeSubscription?.Dispose();
             _highScoreSubscription?.Dispose();
+            _highScoreRankSubscription?.Dispose();
             _seVolumeChangeSubscription?.Dispose();
             _bgmVolumeChangeSubscription?.Dispose();
             _optionMenuSubscription?.Dispose();
@@ -401,6 +408,20 @@ namespace Ccc.Infrastructure.Navigation
             {
                 _highScoreText.text = highScoreText;
             }
+        }
+
+        private void RenderHighScoreRank(int achievedRankCount)
+        {
+            if (_highScoreStarsView != null)
+            {
+                RenderHighScoreRankAsync(achievedRankCount).Forget(HandleAsyncFailure);
+            }
+        }
+
+        private async UniTask RenderHighScoreRankAsync(int achievedRankCount)
+        {
+            // 段階数と星の数の不一致などの例外をHandleAsyncFailureで記録できるよう、awaitで受ける
+            await _highScoreStarsView.RenderAsync(achievedRankCount, destroyCancellationToken);
         }
 
         private void RenderOptionMenu(OptionMenuViewStateDto viewState)
