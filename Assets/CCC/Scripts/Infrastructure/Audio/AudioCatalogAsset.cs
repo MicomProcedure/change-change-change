@@ -20,10 +20,10 @@ namespace Ccc.Infrastructure.Audio
         }
 
         [SerializeField]
-        private List<AudioEntry> seEntries = new List<AudioEntry>();
+        private List<AudioEntry> _seEntries = new List<AudioEntry>();
 
         [SerializeField]
-        private List<AudioEntry> bgmEntries = new List<AudioEntry>();
+        private List<AudioEntry> _bgmEntries = new List<AudioEntry>();
 
         private void OnEnable()
         {
@@ -43,13 +43,13 @@ namespace Ccc.Infrastructure.Audio
         /// <returns>定義が存在する場合はtrue。</returns>
         public bool TryGetSE(AudioKey key, out AudioEntry entry)
         {
-            if (key == AudioKey.None || seEntries == null)
+            if (key == AudioKey.None || _seEntries == null)
             {
                 entry = null;
                 return false;
             }
 
-            entry = seEntries.FirstOrDefault(candidate => candidate != null && candidate.Key == key);
+            entry = _seEntries.FirstOrDefault(candidate => candidate != null && candidate.Key == key);
             return entry != null;
         }
 
@@ -61,13 +61,13 @@ namespace Ccc.Infrastructure.Audio
         /// <returns>定義が存在する場合はtrue。</returns>
         public bool TryGetBgm(AudioKey key, out AudioEntry entry)
         {
-            if (key == AudioKey.None || bgmEntries == null)
+            if (key == AudioKey.None || _bgmEntries == null)
             {
                 entry = null;
                 return false;
             }
 
-            entry = bgmEntries.FirstOrDefault(candidate => candidate != null && candidate.Key == key);
+            entry = _bgmEntries.FirstOrDefault(candidate => candidate != null && candidate.Key == key);
             return entry != null;
         }
 
@@ -80,18 +80,18 @@ namespace Ccc.Infrastructure.Audio
             var errors = new List<string>();
 
             var allEntries = new List<AudioEntry>();
-            if (seEntries != null)
+            if (_seEntries != null)
             {
-                allEntries.AddRange(seEntries);
+                allEntries.AddRange(_seEntries);
             }
 
-            if (bgmEntries != null)
+            if (_bgmEntries != null)
             {
-                allEntries.AddRange(bgmEntries);
+                allEntries.AddRange(_bgmEntries);
             }
 
-            ValidateEntries(seEntries, AudioCategory.SE, "SE", errors);
-            ValidateEntries(bgmEntries, AudioCategory.Bgm, "BGM", errors);
+            ValidateEntries(_seEntries, AudioCategory.SE, "SE", errors);
+            ValidateEntries(_bgmEntries, AudioCategory.Bgm, "BGM", errors);
 
             foreach (var duplicateGroup in allEntries
                          .Where(entry => entry != null)
@@ -124,7 +124,7 @@ namespace Ccc.Infrastructure.Audio
 
                 if (expectedCategory == AudioCategory.SE)
                 {
-                    var seCount = seEntries == null ? 0 : seEntries.Count(entry => entry != null && entry.Key == key);
+                    var seCount = _seEntries == null ? 0 : _seEntries.Count(entry => entry != null && entry.Key == key);
                     if (seCount != 1)
                     {
                         errors.Add($"{key} must be registered exactly once in the SE list.");
@@ -133,7 +133,7 @@ namespace Ccc.Infrastructure.Audio
 
                 if (expectedCategory == AudioCategory.Bgm)
                 {
-                    var bgmCount = bgmEntries == null ? 0 : bgmEntries.Count(entry => entry != null && entry.Key == key);
+                    var bgmCount = _bgmEntries == null ? 0 : _bgmEntries.Count(entry => entry != null && entry.Key == key);
                     if (bgmCount != 1)
                     {
                         errors.Add($"{key} must be registered exactly once in the BGM list.");
@@ -179,7 +179,10 @@ namespace Ccc.Infrastructure.Audio
                     errors.Add($"{entry.Key} has no AudioClip.");
                 }
 
-                if (!IsValidVolume(entry.Volume))
+                bool isVolumeValid = expectedCategory == AudioCategory.Bgm
+                    ? AudioVolumeRules.IsValidAudioSourceVolume(entry.Volume)
+                    : AudioVolumeRules.IsValidOneShotVolume(entry.Volume);
+                if (!isVolumeValid)
                 {
                     errors.Add($"{entry.Key} has an invalid volume: {entry.Volume}.");
                 }
@@ -210,14 +213,6 @@ namespace Ccc.Infrastructure.Audio
                 default:
                     return AudioCategory.Unknown;
             }
-        }
-
-        private static bool IsValidVolume(float volume)
-        {
-            return !float.IsNaN(volume) &&
-                   !float.IsInfinity(volume) &&
-                   volume >= 0f &&
-                   volume <= 1f;
         }
 
         private void LogValidationErrors()
