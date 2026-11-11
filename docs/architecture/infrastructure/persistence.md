@@ -34,6 +34,7 @@
 | `ILocalDataEraser` | `Ccc.Core.UseCases` | ローカルの永続化情報を全消去するポート |
 | `PlayerPrefsHighScoreStore` / `HighScoreRecordJsonCodec` | `Ccc.Infrastructure.Persistence` | PlayerPrefsへの保存と保存用JSONの変換 |
 | `InMemoryHighScoreStore` | `Ccc.Infrastructure.Persistence` | メモリ上だけで記録を保持する DebugMode 用の保存先 |
+| `DebugHighScoreEntry` | `Ccc.Infrastructure.Persistence` | DebugMode の起動時に保存先へ入れる、ゲームモードと難易度の組ごとのハイスコア設定 |
 | `UnityApplicationVersionProvider` | `Ccc.Infrastructure.Persistence` | `Application.version` の提供 |
 | `PlayerPrefsLocalDataEraser` | `Ccc.Infrastructure.Persistence` | `PlayerPrefs.DeleteAll` による全消去 |
 
@@ -47,6 +48,7 @@
 - 記録がない場合のハイスコアは `0` として表示すること。
 - `ApplicationLifetimeScope` の DebugMode では `InMemoryHighScoreStore` を登録し、記録を永続化しないこと。アプリケーションの実行中は記録を保持するため、新記録の判定と表示は通常と同じように確認できる。
 - DebugMode では実際の保存データを読み込まない。また、記録はゲームリセットでは消えず、アプリケーションの終了時に消える。
+- DebugMode では `ApplicationLifetimeScope` の `_debugHighScoreEntries` に指定した記録を、起動時のハイスコアとして保持すること。記録のバージョンには実行中のアプリケーションバージョンを設定し、指定のない組は記録なしとする。同じ組を複数指定した場合は後の指定を使う。通常モードではこの設定を使わないこと。
 
 ---
 
