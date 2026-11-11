@@ -1,4 +1,5 @@
 using System;
+using Ccc.Infrastructure.UI;
 using Ccc.Presentation;
 using R3;
 using TMPro;
@@ -13,9 +14,12 @@ namespace Ccc.Infrastructure.Gameplay
     public sealed class GameplayNavigationView : MonoBehaviour
     {
         [SerializeField] private TMP_Text _resultText;
+        [Tooltip("ハイスコアを更新したSessionのResult画面でのみ表示するText。文言はPrefabで設定する。")]
         [SerializeField] private TMP_Text _highScoreText;
         [Tooltip("ハイスコアを更新したSessionのResult画面でのみ表示するGameObject。")]
         [SerializeField] private GameObject _newHighScoreIndicator;
+        [Tooltip("ハイスコアを更新したSessionのResult画面でのみ強調表示するView。")]
+        [SerializeField] private ScaleHighlightView _newHighScoreHighlightView;
         [SerializeField] private Button _retryButton;
         [SerializeField] private Button _returnToMainMenuButton;
 
@@ -49,7 +53,7 @@ namespace Ccc.Infrastructure.Gameplay
 
             if (_highScoreText != null)
             {
-                _highScoreText.text = result.HighScoreText;
+                _highScoreText.gameObject.SetActive(result.IsNewHighScore);
             }
 
             if (_newHighScoreIndicator != null)
@@ -58,6 +62,19 @@ namespace Ccc.Infrastructure.Gameplay
             }
 
             gameObject.SetActive(true);
+
+            // 非アクティブな間はPlayが無視されるため、表示後に呼ぶ
+            if (_newHighScoreHighlightView != null)
+            {
+                if (result.IsNewHighScore)
+                {
+                    _newHighScoreHighlightView.Play();
+                }
+                else
+                {
+                    _newHighScoreHighlightView.Stop();
+                }
+            }
         }
 
         /// <summary>

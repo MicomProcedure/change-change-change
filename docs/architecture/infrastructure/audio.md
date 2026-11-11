@@ -129,7 +129,8 @@ public enum AudioKey
     SESuccess,
     SEFailure,
     SETimeWarning,
-    SEGameOver
+    SEGameOver,
+    SECongratulations
 }
 ```
 
@@ -296,6 +297,7 @@ Core層に Audio 固有のイベントを設けないこと。既存の論理イ
 | 失敗確定 | `GameplayPresenter` | 失敗の `SubmissionResolvedEvent` | `PlaySE(SEFailure)` |
 | 残り3秒以下到達 | `GameplayPresenter` | `SectionTimerSnapshot` | `PlaySE(SETimeWarning)` |
 | Session終了 | `GameplayPresenter` | `SessionEndedEvent` | `PlaySE(SEGameOver)` |
+| ハイスコア更新時のResult画面表示 | `GameplayPresenter` | `HighScoreUpdateResult.IsNewHighScore` が true の `SessionEndedEvent` | `PlaySE(SECongratulations)`（`SEGameOver` と同時に再生） |
 
 ※ `SETimeWarning` は同一 MissionId・同一整数秒において一度だけ再生すること。タイマー更新スナップショットが同一秒内で複数回届いても重複再生しないこと。
 

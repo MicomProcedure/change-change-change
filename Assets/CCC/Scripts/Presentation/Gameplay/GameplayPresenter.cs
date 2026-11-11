@@ -263,6 +263,10 @@ namespace Ccc.Presentation
                         endedEvent.Result.CorrectAnswerCount);
                     _view.ShowResult(CreateResultViewStateDto(endedEvent.Result, highScoreResult));
                     _audio.PlaySE(AudioKey.SEGameOver);
+                    if (highScoreResult.IsNewHighScore)
+                    {
+                        _audio.PlaySE(AudioKey.SECongratulations);
+                    }
                     _audio.PlayBgm(AudioKey.BgmResult);
                     break;
             }
@@ -510,7 +514,6 @@ namespace Ccc.Presentation
 
             return new GameplayResultViewStateDto(
                 resultText,
-                highScoreResult.HighScore.ToString(CultureInfo.InvariantCulture),
                 highScoreResult.IsNewHighScore);
         }
 
