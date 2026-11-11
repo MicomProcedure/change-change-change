@@ -298,7 +298,7 @@ namespace Ccc.Infrastructure.Navigation
         }
 
         /// <summary>
-        /// ローカルの永続化情報を全て消去し、TitleSceneをタイトル画面から読み込み直します。
+        /// ローカルの永続化情報を全て消去し、TitleSceneをメインメニューから読み込み直します。
         /// 全ての画面状態と音量を消去後の保存内容から再構築します。
         /// </summary>
         public async UniTask ConfirmGameResetAsync()
@@ -316,7 +316,7 @@ namespace Ccc.Infrastructure.Navigation
                 {
                     _localDataEraser.EraseAll();
                     return _sceneNavigator.LoadTitleAsync(
-                        new TitleStartRequest(TitleScreenState.TitleScreen));
+                        new TitleStartRequest(TitleScreenState.MainMenu));
                 },
                 GameResetLoadFailedErrorMessage);
         }
