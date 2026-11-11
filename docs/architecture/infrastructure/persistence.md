@@ -30,6 +30,7 @@
 | `VersionEquivalenceEntryAsset` | `Ccc.Infrastructure.Assets` | 保存データの種類ごとの同一視設定をまとめる `ScriptableObject` |
 | `HighScoreVersionEquivalenceAsset` / `HighScoreVersionEquivalenceEntry` / `VersionGroup` | `Ccc.Infrastructure.Assets` | ゲームモードと難易度の組ごとの、ハイスコアの同一視設定 |
 | `VersionEquivalenceBuildValidator` | `Ccc.Editor` | ビルド時の設定検証と登録漏れの検出 |
+| `EditorPlayerPrefsMenu` | `Ccc.Editor` | Editor上のPlayerPrefsを確認のうえ削除するメニュー |
 | `IApplicationVersionProvider` | `Ccc.Core.UseCases` | 実行中のアプリケーションバージョンの提供ポート |
 | `ILocalDataEraser` | `Ccc.Core.UseCases` | ローカルの永続化情報を全消去するポート |
 | `PlayerPrefsHighScoreStore` / `HighScoreRecordJsonCodec` | `Ccc.Infrastructure.Persistence` | PlayerPrefsへの保存と保存用JSONの変換 |
