@@ -36,7 +36,7 @@ stateDiagram-v2
    Tutorial --> Stage
    MainMenu --> OptionMenu
    OptionMenu --> MainMenu
-   OptionMenu --> TitleScreen: ゲームリセット（全消去してTitleSceneをロード）
+   OptionMenu --> MainMenu: ゲームリセット（全消去しApplicationLifetimeScopeを作り直してTitleSceneをロード）
    MainMenu --> Credit
    Credit --> MainMenu
 
@@ -50,7 +50,7 @@ stateDiagram-v2
 - アプリケーションの通常起動時は `TitleScreen` から開始すること。
 - GameScene から TitleScene へ戻った場合は `MainMenu` から開始すること。
 - ゲームリセットの確認は `OptionMenu` 上のポップアップとし、Screen に含めないこと。ポップアップが開いている間は Screen を遷移させないこと。
-- ゲームリセット後は `TitleScreen` から開始すること。詳細は [CCC ローカル永続化クラス設計](../infrastructure/persistence.md) を参照すること。
+- ゲームリセット後は `MainMenu` から開始すること。詳細は [CCC ローカル永続化クラス設計](../infrastructure/persistence.md) を参照すること。
 - Stage のゲーム開始操作時は、ゲームモードを `LifeEndless`、難易度を Stage で選択中の値と指定した `GameplayStartRequest` を生成すること。
 - TitleScene 内の遷移は方向（`TitleScreenTransitionDirection`）を持つ。`Open*` / `EnterMainMenu` による遷移は `Forward`、`Close*` による遷移は `Backward` とすること。
 
@@ -74,6 +74,7 @@ stateDiagram-v2
 | `ApplicationLifetimeScope` | `Ccc.Bootstrap` | アプリケーション共通のシングルトンコンポーネント登録 |
 | `TitleLifetimeScope` / `GameplayLifetimeScope` | `Ccc.Bootstrap` | 各シーンの DI 依存関係登録 |
 | `TitleEntryPoint` | `Ccc.Bootstrap` | TitleScene 開始時の初期処理（購読開始と Title BGM 再生） |
+| `IGameResetter` / `ApplicationScopeGameResetter` | `Ccc.Presentation.Navigation` / `Ccc.Bootstrap` | `ApplicationLifetimeScope` を作り直して TitleScene を読み込み直すゲームリセット |
 
 ---
 
@@ -84,6 +85,8 @@ classDiagram
 direction LR
 class ApplicationLifetimeScope
 class SceneNavigator
+class IGameResetter
+class ApplicationScopeGameResetter
 class TitleLifetimeScope
 class GameplayLifetimeScope
 class TitleScreenModel
@@ -122,6 +125,10 @@ TitleScreenView --> OptionMenuModel
 TitleScreenView o-- CycleSelectorView
 TitleScreenModel --> OptionMenuModel : settings snapshot
 TitleScreenModel --> SceneNavigator
+TitleScreenModel --> IGameResetter : ResetAsync
+ApplicationScopeGameResetter ..|> IGameResetter
+ApplicationLifetimeScope o-- ApplicationScopeGameResetter : singleton
+ApplicationScopeGameResetter --> SceneNavigator : rebuilt scope
 TitleEntryPoint --> TitleScreenTransitionSoundPlayer : StartSubscription
 TitleEntryPoint --> OptionVolumeAudioSynchronizer : StartSubscription
 TitleEntryPoint --> TitleSelectorChangeSoundPlayer : StartSubscription

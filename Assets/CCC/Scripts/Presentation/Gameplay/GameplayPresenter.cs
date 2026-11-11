@@ -272,13 +272,22 @@ namespace Ccc.Presentation
                             _lifecycleCancellationSource.Token)
                         .Forget(HandleAsyncFailure);
                     _audio.PlaySE(AudioKey.SEGameOver);
-                    if (highScoreResult.IsNewHighScore)
+                    if (ShouldPlayCongratulations(highScoreResult))
                     {
                         _audio.PlaySE(AudioKey.SECongratulations);
                     }
                     _audio.PlayBgm(AudioKey.BgmResult);
                     break;
             }
+        }
+
+        private bool ShouldPlayCongratulations(HighScoreUpdateResult highScoreResult)
+        {
+            // 祝福SEは、ハイスコアを更新し、かつその難易度の評価段階を全て達成したときだけ鳴らす
+            return highScoreResult.IsNewHighScore &&
+                   _scoreRankThresholdsProvider
+                       .Get(_gameplayRequest.GameMode, _gameplayRequest.Difficulty)
+                       .HasAchievedAllRanks(highScoreResult.Score);
         }
 
         private void HandleFailure(GameplayFlowFailure failure)

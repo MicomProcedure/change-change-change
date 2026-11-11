@@ -34,6 +34,40 @@ namespace Ccc.Tests
         }
 
         /// <summary>
+        /// 最も高い段階の必要スコア以上で、全ての段階に到達したとみなすことを境界値で検証します。
+        /// </summary>
+        /// <param name="score">評価するスコア。</param>
+        /// <param name="expectedHasAchievedAllRanks">全ての段階に到達したと期待するかどうか。</param>
+        [TestCase(0, false)]
+        [TestCase(29, false)]
+        [TestCase(30, true)]
+        [TestCase(1000, true)]
+        public void HasAchievedAllRanks_ShouldBeTrueOnlyWhenHighestRequiredScoreIsReached(
+            int score,
+            bool expectedHasAchievedAllRanks)
+        {
+            var thresholds = new ScoreRankThresholds(StandardRequiredScores);
+
+            bool hasAchievedAllRanks = thresholds.HasAchievedAllRanks(score);
+
+            Assert.That(hasAchievedAllRanks, Is.EqualTo(expectedHasAchievedAllRanks));
+        }
+
+        /// <summary>
+        /// 全ての段階への到達判定でも、負のスコアを拒否することを検証します。
+        /// </summary>
+        [Test]
+        public void HasAchievedAllRanks_WhenScoreIsNegative_ShouldThrow()
+        {
+            var thresholds = new ScoreRankThresholds(StandardRequiredScores);
+
+            var exception = Assert.Throws<ArgumentOutOfRangeException>(
+                () => thresholds.HasAchievedAllRanks(-1));
+
+            Assert.That(exception.ParamName, Is.EqualTo("score"));
+        }
+
+        /// <summary>
         /// 負のスコアを拒否することを検証します。
         /// </summary>
         [Test]

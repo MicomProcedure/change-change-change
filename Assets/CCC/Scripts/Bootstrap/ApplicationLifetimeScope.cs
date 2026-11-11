@@ -70,6 +70,7 @@ namespace Ccc.Bootstrap
             RegisterHighScore(builder);
 
             builder.Register<ISceneNavigator, SceneNavigator>(Lifetime.Singleton);
+            builder.Register<IGameResetter, ApplicationScopeGameResetter>(Lifetime.Singleton);
             builder.RegisterInstance(new TitleStartRequest(_startingTitleScreenState));
 
             RegisterLogging(builder);
