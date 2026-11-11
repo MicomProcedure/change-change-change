@@ -31,7 +31,11 @@ namespace Ccc.Presentation
         /// Result画面を表示します。
         /// </summary>
         /// <param name="result">Result画面の表示状態。</param>
-        void ShowResult(GameplayResultViewStateDto result);
+        /// <param name="cancellationToken">Result画面の表示演出を中断するトークン。</param>
+        /// <returns>Result画面の表示演出の完了を表す非同期処理。</returns>
+        UniTask ShowResultAsync(
+            GameplayResultViewStateDto result,
+            CancellationToken cancellationToken);
 
         /// <summary>
         /// 提出結果のフィードバック演出を再生します。

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Ccc.Presentation.Audio;
 using UnityEngine;
-using UnityEngine.Serialization;
 using Ccc.Presentation.Navigation;
 
 namespace Ccc.Infrastructure.Audio
@@ -12,12 +11,11 @@ namespace Ccc.Infrastructure.Audio
     /// </summary>
     public sealed class UnityAudioPlayer : MonoBehaviour, IAudioPlayer, IAudioVolumeControl
     {
-        [SerializeField] private AudioCatalogAsset catalog;
-        [SerializeField] private AudioSource bgmSource;
-        [SerializeField] private AudioSource seSource;
-        [FormerlySerializedAs("loopingSeSource")]
-        [SerializeField] private AudioSource loopingSESource;
-        [SerializeField] private AudioVolumeLevelTableAsset volumeLevelTable;
+        [SerializeField] private AudioCatalogAsset _catalog;
+        [SerializeField] private AudioSource _bgmSource;
+        [SerializeField] private AudioSource _seSource;
+        [SerializeField] private AudioSource _loopingSESource;
+        [SerializeField] private AudioVolumeLevelTableAsset _volumeLevelTable;
 
         private readonly HashSet<string> _warnedIssues = new HashSet<string>();
         private AudioKey _currentBgmKey;
@@ -34,40 +32,40 @@ namespace Ccc.Infrastructure.Audio
             SetSEVolumeLevel(OptionVolumeLevels.Default);
             SetBgmVolumeLevel(OptionVolumeLevels.Default);
             var configurationErrors = new List<string>();
-            if (catalog == null)
+            if (_catalog == null)
             {
                 configurationErrors.Add("UnityAudioPlayer requires an AudioCatalogAsset.");
             }
 
-            if (bgmSource == null)
+            if (_bgmSource == null)
             {
                 configurationErrors.Add("UnityAudioPlayer requires a BGM AudioSource.");
             }
 
-            if (seSource == null)
+            if (_seSource == null)
             {
                 configurationErrors.Add("UnityAudioPlayer requires an SE AudioSource.");
             }
 
-            if (loopingSESource == null)
+            if (_loopingSESource == null)
             {
                 configurationErrors.Add(
                     "UnityAudioPlayer requires a looping SE AudioSource.");
             }
 
-            if (bgmSource != null && ReferenceEquals(bgmSource, seSource))
+            if (_bgmSource != null && ReferenceEquals(_bgmSource, _seSource))
             {
                 configurationErrors.Add(
                     "UnityAudioPlayer requires different AudioSource instances for BGM and SE.");
             }
 
-            if (bgmSource != null && ReferenceEquals(bgmSource, loopingSESource))
+            if (_bgmSource != null && ReferenceEquals(_bgmSource, _loopingSESource))
             {
                 configurationErrors.Add(
                     "UnityAudioPlayer requires different AudioSource instances for BGM and looping SE.");
             }
 
-            if (seSource != null && ReferenceEquals(seSource, loopingSESource))
+            if (_seSource != null && ReferenceEquals(_seSource, _loopingSESource))
             {
                 configurationErrors.Add(
                     "UnityAudioPlayer requires different AudioSource instances for SE and looping SE.");
@@ -85,7 +83,7 @@ namespace Ccc.Infrastructure.Audio
                 return;
             }
 
-            IReadOnlyList<string> errors = catalog.Validate();
+            IReadOnlyList<string> errors = _catalog.Validate();
             for (int index = 0; index < errors.Count; index++)
             {
                 LogErrorOnce($"catalog:{errors[index]}", errors[index]);
@@ -98,7 +96,7 @@ namespace Ccc.Infrastructure.Audio
         /// <param name="key">再生するSEのキー。</param>
         public void PlaySE(AudioKey key)
         {
-            if (catalog == null)
+            if (_catalog == null)
             {
                 LogWarningOnce(
                     "configuration:UnityAudioPlayer requires an AudioCatalogAsset.",
@@ -106,7 +104,7 @@ namespace Ccc.Infrastructure.Audio
                 return;
             }
 
-            if (seSource == null)
+            if (_seSource == null)
             {
                 LogWarningOnce(
                     "configuration:UnityAudioPlayer requires an SE AudioSource.",
@@ -114,7 +112,7 @@ namespace Ccc.Infrastructure.Audio
                 return;
             }
 
-            if (!catalog.TryGetSE(key, out AudioEntry entry))
+            if (!_catalog.TryGetSE(key, out AudioEntry entry))
             {
                 WarnMissingKey(key, "SE");
                 return;
@@ -128,7 +126,7 @@ namespace Ccc.Infrastructure.Audio
                 return;
             }
 
-            if (!IsValidVolume(entry.Volume))
+            if (!AudioVolumeRules.IsValidOneShotVolume(entry.Volume))
             {
                 LogWarningOnce(
                     $"catalog:{key} has an invalid volume: {entry.Volume}.",
@@ -136,7 +134,7 @@ namespace Ccc.Infrastructure.Audio
                 return;
             }
 
-            seSource.PlayOneShot(entry.Clip, entry.Volume * _seVolumeRate);
+            _seSource.PlayOneShot(entry.Clip, entry.Volume * _seVolumeRate);
         }
 
         /// <summary>
@@ -145,7 +143,7 @@ namespace Ccc.Infrastructure.Audio
         /// <param name="key">ループ再生するSEのキー。</param>
         public void PlayLoopingSE(AudioKey key)
         {
-            if (catalog == null)
+            if (_catalog == null)
             {
                 LogWarningOnce(
                     "configuration:UnityAudioPlayer requires an AudioCatalogAsset.",
@@ -153,7 +151,7 @@ namespace Ccc.Infrastructure.Audio
                 return;
             }
 
-            if (loopingSESource == null)
+            if (_loopingSESource == null)
             {
                 LogWarningOnce(
                     "configuration:UnityAudioPlayer requires a looping SE AudioSource.",
@@ -161,7 +159,7 @@ namespace Ccc.Infrastructure.Audio
                 return;
             }
 
-            if (!catalog.TryGetSE(key, out AudioEntry entry))
+            if (!_catalog.TryGetSE(key, out AudioEntry entry))
             {
                 WarnMissingKey(key, "Looping SE");
                 return;
@@ -175,7 +173,7 @@ namespace Ccc.Infrastructure.Audio
                 return;
             }
 
-            if (!IsValidVolume(entry.Volume))
+            if (!AudioVolumeRules.IsValidOneShotVolume(entry.Volume))
             {
                 LogWarningOnce(
                     $"catalog:{key} has an invalid volume: {entry.Volume}.",
@@ -183,16 +181,23 @@ namespace Ccc.Infrastructure.Audio
                 return;
             }
 
-            if (_currentLoopingSEKey == key && loopingSESource.isPlaying)
+            if (!AudioVolumeRules.IsValidAudioSourceVolume(entry.Volume))
+            {
+                LogWarningOnce(
+                    $"catalog:{key} exceeds the AudioSource volume limit: {entry.Volume}.",
+                    $"Looping SE key {key} has volume {entry.Volume}, but looping playback cannot exceed {AudioVolumeRules.MaxAudioSourceVolume}.");
+            }
+
+            if (_currentLoopingSEKey == key && _loopingSESource.isPlaying)
             {
                 return;
             }
 
-            loopingSESource.Stop();
-            loopingSESource.clip = entry.Clip;
-            loopingSESource.volume = entry.Volume * _seVolumeRate;
-            loopingSESource.loop = true;
-            loopingSESource.Play();
+            _loopingSESource.Stop();
+            _loopingSESource.clip = entry.Clip;
+            _loopingSESource.volume = entry.Volume * _seVolumeRate;
+            _loopingSESource.loop = true;
+            _loopingSESource.Play();
             _currentLoopingSEKey = key;
         }
 
@@ -208,12 +213,12 @@ namespace Ccc.Infrastructure.Audio
             }
 
             _currentLoopingSEKey = AudioKey.None;
-            if (loopingSESource == null)
+            if (_loopingSESource == null)
             {
                 return;
             }
 
-            loopingSESource.Stop();
+            _loopingSESource.Stop();
         }
 
         /// <summary>
@@ -222,7 +227,7 @@ namespace Ccc.Infrastructure.Audio
         /// <param name="key">再生するBGMのキー。</param>
         public void PlayBgm(AudioKey key)
         {
-            if (catalog == null)
+            if (_catalog == null)
             {
                 LogWarningOnce(
                     "configuration:UnityAudioPlayer requires an AudioCatalogAsset.",
@@ -230,7 +235,7 @@ namespace Ccc.Infrastructure.Audio
                 return;
             }
 
-            if (bgmSource == null)
+            if (_bgmSource == null)
             {
                 LogWarningOnce(
                     "configuration:UnityAudioPlayer requires a BGM AudioSource.",
@@ -238,7 +243,7 @@ namespace Ccc.Infrastructure.Audio
                 return;
             }
 
-            if (!catalog.TryGetBgm(key, out AudioEntry entry))
+            if (!_catalog.TryGetBgm(key, out AudioEntry entry))
             {
                 WarnMissingKey(key, "BGM");
                 return;
@@ -252,7 +257,7 @@ namespace Ccc.Infrastructure.Audio
                 return;
             }
 
-            if (!IsValidVolume(entry.Volume))
+            if (!AudioVolumeRules.IsValidAudioSourceVolume(entry.Volume))
             {
                 LogWarningOnce(
                     $"catalog:{key} has an invalid volume: {entry.Volume}.",
@@ -260,16 +265,16 @@ namespace Ccc.Infrastructure.Audio
                 return;
             }
 
-            if (_currentBgmKey == key && bgmSource.isPlaying)
+            if (_currentBgmKey == key && _bgmSource.isPlaying)
             {
                 return;
             }
 
-            bgmSource.Stop();
-            bgmSource.clip = entry.Clip;
-            bgmSource.volume = entry.Volume * _bgmVolumeRate;
-            bgmSource.loop = true;
-            bgmSource.Play();
+            _bgmSource.Stop();
+            _bgmSource.clip = entry.Clip;
+            _bgmSource.volume = entry.Volume * _bgmVolumeRate;
+            _bgmSource.loop = true;
+            _bgmSource.Play();
             _currentBgmKey = key;
         }
 
@@ -279,12 +284,12 @@ namespace Ccc.Infrastructure.Audio
         public void StopBgm()
         {
             _currentBgmKey = AudioKey.None;
-            if (bgmSource == null)
+            if (_bgmSource == null)
             {
                 return;
             }
 
-            bgmSource.Stop();
+            _bgmSource.Stop();
         }
         
         /// <summary>
@@ -293,7 +298,7 @@ namespace Ccc.Infrastructure.Audio
         /// <param name="level">音量レベル。</param>
         public void SetSEVolumeLevel(int level)
         {
-            if (volumeLevelTable == null)
+            if (_volumeLevelTable == null)
             {
                 LogWarningOnce(
                     "configuration:UnityAudioPlayer requires an AudioVolumeLevelTableAsset.",
@@ -301,7 +306,7 @@ namespace Ccc.Infrastructure.Audio
                 return;
             }
 
-            if (!volumeLevelTable.TryGetSEVolumeRate(level, out float volumeRate))
+            if (!_volumeLevelTable.TryGetSEVolumeRate(level, out float volumeRate))
             {
                 LogWarningOnce(
                     $"volume-level:SE:{level}",
@@ -311,12 +316,12 @@ namespace Ccc.Infrastructure.Audio
 
             _seVolumeRate = volumeRate;
 
-            if (loopingSESource != null &&
-                catalog != null &&
+            if (_loopingSESource != null &&
+                _catalog != null &&
                 _currentLoopingSEKey != AudioKey.None &&
-                catalog.TryGetSE(_currentLoopingSEKey, out AudioEntry entry))
+                _catalog.TryGetSE(_currentLoopingSEKey, out AudioEntry entry))
             {
-                loopingSESource.volume = entry.Volume * _seVolumeRate;
+                _loopingSESource.volume = entry.Volume * _seVolumeRate;
             }
         }
 
@@ -326,7 +331,7 @@ namespace Ccc.Infrastructure.Audio
         /// <param name="level">音量レベル。</param>
         public void SetBgmVolumeLevel(int level)
         {
-            if (volumeLevelTable == null)
+            if (_volumeLevelTable == null)
             {
                 LogWarningOnce(
                     "configuration:UnityAudioPlayer requires an AudioVolumeLevelTableAsset.",
@@ -334,7 +339,7 @@ namespace Ccc.Infrastructure.Audio
                 return;
             }
 
-            if (!volumeLevelTable.TryGetBgmVolumeRate(level, out float volumeRate))
+            if (!_volumeLevelTable.TryGetBgmVolumeRate(level, out float volumeRate))
             {
                 LogWarningOnce(
                     $"volume-level:BGM:{level}",
@@ -344,18 +349,18 @@ namespace Ccc.Infrastructure.Audio
 
             _bgmVolumeRate = volumeRate;
 
-            if (bgmSource != null &&
-                catalog != null &&
+            if (_bgmSource != null &&
+                _catalog != null &&
                 _currentBgmKey != AudioKey.None &&
-                catalog.TryGetBgm(_currentBgmKey, out AudioEntry entry))
+                _catalog.TryGetBgm(_currentBgmKey, out AudioEntry entry))
             {
-                bgmSource.volume = entry.Volume * _bgmVolumeRate;
+                _bgmSource.volume = entry.Volume * _bgmVolumeRate;
             }
         }
 
         private void ValidateVolumeLevelTable()
         {
-            if (volumeLevelTable == null)
+            if (_volumeLevelTable == null)
             {
                 LogErrorOnce(
                     "configuration:UnityAudioPlayer requires an AudioVolumeLevelTableAsset.",
@@ -363,7 +368,7 @@ namespace Ccc.Infrastructure.Audio
                 return;
             }
 
-            IReadOnlyList<string> errors = volumeLevelTable.Validate();
+            IReadOnlyList<string> errors = _volumeLevelTable.Validate();
             for (int index = 0; index < errors.Count; index++)
             {
                 LogErrorOnce($"volume-table:{errors[index]}", errors[index]);
@@ -391,14 +396,6 @@ namespace Ccc.Infrastructure.Audio
             {
                 Debug.LogWarning($"[UnityAudioPlayer] {name}: {message}");
             }
-        }
-
-        private static bool IsValidVolume(float volume)
-        {
-            return !float.IsNaN(volume) &&
-                   !float.IsInfinity(volume) &&
-                   volume >= 0f &&
-                   volume <= 1f;
         }
     }
 }

@@ -15,7 +15,7 @@
 > - **`Ccc.Core.Logic`**: `Ccc.Core.Model` を扱う同期・決定的なドメイン計算処理。  
 >   （例: `ExpressionCalculator`、`MissionConditionMatcher`、`MissionCatalogBuilder`、`TierResolver`、Selector、セッション遷移用 `GameplayReducer` など）
 > - **`Ccc.Core.UseCases`**: 状態保持および副作用の調停層。  
->   （例: `ExpressionInput`、`GameplayController`、Mission抽選Strategy、`ISectionTimer`、`SectionTimerSnapshot`、`IRandomSource` など。状態の非同期配信には R3 を使用）
+>   （例: `ExpressionInput`、`GameplayController`、Mission抽選Strategy、`ISectionTimer`、`SectionTimerSnapshot`、`IRandomSource`、`HighScoreService`、`IHighScoreStore`、`ILocalDataEraser` など。状態の非同期配信には R3 を使用）
 
 ※ 単一アセンブリ内における `UseCases` → `Logic` → `Model` という依存方向の遵守は、名前空間規約、コードレビュー、および EditMode テストによって検証・維持すること。
 
@@ -42,6 +42,8 @@
 > - `DotweenFeedbackView`
 > - `UniTaskSectionTimer : ISectionTimer`
 > - `UnityRandomSource : IRandomSource`
+> - `PlayerPrefsHighScoreStore : IHighScoreStore`
+> - `PlayerPrefsLocalDataEraser : ILocalDataEraser`
 > - `GameplayConfigAsset` / `MissionParameterGenerationProfileAsset` / `MissionPresetAsset` / `MissionTextAsset` / `LogSettingsAsset`（いずれも `ScriptableObject`）
 > - 診断Reporter群（`CompositeDiagnosticsReporter<TTrace>` / `SafeDiagnosticsReporter<TTrace>` / `LoggerDiagnosticsReporter<TTrace>` / `CsvDiagnosticsReporter<TTrace>` : `IDiagnosticsReporter<TTrace>`）
 > - `SceneNavigator`

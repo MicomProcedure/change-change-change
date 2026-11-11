@@ -40,6 +40,7 @@
 - [UIコンポーネントクラス設計](./architecture/presentation/ui-components.md) — クラス設計
 - [CCC UnityAudioクラス設計](./architecture/infrastructure/audio.md) — クラス設計
 - [CCC Log・診断出力クラス設計](./architecture/infrastructure/logging.md) — クラス設計
+- [CCC ローカル永続化クラス設計](./architecture/infrastructure/persistence.md) — クラス設計
 - [Mission抽選シミュレーション設計](./architecture/tools/mission-draw-simulation.md) — クラス設計
 - [Mission抽選シミュレーション解析Notebook](./architecture/tools/mission-draw-analysis.md) — ツール設計
 

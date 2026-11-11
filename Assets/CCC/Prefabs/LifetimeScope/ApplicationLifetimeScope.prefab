@@ -47,11 +47,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9119946aa39d4c7cb6c81485ebd9a97b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.Audio.UnityAudioPlayer
-  catalog: {fileID: 11400000, guid: a73fcf88ee29d4728ab7aa93c62d89db, type: 2}
-  bgmSource: {fileID: 6019000000000000006}
-  seSource: {fileID: 6019000000000000009}
-  loopingSESource: {fileID: 6019000000000000012}
-  volumeLevelTable: {fileID: 11400000, guid: 6253f93e32b7b4cb0b61b4f15d3974db, type: 2}
+  _catalog: {fileID: 11400000, guid: a73fcf88ee29d4728ab7aa93c62d89db, type: 2}
+  _bgmSource: {fileID: 6019000000000000006}
+  _seSource: {fileID: 6019000000000000009}
+  _loopingSESource: {fileID: 6019000000000000012}
+  _volumeLevelTable: {fileID: 11400000, guid: 6253f93e32b7b4cb0b61b4f15d3974db, type: 2}
 --- !u!1 &6019000000000000004
 GameObject:
   m_ObjectHideFlags: 0
@@ -488,9 +488,21 @@ MonoBehaviour:
     TypeName: 
   autoRun: 1
   autoInjectGameObjects: []
-  audioPlayer: {fileID: 6019000000000000003}
-  isDebugMode: 0
-  startingTitleScreenState: 1
-  logSettingsAsset: {fileID: 11400000, guid: dcd72eb398ccbd24c91c2b4b734ee4ee, type: 2}
-  sceneCatalogAsset: {fileID: 11400000, guid: 3c7d15df3744db74d9117bd1a15df154, type: 2}
-  editorPlayPlatformOverride: 0
+  _audioPlayer: {fileID: 6019000000000000003}
+  _isDebugMode: 0
+  _debugHighScoreEntries:
+  - _gameMode: 0
+    _difficulty: 2
+    _score: 2
+  - _gameMode: 0
+    _difficulty: 0
+    _score: 13
+  - _gameMode: 0
+    _difficulty: 1
+    _score: 30
+  _startingTitleScreenState: 1
+  _logSettingsAsset: {fileID: 11400000, guid: dcd72eb398ccbd24c91c2b4b734ee4ee, type: 2}
+  _sceneCatalogAsset: {fileID: 11400000, guid: 3c7d15df3744db74d9117bd1a15df154, type: 2}
+  _gameplayConfigCatalogAsset: {fileID: 11400000, guid: f863cd1c9be2f49548ffe7465c807a31, type: 2}
+  _versionEquivalenceEntryAsset: {fileID: 11400000, guid: 46feb4f4bd37d8d49a1a350c24c62151, type: 2}
+  _editorPlayPlatformOverride: 0

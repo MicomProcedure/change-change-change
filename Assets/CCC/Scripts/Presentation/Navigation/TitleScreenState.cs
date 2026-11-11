@@ -22,6 +22,5 @@ namespace Ccc.Presentation.Navigation
 
         /// <summary>チュートリアル画像を表示する画面です。</summary>
         Tutorial
-
     }
 }

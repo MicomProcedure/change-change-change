@@ -1,4 +1,6 @@
 using System;
+using System.Globalization;
+using Ccc.Core.UseCases;
 using Ccc.Presentation.Navigation;
 using Cysharp.Threading.Tasks;
 using R3;
@@ -26,7 +28,8 @@ namespace Ccc.Infrastructure.Navigation
         [SerializeField] private GameObject _optionMenuRoot;
         [SerializeField] private GameObject _creditRoot;
         [SerializeField] private GameObject _tutorialRoot;
-        
+        [SerializeField] private GameObject _resetConfirmationRoot;
+
 
         [Header("ボタン")]
         [SerializeField] private Button _enterMainMenuButton;
@@ -42,15 +45,27 @@ namespace Ccc.Infrastructure.Navigation
         [SerializeField] private Button _closeCreditButton;
         [SerializeField] private Button _openTutorialButton;
         [SerializeField] private Button _closeTutorialButton;
+        [SerializeField] private Button _openResetConfirmationButton;
+        [SerializeField] private Button _closeResetConfirmationButton;
+        [SerializeField] private Button _confirmGameResetButton;
 
         [Header("難易度選択")]
         [SerializeField] private CycleSelectorView _difficultySelectorView;
         [SerializeField] private DifficultyDescriptionView _difficultyDescriptionView;
         [SerializeField] private TutorialPageView _tutorialPageView;
+        [SerializeField] private TMP_Text _highScoreText;
+        [Tooltip("選択中の難易度のハイスコアで到達した評価段階の数を表示するView。")]
+        [SerializeField] private ScoreStarsView _highScoreStarsView;
 
         [Header("音量設定")]
         [SerializeField] private CycleSelectorView _seVolumeSelectorView;
         [SerializeField] private CycleSelectorView _bgmVolumeSelectorView;
+
+        [Header("バージョン表示")]
+        [Tooltip("アプリケーションバージョンを表示するText。タイトル画面とクレジットに配置する。")]
+        [SerializeField] private TMP_Text[] _versionTexts;
+        [Tooltip("バージョン表示の書式。{0}にアプリケーションバージョンが入る。")]
+        [SerializeField] private string _versionTextFormat = "v{0}";
 
         [Header("エラー表示")]
         [SerializeField] private TMP_Text _errorText;
@@ -61,27 +76,32 @@ namespace Ccc.Infrastructure.Navigation
 
         private TitleScreenModel _model;
         private IRuntimeMode _runtimeMode;
+        private IApplicationVersionProvider _applicationVersionProvider;
         private IDisposable _screenSubscription;
         private IDisposable _busySubscription;
         private IDisposable _errorSubscription;
         private IDisposable _difficultyChangeSubscription;
         private IDisposable _difficultySubscription;
+        private IDisposable _highScoreSubscription;
+        private IDisposable _highScoreRankSubscription;
         private OptionMenuModel _optionMenuModel;
         private IDisposable _seVolumeChangeSubscription;
-        private IDisposable _seVolumeSubscription;
         private IDisposable _bgmVolumeChangeSubscription;
-        private IDisposable _bgmVolumeSubscription;
+        private IDisposable _optionMenuSubscription;
+        private IDisposable _resetConfirmationSubscription;
         private bool _isInitialized;
 
         [Inject]
         private void Construct(
             TitleScreenModel model,
             OptionMenuModel optionMenuModel,
-            IRuntimeMode runtimeMode)
+            IRuntimeMode runtimeMode,
+            IApplicationVersionProvider applicationVersionProvider)
         {
             _model = model;
             _optionMenuModel = optionMenuModel;
             _runtimeMode = runtimeMode;
+            _applicationVersionProvider = applicationVersionProvider;
         }
 
         private void Start()
@@ -141,6 +161,21 @@ namespace Ccc.Infrastructure.Navigation
                 _closeTutorialButton.onClick.AddListener(_model.CloseTutorial);
             }
 
+            if (_openResetConfirmationButton != null)
+            {
+                _openResetConfirmationButton.onClick.AddListener(_model.OpenResetConfirmation);
+            }
+
+            if (_closeResetConfirmationButton != null)
+            {
+                _closeResetConfirmationButton.onClick.AddListener(_model.CloseResetConfirmation);
+            }
+
+            if (_confirmGameResetButton != null)
+            {
+                _confirmGameResetButton.onClick.AddListener(HandleConfirmGameReset);
+            }
+
             if (_difficultySelectorView != null)
             {
                 _difficultyChangeSubscription =
@@ -170,16 +205,30 @@ namespace Ccc.Infrastructure.Navigation
 
             _difficultySubscription =
                 _model.SelectedDifficulty.Subscribe(RenderDifficulty);
-            
-            _seVolumeSubscription =
-                _optionMenuModel.SEVolumeLevel.Subscribe(RenderSEVolumeLevel);
 
-            _bgmVolumeSubscription =
-                _optionMenuModel.BgmVolumeLevel.Subscribe(RenderBgmVolumeLevel);
+            _highScoreSubscription =
+                _model.SelectedHighScoreText.Subscribe(RenderHighScore);
+
+            _highScoreRankSubscription =
+                _model.SelectedHighScoreAchievedRankCount.Subscribe(RenderHighScoreRank);
+
+
+            _optionMenuSubscription =
+                _optionMenuModel.Settings
+                    .CombineLatest(
+                        _model.IsBusy,
+                        _model.IsResetConfirmationOpen,
+                        (settings, isBusy, isResetConfirmationOpen) =>
+                            OptionMenuViewStateDto.Create(settings, !isBusy && !isResetConfirmationOpen))
+                    .Subscribe(RenderOptionMenu);
+
+            _resetConfirmationSubscription =
+                _model.IsResetConfirmationOpen.Subscribe(RenderResetConfirmation);
 
             RenderScreen(_model.CurrentScreen.CurrentValue);
             RenderBusyState(_model.IsBusy.CurrentValue);
             RenderErrorMessage(_model.ErrorMessage.CurrentValue);
+            RenderApplicationVersion();
 
             _isInitialized = true;
         }
@@ -191,10 +240,12 @@ namespace Ccc.Infrastructure.Navigation
             _errorSubscription?.Dispose();
             _difficultySubscription?.Dispose();
             _difficultyChangeSubscription?.Dispose();
-            _seVolumeSubscription?.Dispose();
+            _highScoreSubscription?.Dispose();
+            _highScoreRankSubscription?.Dispose();
             _seVolumeChangeSubscription?.Dispose();
-            _bgmVolumeSubscription?.Dispose();
             _bgmVolumeChangeSubscription?.Dispose();
+            _optionMenuSubscription?.Dispose();
+            _resetConfirmationSubscription?.Dispose();
 
             if (!_isInitialized || _model == null)
             {
@@ -254,6 +305,24 @@ namespace Ccc.Infrastructure.Navigation
                     _model.CloseTutorial);
             }
 
+            if (_openResetConfirmationButton != null)
+            {
+                _openResetConfirmationButton.onClick.RemoveListener(
+                    _model.OpenResetConfirmation);
+            }
+
+            if (_closeResetConfirmationButton != null)
+            {
+                _closeResetConfirmationButton.onClick.RemoveListener(
+                    _model.CloseResetConfirmation);
+            }
+
+            if (_confirmGameResetButton != null)
+            {
+                _confirmGameResetButton.onClick.RemoveListener(
+                    HandleConfirmGameReset);
+            }
+
             if (_closeCreditButton != null)
             {
                 _closeCreditButton.onClick.RemoveListener(
@@ -288,6 +357,11 @@ namespace Ccc.Infrastructure.Navigation
                 screenState == TitleScreenState.Tutorial);
         }
 
+        private void RenderResetConfirmation(bool isOpen)
+        {
+            RenderScreenRoot(_resetConfirmationRoot, isOpen);
+        }
+
         private void RenderBusyState(bool isBusy)
         {
             bool isInteractable = !isBusy;
@@ -302,9 +376,10 @@ namespace Ccc.Infrastructure.Navigation
             SetInteractableIfAvailable(_closeStageButton, isInteractable);
             SetInteractableIfAvailable(_openTutorialButton, isInteractable);
             SetInteractableIfAvailable(_closeTutorialButton, isInteractable);
+            SetInteractableIfAvailable(_openResetConfirmationButton, isInteractable);
+            SetInteractableIfAvailable(_closeResetConfirmationButton, isInteractable);
+            SetInteractableIfAvailable(_confirmGameResetButton, isInteractable);
             RenderDifficulty(_model.SelectedDifficulty.CurrentValue);
-            RenderSEVolumeLevel(_optionMenuModel.SEVolumeLevel.CurrentValue);
-            RenderBgmVolumeLevel(_optionMenuModel.BgmVolumeLevel.CurrentValue);
         }
 
         private void RenderDifficulty(GameDifficulty difficulty)
@@ -327,30 +402,40 @@ namespace Ccc.Infrastructure.Navigation
                     DifficultyChoices.Length));
         }
 
-        private void RenderSEVolumeLevel(int volumeLevel)
+        private void RenderHighScore(string highScoreText)
         {
-            RenderVolumeLevel(_seVolumeSelectorView, volumeLevel);
-        }
-
-        private void RenderBgmVolumeLevel(int volumeLevel)
-        {
-            RenderVolumeLevel(_bgmVolumeSelectorView, volumeLevel);
-        }
-
-        private void RenderVolumeLevel(CycleSelectorView selectorView, int volumeLevel)
-        {
-            if (selectorView == null)
+            if (_highScoreText != null)
             {
-                return;
+                _highScoreText.text = highScoreText;
             }
+        }
 
-            // 音量は最小レベル（ミュート）を丸に含めず、最小レベルの時はどの丸も塗りつぶさない
-            selectorView.Render(
-                new CycleSelectorStateDto(
-                    volumeLevel.ToString(),
-                    !_model.IsBusy.CurrentValue,
-                    volumeLevel - OptionVolumeLevels.Min - 1,
-                    OptionVolumeLevels.Count - 1));
+        private void RenderHighScoreRank(int achievedRankCount)
+        {
+            if (_highScoreStarsView != null)
+            {
+                RenderHighScoreRankAsync(achievedRankCount).Forget(HandleAsyncFailure);
+            }
+        }
+
+        private async UniTask RenderHighScoreRankAsync(int achievedRankCount)
+        {
+            // 段階数と星の数の不一致などの例外をHandleAsyncFailureで記録できるよう、awaitで受ける
+            await _highScoreStarsView.RenderAsync(achievedRankCount, destroyCancellationToken);
+        }
+
+        private void RenderOptionMenu(OptionMenuViewStateDto viewState)
+        {
+            RenderSelector(_seVolumeSelectorView, viewState.SEVolumeSelector);
+            RenderSelector(_bgmVolumeSelectorView, viewState.BgmVolumeSelector);
+        }
+
+        private static void RenderSelector(CycleSelectorView selectorView, CycleSelectorStateDto selectorState)
+        {
+            if (selectorView != null)
+            {
+                selectorView.Render(selectorState);
+            }
         }
 
         private void RenderErrorMessage(string errorMessage)
@@ -366,9 +451,35 @@ namespace Ccc.Infrastructure.Navigation
             _errorText.text = errorMessage;
         }
 
+        private void RenderApplicationVersion()
+        {
+            if (_versionTexts == null)
+            {
+                return;
+            }
+
+            string versionText = string.Format(
+                CultureInfo.InvariantCulture,
+                _versionTextFormat,
+                _applicationVersionProvider.CurrentVersion);
+
+            for (int index = 0; index < _versionTexts.Length; index++)
+            {
+                if (_versionTexts[index] != null)
+                {
+                    _versionTexts[index].text = versionText;
+                }
+            }
+        }
+
         private void HandleStartGameplay()
         {
             _model.StartGameplayAsync().Forget(HandleAsyncFailure);
+        }
+
+        private void HandleConfirmGameReset()
+        {
+            _model.ConfirmGameResetAsync().Forget(HandleAsyncFailure);
         }
 
         private void HandleAsyncFailure(Exception exception)
@@ -387,6 +498,12 @@ namespace Ccc.Infrastructure.Navigation
             if (_optionMenuModel == null)
             {
                 LogMissingReference(nameof(_optionMenuModel));
+                return false;
+            }
+
+            if (_applicationVersionProvider == null)
+            {
+                LogMissingReference(nameof(_applicationVersionProvider));
                 return false;
             }
 
@@ -418,6 +535,11 @@ namespace Ccc.Infrastructure.Navigation
              if (_tutorialRoot == null)
             {
                 LogMissingReference(nameof(_tutorialRoot));
+            }
+
+            if (_resetConfirmationRoot == null)
+            {
+                LogMissingReference(nameof(_resetConfirmationRoot));
             }
 
 
@@ -471,6 +593,21 @@ namespace Ccc.Infrastructure.Navigation
                 LogMissingReference(nameof(_closeTutorialButton));
             }
 
+            if (_openResetConfirmationButton == null)
+            {
+                LogMissingReference(nameof(_openResetConfirmationButton));
+            }
+
+            if (_closeResetConfirmationButton == null)
+            {
+                LogMissingReference(nameof(_closeResetConfirmationButton));
+            }
+
+            if (_confirmGameResetButton == null)
+            {
+                LogMissingReference(nameof(_confirmGameResetButton));
+            }
+
 
             if (_difficultySelectorView == null)
             {
@@ -498,6 +635,11 @@ namespace Ccc.Infrastructure.Navigation
                 LogMissingReference(nameof(_tutorialPageView));
             }
 
+            if (_highScoreText == null)
+            {
+                LogMissingReference(nameof(_highScoreText));
+            }
+
             if (_seVolumeSelectorView == null)
             {
                 LogMissingReference(nameof(_seVolumeSelectorView));
@@ -506,6 +648,11 @@ namespace Ccc.Infrastructure.Navigation
             if (_bgmVolumeSelectorView == null)
             {
                 LogMissingReference(nameof(_bgmVolumeSelectorView));
+            }
+
+            if (_versionTexts == null || _versionTexts.Length == 0)
+            {
+                LogMissingReference(nameof(_versionTexts));
             }
 
             if (_errorText == null)

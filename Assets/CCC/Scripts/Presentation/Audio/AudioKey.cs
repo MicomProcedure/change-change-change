@@ -25,5 +25,6 @@ namespace Ccc.Presentation.Audio
         SECountdown = 208,
         SEHizimere = 209,
         SESubmit = 210,
+        SECongratulations = 211,
     }
 }

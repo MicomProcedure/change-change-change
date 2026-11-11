@@ -1730,6 +1730,8 @@ Disposeは購読、進行中演出、MainMenu遷移待機をCancelすること�
 
 | 登録対象の型 | 登録ライフタイム (Lifetime) |
 | --- | --- |
+| `GameplayConfigCatalogAsset` | `ApplicationLifetimeScope` で `Instance` 登録したものを親Scopeから解決 |
+| `IScoreRankThresholdsProvider` | `ApplicationLifetimeScope` で `Singleton`（Title画面からも解決できる） |
 | `GameplayConfigEntry` / 設定Asset群 | `Instance`またはEntry経由の参照 |
 | `GameplayConfig` | `Scoped`（アセットからファクトリ生成） |
 | `UnityRandomSource` / `UniTaskSectionTimer` | `Scoped` |

@@ -40,6 +40,7 @@ Key と `AudioClip` の紐付け管理には `ScriptableObject` を採用する�
 | `AudioKey` | `Ccc.Presentation.Audio` | Presenter / EntryPoint / SE 再生クラスが指定する演出上の意味的なサウンド識別子 |
 | `IAudioPlayer` | `Ccc.Presentation.Audio` | Presentation層から外部へ向けたサウンド再生の出力ポート |
 | `AudioEntry` | `Ccc.Infrastructure.Audio` | `AudioClip` や音量設定を含む Unity 依存の設定構造 |
+| `AudioVolumeRules` | `Ccc.Infrastructure.Audio` | 再生方法ごとに許可する音量の範囲の定義 |
 | `AudioCatalogAsset` | `Ccc.Infrastructure.Audio` | Inspector 編集用の `ScriptableObject` 実装 |
 | `UnityAudioPlayer` | `Ccc.Infrastructure.Audio` | `AudioSource` を操作する `MonoBehaviour` 具象クラス |
 | `ApplicationLifetimeScope` | `Ccc.Bootstrap` | 全画面で同一の Audio インスタンスを解決・提供する Composition Root |
@@ -66,17 +67,17 @@ class IAudioPlayer {
   +StopBgm()
 }
 class UnityAudioPlayer {
-  -AudioSource bgmSource
-  -AudioSource seSource
-  -AudioCatalogAsset catalog
+  -AudioSource _bgmSource
+  -AudioSource _seSource
+  -AudioCatalogAsset _catalog
   -AudioKey currentBgmKey
   +PlaySE(AudioKey key)
   +PlayBgm(AudioKey key)
   +StopBgm()
 }
 class AudioCatalogAsset {
-  -List~AudioEntry~ seEntries
-  -List~AudioEntry~ bgmEntries
+  -List~AudioEntry~ _seEntries
+  -List~AudioEntry~ _bgmEntries
   +TryGetSE(AudioKey key, AudioEntry entry) bool
   +TryGetBgm(AudioKey key, AudioEntry entry) bool
   +Validate() IReadOnlyList~string~
@@ -128,7 +129,8 @@ public enum AudioKey
     SESuccess,
     SEFailure,
     SETimeWarning,
-    SEGameOver
+    SEGameOver,
+    SECongratulations
 }
 ```
 
@@ -166,10 +168,10 @@ namespace Ccc.Infrastructure.Audio;
 public sealed class AudioCatalogAsset : ScriptableObject
 {
     [SerializeField]
-    private List<AudioEntry> seEntries;
+    private List<AudioEntry> _seEntries;
 
     [SerializeField]
-    private List<AudioEntry> bgmEntries;
+    private List<AudioEntry> _bgmEntries;
 
     public bool TryGetSE(AudioKey key, out AudioEntry entry);
     public bool TryGetBgm(AudioKey key, out AudioEntry entry);
@@ -184,17 +186,17 @@ public sealed class AudioCatalogAsset : ScriptableObject
 public sealed class AudioEntry
 {
     [SerializeField]
-    private AudioKey key;
+    private AudioKey _key;
 
     [SerializeField]
-    private AudioClip clip;
+    private AudioClip _clip;
 
-    [SerializeField, Range(0f, 1f)]
-    private float volume = 1f;
+    [SerializeField, Min(AudioVolumeRules.MinVolume)]
+    private float _volume = 1f;
 
-    public AudioKey Key => key;
-    public AudioClip Clip => clip;
-    public float Volume => volume;
+    public AudioKey Key => _key;
+    public AudioClip Clip => _clip;
+    public float Volume => _volume;
 }
 ```
 
@@ -203,7 +205,12 @@ public sealed class AudioEntry
 > - SE一覧および BGM一覧の中で Key が重複して登録されていないこと。
 > - アプリケーションで使用するすべての Key がそれぞれ1件ずつ登録されていること。
 > - 割り当てられている `AudioClip` が `null` でないこと。
-> - `Volume` が 0.0 以上 1.0 以下の正常範囲であり、`NaN` や無限大でないこと。
+> - `Volume` が 0.0 以上であり、`NaN` や無限大でないこと。
+> - BGM一覧の `Volume` が 1.0 以下であること。SE一覧の `Volume` に上限は設けない。
+>
+> **1.0 を超える音量の扱い**
+> - `AudioSource.PlayOneShot` で再生する単発 SE は増幅される。音割れする可能性があるため、実際の音を確認して調整すること。
+> - ループ再生の SE は `AudioSource.volume` を使うため 1.0 を超えて大きくならない。1.0 を超える値を指定した場合は警告ログを1回出力し、再生は継続すること。
 > - `SE` プレフィックスの Key は SE一覧に、`Bgm` プレフィックスの Key は BGM一覧に正しく分類されていること。
 
 ※ 検証エラーは一覧として取得可能にし、アプリケーション起動時にエラーログを出力した上で該当 Key の再生を安全にスキップすること。オーディオ設定の不備によってゲームの中核ロジック（Core）が停止しないように設計すること。
@@ -218,13 +225,13 @@ namespace Ccc.Infrastructure.Audio;
 public sealed class UnityAudioPlayer : MonoBehaviour, IAudioPlayer
 {
     [SerializeField]
-    private AudioCatalogAsset catalog;
+    private AudioCatalogAsset _catalog;
 
     [SerializeField]
-    private AudioSource bgmSource;
+    private AudioSource _bgmSource;
 
     [SerializeField]
-    private AudioSource seSource;
+    private AudioSource _seSource;
 
     private AudioKey currentBgmKey;
 
@@ -238,7 +245,7 @@ public sealed class UnityAudioPlayer : MonoBehaviour, IAudioPlayer
 Application Root の単一コンポーネントとして `IAudioPlayer` インターフェースで登録すること。ライフタイムは Application 固定とする。
 
 ```csharp
-builder.RegisterComponent(audioPlayer)
+builder.RegisterComponent(_audioPlayer)
        .As<IAudioPlayer>();
 ```
 
@@ -251,7 +258,7 @@ flowchart TD
     Request{再生要求}
     SELookup{SE一覧にKeyがあるか}
     BgmLookup{BGM一覧にKeyがあるか}
-    SEPlayback["seSource.PlayOneShot\nClip・Volume"]
+    SEPlayback["_seSource.PlayOneShot\nClip・Volume"]
     Same{同じBGMを再生中か}
     Bgm["bgmSourceへClip・Volumeを設定\nLoop = trueでPlay"]
     Ignore[ログを1回出して再生しない]
@@ -290,6 +297,7 @@ Core層に Audio 固有のイベントを設けないこと。既存の論理イ
 | 失敗確定 | `GameplayPresenter` | 失敗の `SubmissionResolvedEvent` | `PlaySE(SEFailure)` |
 | 残り3秒以下到達 | `GameplayPresenter` | `SectionTimerSnapshot` | `PlaySE(SETimeWarning)` |
 | Session終了 | `GameplayPresenter` | `SessionEndedEvent` | `PlaySE(SEGameOver)` |
+| ハイスコア更新時のResult画面表示 | `GameplayPresenter` | `HighScoreUpdateResult.IsNewHighScore` が true で、かつ今回のスコアがその `GameMode` と `GameDifficulty` の評価段階を全て達成した（`ScoreRankThresholds.HasAchievedAllRanks`）`SessionEndedEvent` | `PlaySE(SECongratulations)`（`SEGameOver` と同時に再生） |
 
 ※ `SETimeWarning` は同一 MissionId・同一整数秒において一度だけ再生すること。タイマー更新スナップショットが同一秒内で複数回届いても重複再生しないこと。
 
@@ -322,11 +330,11 @@ flowchart TB
 public sealed class ApplicationLifetimeScope : LifetimeScope
 {
     [SerializeField]
-    private UnityAudioPlayer audioPlayer;
+    private UnityAudioPlayer _audioPlayer;
 
     protected override void Configure(IContainerBuilder builder)
     {
-        builder.RegisterComponent(audioPlayer)
+        builder.RegisterComponent(_audioPlayer)
                .AsImplementedInterfaces();
     }
 }
