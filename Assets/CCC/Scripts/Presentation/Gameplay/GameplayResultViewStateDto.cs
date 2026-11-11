@@ -8,9 +8,14 @@ namespace Ccc.Presentation
     public sealed class GameplayResultViewStateDto
     {
         /// <summary>
-        /// Result画面に表示する本文を取得します。
+        /// 今回のSessionのスコアを、接頭辞を含まない表示用文字列で取得します。
         /// </summary>
-        public string ResultText { get; }
+        public string ScoreText { get; }
+
+        /// <summary>
+        /// 今回のSessionのスコアで到達した評価段階の数を取得します。
+        /// </summary>
+        public int AchievedRankCount { get; }
 
         /// <summary>
         /// 今回のSessionでハイスコアを更新したかどうかを取得します。
@@ -20,14 +25,26 @@ namespace Ccc.Presentation
         /// <summary>
         /// Result画面の表示状態を生成します。
         /// </summary>
-        /// <param name="resultText">Result画面に表示する本文。</param>
+        /// <param name="scoreText">接頭辞を含まないスコアの表示用文字列。</param>
+        /// <param name="achievedRankCount">今回のSessionのスコアで到達した評価段階の数。0以上。</param>
         /// <param name="isNewHighScore">今回のSessionでハイスコアを更新したかどうか。</param>
-        /// <exception cref="ArgumentNullException">resultTextがnullの場合。</exception>
+        /// <exception cref="ArgumentNullException">scoreTextがnullの場合。</exception>
+        /// <exception cref="ArgumentOutOfRangeException">achievedRankCountが負の値の場合。</exception>
         public GameplayResultViewStateDto(
-            string resultText,
+            string scoreText,
+            int achievedRankCount,
             bool isNewHighScore)
         {
-            ResultText = resultText ?? throw new ArgumentNullException(nameof(resultText));
+            if (achievedRankCount < 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(achievedRankCount),
+                    achievedRankCount,
+                    "Achieved rank count must be zero or positive.");
+            }
+
+            ScoreText = scoreText ?? throw new ArgumentNullException(nameof(scoreText));
+            AchievedRankCount = achievedRankCount;
             IsNewHighScore = isNewHighScore;
         }
     }

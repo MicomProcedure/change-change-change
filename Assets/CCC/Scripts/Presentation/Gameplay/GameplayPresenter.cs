@@ -6,6 +6,7 @@ using Ccc.Core.Model;
 using Ccc.Core.UseCases;
 using Ccc.Presentation.Audio;
 using Ccc.Presentation.Navigation;
+using Ccc.Presentation.ScoreRank;
 using Cysharp.Threading.Tasks;
 using R3;
 
@@ -28,6 +29,7 @@ namespace Ccc.Presentation
         private readonly GameplayNavigationRequest _gameplayRequest;
         private readonly GameplayConfig _gameplayConfig;
         private readonly HighScoreService _highScoreService;
+        private readonly IScoreRankThresholdsProvider _scoreRankThresholdsProvider;
         private readonly IAudioPlayer _audio;
         private readonly MissionTextFormatter _missionTextFormatter;
         private readonly RationalDecimalFormatter _resultFormatter;
@@ -58,6 +60,7 @@ namespace Ccc.Presentation
         /// <param name="gameplayRequest">現在のGameplay開始Request。</param>
         /// <param name="gameplayConfig">Gameplay設定。</param>
         /// <param name="highScoreService">ハイスコアの記録処理。</param>
+        /// <param name="scoreRankThresholdsProvider">Result画面の評価段階の基準を提供するポート。</param>
         /// <param name="audio">Audio再生ポート。</param>
         /// <param name="rationalFormatter">計算結果Formatter。</param>
         /// <param name="missionTextFormatter">Mission表示Formatter。</param>
@@ -69,6 +72,7 @@ namespace Ccc.Presentation
             GameplayNavigationRequest gameplayRequest,
             GameplayConfig gameplayConfig,
             HighScoreService highScoreService,
+            IScoreRankThresholdsProvider scoreRankThresholdsProvider,
             IAudioPlayer audio,
             RationalDecimalFormatter rationalFormatter,
             MissionTextFormatter missionTextFormatter)
@@ -79,6 +83,8 @@ namespace Ccc.Presentation
             _gameplayRequest = gameplayRequest ?? throw new ArgumentNullException(nameof(gameplayRequest));
             _gameplayConfig = gameplayConfig ?? throw new ArgumentNullException(nameof(gameplayConfig));
             _highScoreService = highScoreService ?? throw new ArgumentNullException(nameof(highScoreService));
+            _scoreRankThresholdsProvider = scoreRankThresholdsProvider ??
+                throw new ArgumentNullException(nameof(scoreRankThresholdsProvider));
             _audio = audio ?? throw new ArgumentNullException(nameof(audio));
             _missionTextFormatter = missionTextFormatter ?? throw new ArgumentNullException(nameof(missionTextFormatter));
             _resultFormatter = rationalFormatter ?? throw new ArgumentNullException(nameof(rationalFormatter));
@@ -261,7 +267,10 @@ namespace Ccc.Presentation
                         _gameplayRequest.GameMode,
                         _gameplayRequest.Difficulty,
                         endedEvent.Result.CorrectAnswerCount);
-                    _view.ShowResult(CreateResultViewStateDto(endedEvent.Result, highScoreResult));
+                    _view.ShowResultAsync(
+                            CreateResultViewStateDto(endedEvent.Result, highScoreResult),
+                            _lifecycleCancellationSource.Token)
+                        .Forget(HandleAsyncFailure);
                     _audio.PlaySE(AudioKey.SEGameOver);
                     if (highScoreResult.IsNewHighScore)
                     {
@@ -503,17 +512,23 @@ namespace Ccc.Presentation
             string finalExpressionText = FormatExpression(result.FinalExpression);
             string finalResultText = _resultFormatter.Format(result.LastResolution.CalculationResult);
             string terminationReasonText = FormatTerminationReason(result.TerminationReason);
-            string resultText = string.Join(
-                Environment.NewLine,
-                //$"終了理由: {terminationReasonText}",
-                //$"最後のMission: {lastMissionText}",
-                //$"最終式: {finalExpressionText}",
-                //$"最終結果: {finalResultText}",
-                $"Your Score: {result.CorrectAnswerCount}");
-                //$"最終Section: {result.FinalSection}");
+            // Result画面に表示していない項目。表示を再開する場合は、DTOとViewに表示先を追加する
+            //string detailText = string.Join(
+            //    Environment.NewLine,
+            //    $"終了理由: {terminationReasonText}",
+            //    $"最後のMission: {lastMissionText}",
+            //    $"最終式: {finalExpressionText}",
+            //    $"最終結果: {finalResultText}",
+            //    $"最終Section: {result.FinalSection}");
+
+            string scoreText = result.CorrectAnswerCount.ToString(CultureInfo.InvariantCulture);
+            int achievedRankCount = _scoreRankThresholdsProvider
+                .Get(_gameplayRequest.GameMode, _gameplayRequest.Difficulty)
+                .CountAchievedRanks(result.CorrectAnswerCount);
 
             return new GameplayResultViewStateDto(
-                resultText,
+                scoreText,
+                achievedRankCount,
                 highScoreResult.IsNewHighScore);
         }
 

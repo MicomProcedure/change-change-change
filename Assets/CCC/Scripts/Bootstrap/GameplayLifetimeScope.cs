@@ -84,6 +84,7 @@ namespace Ccc.Bootstrap
                     resolver.Resolve<GameplayStartContext>().Request,
                     resolver.Resolve<GameplayConfig>(),
                     resolver.Resolve<HighScoreService>(),
+                    resolver.Resolve<IScoreRankThresholdsProvider>(),
                     resolver.Resolve<IAudioPlayer>(),
                     resolver.Resolve<RationalDecimalFormatter>(),
                     resolver.Resolve<MissionTextFormatter>()),
