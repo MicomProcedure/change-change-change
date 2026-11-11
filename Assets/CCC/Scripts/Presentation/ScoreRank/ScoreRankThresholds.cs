@@ -93,5 +93,16 @@ namespace Ccc.Presentation.ScoreRank
 
             return achievedRankCount;
         }
+
+        /// <summary>
+        /// 指定スコアで全ての評価段階に到達したかどうかを取得します。
+        /// </summary>
+        /// <param name="score">評価するスコア。0以上。</param>
+        /// <returns>到達した評価段階の数が<see cref="RankCount"/>と等しい場合はtrue。</returns>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="score"/>が負の値の場合。</exception>
+        public bool HasAchievedAllRanks(int score)
+        {
+            return CountAchievedRanks(score) == RankCount;
+        }
     }
 }
