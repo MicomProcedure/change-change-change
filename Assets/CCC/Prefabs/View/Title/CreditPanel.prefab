@@ -65,8 +65,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "  \u5236\u4F5C\n\u30D7\u30ED\u30C8\u30B9\u30D7\u30EA\u30F3\u30C8\u30EA\u30FC\u30B0
-    \u30C1\u30FC\u30E0L\u300C\u3046\u306B\u30BF\u30B9\u30AF\u300D\n(\u30E1\u30F3\u30D0\u30FC
+  m_text: "  \u5236\u4F5C\n\u30C1\u30FC\u30E0: \u3046\u306B\u30BF\u30B9\u30AF\n(\u30E1\u30F3\u30D0\u30FC
     Mira. / \u9AD8\u8349\u6728 / Yuto77)\n\n  \u8B1D\u8F9E\nDova-Syndrome / \u52B9\u679C\u97F3\u30E9\u30DC\nOtoLogic
     / \u3073\u3058\u3048\u3082\u3093 / PocketSound  "
   m_isRightToLeft: 0

@@ -1622,6 +1622,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: DataResetConfirmPopup
       objectReference: {fileID: 0}
+    - target: {fileID: 8609568545115950137, guid: 2f59366f7b838094b92d29789c224511, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
