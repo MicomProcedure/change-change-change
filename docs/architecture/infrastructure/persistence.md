@@ -1,0 +1,165 @@
+# CCC ローカル永続化クラス設計
+
+> [ドキュメント一覧](../../README.md) / 区分: クラス設計
+
+> **対象範囲**: ハイスコアの記録と参照、保存データのバージョン互換、ゲームリセット
+
+---
+
+## 1. 目的
+
+ローカルに保存するハイスコアの扱いを、「ゲームのルール（更新判定、バージョン互換）」と「保存手段（PlayerPrefs）」に分離すること。
+
+- ハイスコアは `GameMode` と `GameDifficulty` の組ごとに1件保持すること。
+- 各記録には、達成時のアプリケーションバージョンを併せて保存すること。
+- ゲームリセットでは、ローカルに永続化した情報を保存項目によらず全て消去すること。
+
+---
+
+## 2. 配置
+
+| 型名 | 配置アセンブリ / 名前空間 | 役割概要 |
+| --- | --- | --- |
+| `HighScoreRecord` / `HighScoreUpdateResult` | `Ccc.Core.Model` | 保存する記録と、スコア記録の結果を表す不変データ |
+| `HighScoreService` | `Ccc.Core.UseCases` | バージョン互換方針を適用したハイスコアの参照と更新 |
+| `IHighScoreStore` | `Ccc.Core.UseCases` | ハイスコア記録の保存先ポート |
+| `IHighScoreCompatibilityPolicy` / `HighScoreCompatibilityDecision` / `HighScoreCompatibilityAction` | `Ccc.Core.UseCases` | 保存済み記録の扱いを決定する方針と決定内容 |
+| `VersionEquivalenceGroups` | `Ccc.Core.Model` | 保存データを同一視するバージョングループ |
+| `VersionEquivalenceHighScoreCompatibilityPolicy` | `Ccc.Core.UseCases` | バージョングループに基づき、記録を同一視する互換方針 |
+| `KeepAllHighScoreCompatibilityPolicy` | `Ccc.Core.UseCases` | 判定せず全ての記録を使い続ける互換方針 |
+| `VersionEquivalenceEntryAsset` | `Ccc.Infrastructure.Assets` | 保存データの種類ごとの同一視設定をまとめる `ScriptableObject` |
+| `HighScoreVersionEquivalenceAsset` / `HighScoreVersionEquivalenceEntry` / `VersionGroup` | `Ccc.Infrastructure.Assets` | ゲームモードと難易度の組ごとの、ハイスコアの同一視設定 |
+| `VersionEquivalenceBuildValidator` | `Ccc.Editor` | ビルド時の設定検証と登録漏れの検出 |
+| `EditorPlayerPrefsMenu` | `Ccc.Editor` | Editor上のPlayerPrefsを確認のうえ削除するメニュー |
+| `IApplicationVersionProvider` | `Ccc.Core.UseCases` | 実行中のアプリケーションバージョンの提供ポート |
+| `ILocalDataEraser` | `Ccc.Core.UseCases` | ローカルの永続化情報を全消去するポート |
+| `PlayerPrefsHighScoreStore` / `HighScoreRecordJsonCodec` | `Ccc.Infrastructure.Persistence` | PlayerPrefsへの保存と保存用JSONの変換 |
+| `InMemoryHighScoreStore` | `Ccc.Infrastructure.Persistence` | メモリ上だけで記録を保持する DebugMode 用の保存先 |
+| `DebugHighScoreEntry` | `Ccc.Infrastructure.Persistence` | DebugMode の起動時に保存先へ入れる、ゲームモードと難易度の組ごとのハイスコア設定 |
+| `UnityApplicationVersionProvider` | `Ccc.Infrastructure.Persistence` | `Application.version` の提供 |
+| `PlayerPrefsLocalDataEraser` | `Ccc.Infrastructure.Persistence` | `PlayerPrefs.DeleteAll` による全消去 |
+| `IGameResetter` | `Ccc.Presentation.Navigation` | 永続化情報を消去し、アプリケーションを起動直後の状態から再構築するポート |
+| `ApplicationScopeGameResetter` | `Ccc.Bootstrap` | 表示中の Scene と `ApplicationLifetimeScope` を破棄して作り直すゲームリセット |
+
+---
+
+## 3. ハイスコアの仕様
+
+- スコアは `SessionResult.CorrectAnswerCount` とする。
+- 記録は `SessionEndedEvent` の受信時に行うこと。プレイ途中でメインメニューへ戻った場合は記録しない。
+- 既存のハイスコアを超えた場合のみ更新し、新記録として扱うこと。同点は更新せず、記録がない状態のスコア0も新記録にしない。
+- 記録がない場合のハイスコアは `0` として表示すること。
+- `ApplicationLifetimeScope` の DebugMode では `InMemoryHighScoreStore` を登録し、記録を永続化しないこと。アプリケーションの実行中は記録を保持するため、新記録の判定と表示は通常と同じように確認できる。
+- DebugMode では実際の保存データを読み込まない。記録はアプリケーションの終了時に消え、ゲームリセットでは `_debugHighScoreEntries` に指定した起動時の記録に戻る。
+- DebugMode では `ApplicationLifetimeScope` の `_debugHighScoreEntries` に指定した記録を、起動時のハイスコアとして保持すること。記録のバージョンには実行中のアプリケーションバージョンを設定し、指定のない組は記録なしとする。同じ組を複数指定した場合は後の指定を使う。通常モードではこの設定を使わないこと。
+
+---
+
+## 4. 保存形式
+
+| 項目 | 内容 |
+| --- | --- |
+| キー | `HighScore.{GameMode}.{GameDifficulty}`（例: `HighScore.LifeEndless.Hard`） |
+| 値 | `{"formatVersion":1,"score":12,"appVersion":"1.0.1"}` |
+
+- `formatVersion` は保存形式の版数、`appVersion` は記録を達成したアプリケーションバージョンとする。
+- JSONが不正、スコアが負、`appVersion` が空白、`formatVersion` が未対応のいずれかに該当する値は、警告ログを出して記録なしとして扱うこと。
+- 音量設定はバージョン管理の対象外とする。
+
+---
+
+## 5. バージョン更新時の扱い
+
+`HighScoreService` は記録を読み込むたびに `IHighScoreCompatibilityPolicy` を適用する。
+
+| 決定 | 動作 | 使用例 |
+| --- | --- | --- |
+| `Keep` | 記録をそのまま使い続ける | 達成時のバージョンと同一視する場合 |
+| `Ignore` | 記録を残したまま記録なしとして扱い、1以上のスコアで上書きする | 達成時のバージョンと同一視しない場合 |
+| `Discard` | 記録を削除し、記録なしとして扱う | 記録を確実に消したい場合 |
+| `Replace` | 変換後の記録を保存して使用する | スコアの定義が変わり、換算できる場合 |
+
+### 5.1 バージョングループによる同一視
+
+`ApplicationLifetimeScope` に `VersionEquivalenceEntryAsset` を設定すると、`VersionEquivalenceHighScoreCompatibilityPolicy` を使用する。未設定の場合は `KeepAllHighScoreCompatibilityPolicy` を使用し、判定を行わない。
+
+- 記録の `appVersion` と実行中のバージョンが同じグループにある場合は `Keep`、それ以外は `Ignore` とすること。
+- 設定はゲームモードと難易度の組ごとに持つこと。
+- 同一視の設定を誤っても記録が失われないよう、`Discard` は使用しない。バージョンをグループへ追加すれば、残っている記録は再び使用される。
+- 同じバージョンは、未登録でも常に同一視すること。
+
+### 5.2 バージョン更新時の手順
+
+1. `HighScoreVersionEquivalenceAsset` の全ての組に、新しいバージョンを登録すること。スコアを引き継ぐ組は既存のグループへ、引き継がない組は新しいグループへ追加する。
+2. ビルドすると `VersionEquivalenceBuildValidator` が設定を検証し、不正な設定または未登録のバージョンがあればビルドを中止する。
+
+| 検出箇所 | 対象 | 動作 |
+| --- | --- | --- |
+| ビルド時 | 設定の不正、ビルド対象バージョンの未登録 | `BuildFailedException` でビルドを中止 |
+| 起動時 | 設定の不正 | `InvalidOperationException` で起動を中止 |
+| 起動時 | 実行中バージョンの未登録 | エラーログを出し、同じバージョンの記録だけを同一視して継続 |
+
+### 5.3 同一視では対応できない変更
+
+- スコアを換算する場合は、`Replace` を返す互換方針をコードで実装すること。
+- 保存形式そのものを変更する場合は、`HighScoreRecordJsonCodec.CurrentFormatVersion` を増やし、旧形式の読み込みを同時に実装すること。
+
+---
+
+## 6. ゲームリセット
+
+ゲームリセットは、アプリケーションを起動直後と同じ状態に戻す操作とする。各 Model や Application Scope のサービスを個別に初期化せず、表示中の Scene と `ApplicationLifetimeScope` を破棄して作り直すことで、消去後の保存内容から全ての状態を再構築する。これにより、保存項目や Application Scope に状態を持つサービス（BGM の再生状態など）が増えても、リセット処理の変更を不要とする。
+
+### 6.1 手順
+
+1. `OptionMenu` 上に確認ポップアップを開くこと。画面状態は `OptionMenu` のまま変更しない。
+2. 確定後、`TitleScreenModel` は `IGameResetter.ResetAsync` に `MainMenu` から開始する `TitleStartRequest` を渡すこと。
+3. `ApplicationScopeGameResetter` は次の順に処理すること。
+   1. `ApplicationLifetimeScope` が VContainerSettings の RootLifetimeScope として作り直せることを確認する。確認できない場合は何も破棄せずに `InvalidOperationException` を送出し、`OptionMenu` にエラーを表示する。
+   2. 空の一時 Scene を作成してアクティブにし、表示中の Scene を全てアンロードする。子の Scope を親より先に破棄するためである。
+   3. `ApplicationLifetimeScope` を破棄し、GameObject の破棄が完了する次のフレームまで待つ。
+   4. `ILocalDataEraser.EraseAll` を実行する。全てのオブジェクトを破棄した後に消去するため、破棄処理による保存が消去後に残ることはない。
+   5. VContainerSettings から `ApplicationLifetimeScope` を作り直す。`LifetimeScope.Enqueue` で渡す `TitleStartRequest` が `ApplicationLifetimeScope` にも登録されないよう、`TitleScene` の読み込みより先に作り直すこと。
+   6. 作り直した `ApplicationLifetimeScope` の `ISceneNavigator` で `TitleScene` を読み込む。
+
+音量は作り直した `ApplicationEntryPoint` と `TitleEntryPoint` の購読開始時に Audio へ反映され、Title BGM は先頭から再生される。
+
+### 6.2 制約
+
+- 表示中の Scene のアンロードを始めた後は元の画面に戻れないため、失敗した場合はエラーを画面に表示できない。例外をログに出力し、画面は一時 Scene のまま停止する。
+- 一時 Scene にはカメラがないため、表示中の Scene のアンロードから `TitleScene` の読み込み完了までは何も描画されない。
+- 作り直した Scope からの `ISceneNavigator` の取り出しは、Scope を作り直す `ApplicationScopeGameResetter` に限って許可する Service Locator の例外とする。
+- Editor のファイルログは `ApplicationLifetimeScope` と共に作り直されるため、リセットのたびに別ファイルになる。
+- `ApplicationLifetimeScope` は一時 Scene がアクティブな状態で作り直されるため、Editor の `PlayPlatformOverride.Auto` は起動時の Scene から判定できず、既定の Mobile になる。Editor で `GameSceneForPC` から再生した場合は、リセットの前後で PlayPlatform が変わる。
+- `PlayerPrefs.DeleteAll` は、Unity が PlayerPrefs へ保存するウィンドウサイズなどの情報も消去する。
+- `Logs/Ccc` のログと診断CSVはゲームデータではないため、消去の対象外とする。
+- PlayerPrefs 以外の保存手段を追加する場合は、`ILocalDataEraser` の実装でその保存先も消去すること。
+
+### 6.3 申し送り事項：Bootstrap シーンへの移行
+
+現在の方式は、Root の破棄が次のフレームまで遅延すること、`LifetimeScope.Enqueue` が Root の組み立てにも適用されることなど、VContainer の内部挙動に依存している。6.2 の制約もこの方式に由来する。
+
+`ApplicationLifetimeScope` を常駐の Bootstrap シーンに置き、`TitleScene` と GameScene を加算読み込みする構成に移行すれば、ゲームリセットは「表示中の Scene をアンロードし、Bootstrap シーンを Single で読み込み直す」だけになり、起動と同じ経路で Application Scope を構築できる。移行には次の対応が必要になる。
+
+- `SceneNavigator` を、加算読み込み・前の Scene のアンロード・アクティブ Scene の切り替えに対応させる。
+- VContainerSettings の RootLifetimeScope 指定をやめ、Bootstrap シーン上の Scope を親にする。
+- Editor で任意の Scene から再生したとき、Bootstrap シーンを先に読み込む仕組みを用意する。GameScene の直接再生を維持するためである。
+- Editor の PlayPlatform 判定を、再生を開始した Scene から行うよう作り直す。
+- 必要に応じて Bootstrap シーンにフェードや読み込み画面を常駐させ、遷移中の暗転を隠す。
+
+対応は [Issue #60](https://github.com/MicomProcedure/change-change-change/issues/60) で管理する。
+
+---
+
+## 7. DI仕様
+
+`ApplicationLifetimeScope` が全て Singleton で登録し、TitleScene と GameScene の双方から解決すること。
+
+| 解決する型 | 実装 |
+| --- | --- |
+| `IHighScoreStore` | 通常は `PlayerPrefsHighScoreStore`、DebugMode は `InMemoryHighScoreStore` |
+| `IHighScoreCompatibilityPolicy` | `VersionEquivalenceEntryAsset` の設定時は `VersionEquivalenceHighScoreCompatibilityPolicy`、未設定時は `KeepAllHighScoreCompatibilityPolicy` |
+| `IApplicationVersionProvider` | `UnityApplicationVersionProvider` |
+| `ILocalDataEraser` | `PlayerPrefsLocalDataEraser` |
+| `HighScoreService` | `HighScoreService` |
+| `IGameResetter` | `ApplicationScopeGameResetter` |

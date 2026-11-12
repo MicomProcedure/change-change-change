@@ -248,17 +248,23 @@ namespace Ccc.Infrastructure.Gameplay
         /// Result画面を表示します。
         /// </summary>
         /// <param name="result">Result画面の表示状態。</param>
-        public void ShowResult(GameplayResultViewStateDto result)
+        /// <param name="cancellationToken">Result画面の表示演出を中断するトークン。</param>
+        /// <returns>Result画面の表示演出の完了を表す非同期処理。</returns>
+        public UniTask ShowResultAsync(
+            GameplayResultViewStateDto result,
+            System.Threading.CancellationToken cancellationToken)
         {
             if (result == null)
             {
                 throw new ArgumentNullException(nameof(result));
             }
 
-            if (_gameplayNavigationView != null)
+            if (_gameplayNavigationView == null)
             {
-                _gameplayNavigationView.RenderResult(result);
+                return UniTask.CompletedTask;
             }
+
+            return _gameplayNavigationView.RenderResultAsync(result, cancellationToken);
         }
 
         /// <summary>

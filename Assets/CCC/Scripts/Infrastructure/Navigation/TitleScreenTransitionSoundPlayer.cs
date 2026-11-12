@@ -6,13 +6,14 @@ using R3;
 namespace Ccc.Infrastructure.Navigation
 {
     /// <summary>
-    /// TitleScene内で受け付けた画面遷移の方向に対応するSEを再生します。
+    /// TitleScene内で受け付けた画面遷移の方向と、ポップアップを閉じる操作に対応するSEを再生します。
     /// </summary>
     public sealed class TitleScreenTransitionSoundPlayer : IDisposable
     {
         private readonly TitleScreenModel _titleScreenModel;
         private readonly IAudioPlayer _audio;
         private IDisposable _screenTransitionSubscription;
+        private IDisposable _resetConfirmationSubscription;
         private bool _isDisposed;
 
         /// <summary>
@@ -31,7 +32,7 @@ namespace Ccc.Infrastructure.Navigation
         }
 
         /// <summary>
-        /// 画面遷移の購読を開始します。
+        /// 画面遷移とポップアップ開閉の購読を開始します。
         /// </summary>
         /// <exception cref="ObjectDisposedException">破棄済みの場合。</exception>
         /// <exception cref="InvalidOperationException">既に購読を開始している場合。</exception>
@@ -50,10 +51,17 @@ namespace Ccc.Infrastructure.Navigation
 
             _screenTransitionSubscription =
                 _titleScreenModel.ScreenTransitioned.Subscribe(HandleScreenTransitioned);
+
+            // ReadOnlyReactivePropertyは購読時に現在値を通知するため、初回分を読み飛ばす
+            _resetConfirmationSubscription =
+                _titleScreenModel.IsResetConfirmationOpen
+                    .Skip(1)
+                    .Where(isOpen => !isOpen)
+                    .Subscribe(_ => _audio.PlaySE(AudioKey.SECancelClick));
         }
 
         /// <summary>
-        /// 画面遷移の購読を解除します。
+        /// 画面遷移とポップアップ開閉の購読を解除します。
         /// </summary>
         public void Dispose()
         {
@@ -65,6 +73,8 @@ namespace Ccc.Infrastructure.Navigation
             _isDisposed = true;
             _screenTransitionSubscription?.Dispose();
             _screenTransitionSubscription = null;
+            _resetConfirmationSubscription?.Dispose();
+            _resetConfirmationSubscription = null;
         }
 
         private void HandleScreenTransitioned(TitleScreenTransitionDirection direction)

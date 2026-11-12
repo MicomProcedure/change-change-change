@@ -12,13 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb8554bb587e48eca45caeb4a0faf01e, type: 3}
   m_Name: LifeEndlessEasy
   m_EditorClassIdentifier: Ccc.Infrastructure::Ccc.Infrastructure.Assets.GameplayConfigEntry
-  displayName: Life-Endless Easy
-  gameMode: 0
-  difficulty: 0
-  gameplayConfigAsset: {fileID: 11400000, guid: 8655dad8aefdb7f41a7debae2ceb4975, type: 2}
-  missionParameterSourceMode: 0
-  missionParameterGenerationProfileAsset: {fileID: 11400000, guid: cde98315fd8d49b42a2da5e9e451b44d, type: 2}
-  missionPresetAsset: {fileID: 0}
-  missionTextAsset: {fileID: 11400000, guid: b1014d3a149b1417982fbb0cda8c7830, type: 2}
-  gameplayBgmKey: 101
-  expressionDisplayStyle: 1
+  _displayName: Life-Endless Easy
+  _gameMode: 0
+  _difficulty: 0
+  _gameplayConfigAsset: {fileID: 11400000, guid: 8655dad8aefdb7f41a7debae2ceb4975, type: 2}
+  _missionParameterSourceMode: 0
+  _missionParameterGenerationProfileAsset: {fileID: 11400000, guid: cde98315fd8d49b42a2da5e9e451b44d, type: 2}
+  _missionPresetAsset: {fileID: 0}
+  _missionTextAsset: {fileID: 11400000, guid: b1014d3a149b1417982fbb0cda8c7830, type: 2}
+  _gameplayBgmKey: 101
+  _expressionDisplayStyle: 1
+  _scoreRankThresholds:
+  - 10
+  - 20
+  - 30

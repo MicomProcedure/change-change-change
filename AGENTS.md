@@ -36,11 +36,11 @@
 
 
 ### 大文字・小文字
- ローカル変数、引数、プロパティ、関数、メソッドは `lowerCamelCase`
+ ローカル変数、引数、プロパティ、private関数は `lowerCamelCase`
   例: `userName`、`calculateTotal`
  クラスのprivateフィールドには頭にアンダースコアをつける
  	例: `_hasRequest`、`_gameplayScore`
- クラス、構造体、列挙型、インターフェース、型は `PascalCase`
+ クラス、構造体、列挙型、インターフェース、型, プロパティ、publicメソッドは `PascalCase`
   例: `UserRepository`、`ConnectionState`
  GLOBAL な定数は `UPPER_SNAKE_CASE`
   例: `MAX_RETRY_COUNT`、`DEFAULT_TIMEOUT_MS`

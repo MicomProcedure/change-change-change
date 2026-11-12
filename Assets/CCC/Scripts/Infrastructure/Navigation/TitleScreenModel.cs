@@ -1,6 +1,9 @@
 using System;
+using System.Globalization;
 using Ccc.Core.Model;
+using Ccc.Core.UseCases;
 using Ccc.Presentation.Navigation;
+using Ccc.Presentation.ScoreRank;
 using Cysharp.Threading.Tasks;
 using R3;
 using UnityEngine;
@@ -18,14 +21,21 @@ namespace Ccc.Infrastructure.Navigation
         private const string GameplayLoadFailedErrorMessage =
             "ゲームを開始できませんでした。";
 
+        private const string GameResetLoadFailedErrorMessage =
+            "リセット後の画面を読み込めませんでした。";
+
+        private const GameMode SelectedGameMode = GameMode.LifeEndless;
+
         private const GameDifficulty InitialDifficulty = GameDifficulty.Easy;
 
         private readonly ISceneNavigator _sceneNavigator;
         private readonly OptionMenuModel _optionMenuModel;
+        private readonly IGameResetter _gameResetter;
         private readonly ReactiveProperty<TitleScreenState> _currentScreen;
         private readonly ReactiveProperty<bool> _isBusy;
         private readonly ReactiveProperty<string> _errorMessage;
         private readonly ReactiveProperty<GameDifficulty> _selectedDifficulty;
+        private readonly ReactiveProperty<bool> _isResetConfirmationOpen;
         private readonly Subject<TitleScreenTransitionDirection> _screenTransitioned;
 
         private bool _isDisposed;
@@ -57,15 +67,36 @@ namespace Ccc.Infrastructure.Navigation
         public ReadOnlyReactiveProperty<GameDifficulty> SelectedDifficulty { get; }
 
         /// <summary>
+        /// 選択中のゲームモードと難易度のハイスコアを表示用の文字列で取得します。記録がない場合は0です。
+        /// </summary>
+        public ReadOnlyReactiveProperty<string> SelectedHighScoreText { get; }
+
+        /// <summary>
+        /// 選択中のゲームモードと難易度のハイスコアで到達した評価段階の数を取得します。記録がない場合は0です。
+        /// </summary>
+        public ReadOnlyReactiveProperty<int> SelectedHighScoreAchievedRankCount { get; }
+
+        /// <summary>
+        /// OptionMenu上のゲームリセット確認ポップアップが開いているかどうかを取得します。
+        /// </summary>
+        public ReadOnlyReactiveProperty<bool> IsResetConfirmationOpen { get; }
+
+        /// <summary>
         /// TitleScreenModelを生成します。
         /// </summary>
         /// <param name="sceneNavigator">Scene遷移処理。</param>
         /// <param name="optionMenuModel">Option設定を保持するModel。</param>
         /// <param name="startRequest">TitleScene開始Request。</param>
+        /// <param name="highScoreService">ハイスコアの参照処理。</param>
+        /// <param name="scoreRankThresholdsProvider">ハイスコアの評価段階の基準を提供するポート。</param>
+        /// <param name="gameResetter">ゲームリセット処理。</param>
         public TitleScreenModel(
             ISceneNavigator sceneNavigator,
             OptionMenuModel optionMenuModel,
-            TitleStartRequest startRequest)
+            TitleStartRequest startRequest,
+            HighScoreService highScoreService,
+            IScoreRankThresholdsProvider scoreRankThresholdsProvider,
+            IGameResetter gameResetter)
         {
             _sceneNavigator =
                 sceneNavigator ?? throw new ArgumentNullException(nameof(sceneNavigator));
@@ -73,9 +104,22 @@ namespace Ccc.Infrastructure.Navigation
             _optionMenuModel =
                 optionMenuModel ?? throw new ArgumentNullException(nameof(optionMenuModel));
 
+            _gameResetter =
+                gameResetter ?? throw new ArgumentNullException(nameof(gameResetter));
+
             if (startRequest == null)
             {
                 throw new ArgumentNullException(nameof(startRequest));
+            }
+
+            if (highScoreService == null)
+            {
+                throw new ArgumentNullException(nameof(highScoreService));
+            }
+
+            if (scoreRankThresholdsProvider == null)
+            {
+                throw new ArgumentNullException(nameof(scoreRankThresholdsProvider));
             }
 
             _currentScreen =
@@ -84,6 +128,7 @@ namespace Ccc.Infrastructure.Navigation
             _isBusy = new ReactiveProperty<bool>(false);
             _errorMessage = new ReactiveProperty<string>(string.Empty);
             _selectedDifficulty = new ReactiveProperty<GameDifficulty>(InitialDifficulty);
+            _isResetConfirmationOpen = new ReactiveProperty<bool>(false);
             _screenTransitioned = new Subject<TitleScreenTransitionDirection>();
 
             CurrentScreen = _currentScreen.ToReadOnlyReactiveProperty();
@@ -91,6 +136,17 @@ namespace Ccc.Infrastructure.Navigation
             IsBusy = _isBusy.ToReadOnlyReactiveProperty();
             ErrorMessage = _errorMessage.ToReadOnlyReactiveProperty();
             SelectedDifficulty = _selectedDifficulty.ToReadOnlyReactiveProperty();
+            SelectedHighScoreText = _selectedDifficulty
+                .Select(difficulty => highScoreService
+                    .GetHighScore(SelectedGameMode, difficulty)
+                    .ToString(CultureInfo.InvariantCulture))
+                .ToReadOnlyReactiveProperty();
+            SelectedHighScoreAchievedRankCount = _selectedDifficulty
+                .Select(difficulty => scoreRankThresholdsProvider
+                    .Get(SelectedGameMode, difficulty)
+                    .CountAchievedRanks(highScoreService.GetHighScore(SelectedGameMode, difficulty)))
+                .ToReadOnlyReactiveProperty();
+            IsResetConfirmationOpen = _isResetConfirmationOpen.ToReadOnlyReactiveProperty();
         }
 
         /// <summary>
@@ -212,6 +268,56 @@ namespace Ccc.Infrastructure.Navigation
         }
 
         /// <summary>
+        /// OptionMenu上にゲームリセットの確認ポップアップを開きます。
+        /// </summary>
+        public void OpenResetConfirmation()
+        {
+            if (_isDisposed ||
+                _isBusy.Value ||
+                _currentScreen.Value != TitleScreenState.OptionMenu)
+            {
+                return;
+            }
+
+            _errorMessage.Value = string.Empty;
+            _isResetConfirmationOpen.Value = true;
+        }
+
+        /// <summary>
+        /// ゲームリセットの確認ポップアップを閉じます。
+        /// </summary>
+        public void CloseResetConfirmation()
+        {
+            if (_isDisposed || _isBusy.Value)
+            {
+                return;
+            }
+
+            _errorMessage.Value = string.Empty;
+            _isResetConfirmationOpen.Value = false;
+        }
+
+        /// <summary>
+        /// ローカルの永続化情報を全て消去し、アプリケーションを起動直後と同じ状態に戻してから、
+        /// TitleSceneをメインメニューから読み込み直します。
+        /// </summary>
+        public async UniTask ConfirmGameResetAsync()
+        {
+            ThrowIfDisposed();
+
+            if (!_isResetConfirmationOpen.Value ||
+                _isBusy.Value)
+            {
+                return;
+            }
+
+            await LoadSceneWhileBusyAsync(
+                () => _gameResetter.ResetAsync(
+                    new TitleStartRequest(TitleScreenState.MainMenu)),
+                GameResetLoadFailedErrorMessage);
+        }
+
+        /// <summary>
         /// StageからGameSceneを開始します。
         /// </summary>
         public async UniTask StartGameplayAsync()
@@ -224,22 +330,25 @@ namespace Ccc.Infrastructure.Navigation
                 return;
             }
 
+            await LoadSceneWhileBusyAsync(
+                () => _sceneNavigator.LoadGameplayAsync(
+                    new GameplayNavigationRequest(
+                        SelectedGameMode,
+                        _selectedDifficulty.Value,
+                        _optionMenuModel.Settings.CurrentValue)),
+                GameplayLoadFailedErrorMessage);
+        }
+
+        private async UniTask LoadSceneWhileBusyAsync(
+            Func<UniTask<SceneNavigationResult>> loadSceneAsync,
+            string loadFailedErrorMessage)
+        {
             _errorMessage.Value = string.Empty;
             _isBusy.Value = true;
 
             try
             {
-                OptionSettingsSnapshot optionSettings =
-                    _optionMenuModel.CreateSnapshot();
-
-                GameplayNavigationRequest request =
-                    new GameplayNavigationRequest(
-                        GameMode.LifeEndless,
-                        _selectedDifficulty.Value,
-                        optionSettings);
-
-                SceneNavigationResult result =
-                    await _sceneNavigator.LoadGameplayAsync(request);
+                SceneNavigationResult result = await loadSceneAsync();
 
                 if (_isDisposed || result.IsSuccess)
                 {
@@ -250,7 +359,7 @@ namespace Ccc.Infrastructure.Navigation
                     result.FailureKind ==
                     SceneNavigationFailureKind.AlreadyLoading
                         ? AlreadyLoadingErrorMessage
-                        : GameplayLoadFailedErrorMessage;
+                        : loadFailedErrorMessage;
             }
             catch (Exception exception)
             {
@@ -258,7 +367,7 @@ namespace Ccc.Infrastructure.Navigation
 
                 if (!_isDisposed)
                 {
-                    _errorMessage.Value = GameplayLoadFailedErrorMessage;
+                    _errorMessage.Value = loadFailedErrorMessage;
                 }
             }
             finally
@@ -286,11 +395,15 @@ namespace Ccc.Infrastructure.Navigation
             IsBusy.Dispose();
             ErrorMessage.Dispose();
             SelectedDifficulty.Dispose();
+            SelectedHighScoreText.Dispose();
+            SelectedHighScoreAchievedRankCount.Dispose();
+            IsResetConfirmationOpen.Dispose();
 
             _currentScreen.Dispose();
             _isBusy.Dispose();
             _errorMessage.Dispose();
             _selectedDifficulty.Dispose();
+            _isResetConfirmationOpen.Dispose();
             _screenTransitioned.Dispose();
         }
 
@@ -301,6 +414,7 @@ namespace Ccc.Infrastructure.Navigation
         {
             if (_isDisposed ||
                 _isBusy.Value ||
+                _isResetConfirmationOpen.Value ||
                 _currentScreen.Value != expectedCurrentScreen)
             {
                 return;
