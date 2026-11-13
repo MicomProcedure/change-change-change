@@ -49,6 +49,9 @@ MonoBehaviour:
   - _key: 211
     _clip: {fileID: 8300000, guid: d8f66d109f65c674382b9f8c33aa12c6, type: 3}
     _volume: 1
+  - _key: 212
+    _clip: {fileID: 8300000, guid: bc14df8ccdc77214fa98a7e46b5ec104, type: 3}
+    _volume: 1
   _bgmEntries:
   - _key: 100
     _clip: {fileID: 8300000, guid: ad08d597ae711c44c9f07d37822a481e, type: 3}

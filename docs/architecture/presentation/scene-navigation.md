@@ -316,7 +316,7 @@ public sealed class TitleScreenTransitionSoundPlayer : IDisposable
 ```
 
 - `StartSubscription` で `TitleScreenModel.ScreenTransitioned` の購読を開始すること。
-- `Backward` を受けた場合は `AudioKey.SECancelClick` を再生し、`Forward` を受けた場合は何も再生しないこと。
+- `Forward` を受けた場合は `AudioKey.SEApplyClick`（`WeakClick_1`）、`Backward` を受けた場合は `AudioKey.SECancelClick`（`WeakClick_2`）を再生すること。
 - 引数が `null` の場合は `ArgumentNullException`、二重開始時は `InvalidOperationException`、`Dispose` 後の開始は `ObjectDisposedException` を送出すること。
 - `Dispose` で購読を解除すること。
 

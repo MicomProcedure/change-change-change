@@ -26,5 +26,7 @@ namespace Ccc.Presentation.Audio
         SEHizimere = 209,
         SESubmit = 210,
         SECongratulations = 211,
+        /// <summary>画面を進める操作の効果音。</summary>
+        SEApplyClick = 212,
     }
 }
