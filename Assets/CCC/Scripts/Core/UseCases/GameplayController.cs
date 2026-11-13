@@ -28,7 +28,7 @@ namespace Ccc.Core.UseCases
 
         private GameplaySessionContext _sessionContext;
         private GameplayState _currentState;
-        private SectionTimerSnapshot _latestTimerSnapshot;
+        private TimeSpan _pendingBonusDuration;
         private bool _isDisposed;
 
         /// <summary>
@@ -123,7 +123,7 @@ namespace Ccc.Core.UseCases
             _sectionTimer.StopAll();
             _sessionContext = null;
             _currentState = null;
-            _latestTimerSnapshot = default;
+            _pendingBonusDuration = TimeSpan.Zero;
 
             MissionCatalogPreparationResult preparationResult = MissionCatalogPreparer.Prepare(
                 _config,
@@ -176,7 +176,7 @@ namespace Ccc.Core.UseCases
             _expressionsSubject.OnNext(_expressionInput.Current);
 
             TimeSpan duration = _config.Timer.GetDuration(initialState.Section);
-            _sectionTimer.Start(initialMission.Id, duration);
+            _sectionTimer.Start(initialMission.Id, duration, TimeSpan.Zero);
             _eventsSubject.OnNext(new MissionPresentedEvent(initialMission, duration));
 
             return GameplayStartResult.Success(sessionContext, initialState);
@@ -226,10 +226,7 @@ namespace Ccc.Core.UseCases
                 return;
             }
 
-            TimeSpan remainingTime = _latestTimerSnapshot.MissionId == missionId
-                ? _latestTimerSnapshot.RemainingTime
-                : TimeSpan.Zero;
-            ProcessCommand(new SubmitCommand(missionId, _expressionInput.Current, remainingTime));
+            ProcessCommand(new SubmitCommand(missionId, _expressionInput.Current));
         }
 
         /// <summary>
@@ -355,7 +352,6 @@ namespace Ccc.Core.UseCases
         {
             if (!_isDisposed)
             {
-                _latestTimerSnapshot = snapshot;
                 _timerSnapshotsSubject.OnNext(snapshot);
             }
         }
@@ -401,10 +397,11 @@ namespace Ccc.Core.UseCases
                 switch (transition.Events[index])
                 {
                     case SubmissionResolvedEvent resolvedEvent:
-                        _sectionTimer.Stop(resolvedEvent.Resolution.MissionId);
+                        _pendingBonusDuration = StopTimerAndCalculateBonus(resolvedEvent.Resolution);
                         break;
                     case MissionPresentedEvent presentedEvent:
-                        _sectionTimer.Start(presentedEvent.Mission.Id, presentedEvent.Duration);
+                        _sectionTimer.Start(presentedEvent.Mission.Id, presentedEvent.Duration, _pendingBonusDuration);
+                        _pendingBonusDuration = TimeSpan.Zero;
                         break;
                 }
             }
@@ -413,6 +410,21 @@ namespace Ccc.Core.UseCases
             {
                 _eventsSubject.OnNext(transition.Events[index]);
             }
+        }
+
+        private TimeSpan StopTimerAndCalculateBonus(SubmissionResolution resolution)
+        {
+            // 時間切れの場合はTimerが既に満了しているため、残り時間を0として扱う
+            bool isStopped = _sectionTimer.TryStop(resolution.MissionId, out SectionTimerSnapshot stoppedSnapshot);
+            TimeSpan normalRemainingTime = isStopped ? stoppedSnapshot.NormalRemainingTime : TimeSpan.Zero;
+            TimeSpan bonusRemainingTime = isStopped ? stoppedSnapshot.BonusRemainingTime : TimeSpan.Zero;
+
+            return BonusTimeCalculator.CalculateNextBonusDuration(
+                _config.Timer,
+                normalRemainingTime,
+                bonusRemainingTime,
+                resolution.IsSuccess,
+                resolution.Trigger);
         }
 
         private bool CanAcceptCurrentMission(MissionId missionId, GameplayStatus requiredStatus)

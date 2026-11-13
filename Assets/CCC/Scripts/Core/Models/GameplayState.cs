@@ -24,11 +24,6 @@ namespace Ccc.Core.Model
         public Mission CurrentMission { get; }
         public SubmissionResolution? LastResolution { get; }
 
-        /// <summary>
-        /// 次に提示するMissionへ付与するボーナス時間を取得します。
-        /// </summary>
-        public TimeSpan PendingBonusDuration { get; }
-
         public int CorrectAnswerCount => Math.Max(0, Section - 1);
         public bool IsAcceptingSubmit => Status == GameplayStatus.Playing;
         public bool IsTransitioning => Status == GameplayStatus.Transitioning;
@@ -38,8 +33,7 @@ namespace Ccc.Core.Model
             int section,
             int life,
             Mission currentMission,
-            SubmissionResolution? lastResolution,
-            TimeSpan pendingBonusDuration = default)
+            SubmissionResolution? lastResolution)
         {
             if (!Enum.IsDefined(typeof(GameplayStatus), status))
             {
@@ -90,17 +84,11 @@ namespace Ccc.Core.Model
                 }
             }
 
-            if (pendingBonusDuration < TimeSpan.Zero)
-            {
-                throw new ArgumentOutOfRangeException(nameof(pendingBonusDuration), pendingBonusDuration, "Pending bonus duration must be zero or positive.");
-            }
-
             Status = status;
             Section = section;
             Life = life;
             CurrentMission = currentMission;
             LastResolution = lastResolution;
-            PendingBonusDuration = pendingBonusDuration;
         }
     }
 }
