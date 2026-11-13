@@ -34,8 +34,11 @@ MonoBehaviour:
   - _key: 206
     _clip: {fileID: 8300000, guid: a30e8d94136bfb64b919e688d8db4a53, type: 3}
     _volume: 1
+  - _key: 212
+    _clip: {fileID: 8300000, guid: f5d4b7be7fad4564b84d68ae9b4144ed, type: 3}
+    _volume: 1
   - _key: 207
-    _clip: {fileID: 8300000, guid: ef0045877812e364c84f302d9fcdab67, type: 3}
+    _clip: {fileID: 8300000, guid: f3a35827d3580ec44b6e62254b915cd5, type: 3}
     _volume: 1
   - _key: 208
     _clip: {fileID: 8300000, guid: f634f30274c6c2241b9c45faa418011b, type: 3}
@@ -48,9 +51,6 @@ MonoBehaviour:
     _volume: 0
   - _key: 211
     _clip: {fileID: 8300000, guid: d8f66d109f65c674382b9f8c33aa12c6, type: 3}
-    _volume: 1
-  - _key: 212
-    _clip: {fileID: 8300000, guid: bc14df8ccdc77214fa98a7e46b5ec104, type: 3}
     _volume: 1
   _bgmEntries:
   - _key: 100

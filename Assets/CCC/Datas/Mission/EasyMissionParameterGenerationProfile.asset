@@ -55,7 +55,7 @@ MonoBehaviour:
       step: 1
   - kind: 2
     isEnabled: 1
-    appliesMatchRatioRange: 1
+    appliesMatchRatioRange: 0
     generatesNegated: 0
     maximumCandidateCount: 2
     parameterA:
@@ -93,7 +93,7 @@ MonoBehaviour:
       step: 1
   - kind: 4
     isEnabled: 1
-    appliesMatchRatioRange: 1
+    appliesMatchRatioRange: 0
     generatesNegated: 0
     maximumCandidateCount: 2
     parameterA:
