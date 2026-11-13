@@ -210,6 +210,7 @@ namespace Ccc.Infrastructure.Audio
                 case AudioKey.SEHizimere:
                 case AudioKey.SESubmit:
                 case AudioKey.SECongratulations:
+                case AudioKey.SEApplyClick:
                     return AudioCategory.SE;
                 default:
                     return AudioCategory.Unknown;
