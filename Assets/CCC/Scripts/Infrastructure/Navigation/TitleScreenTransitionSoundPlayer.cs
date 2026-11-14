@@ -82,6 +82,7 @@ namespace Ccc.Infrastructure.Navigation
             switch (direction)
             {
                 case TitleScreenTransitionDirection.Forward:
+                    _audio.PlaySE(AudioKey.SEApplyClick);
                     break;
                 case TitleScreenTransitionDirection.Backward:
                     _audio.PlaySE(AudioKey.SECancelClick);

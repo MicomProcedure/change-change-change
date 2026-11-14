@@ -20,7 +20,7 @@ MonoBehaviour:
   initialLife: 3
   initialDurationSeconds: 10
   reductionPerSectionSeconds: 0.3
-  minimumDurationSeconds: 4.5
+  minimumDurationSeconds: 4
   bonusRatio: 0.4
   maximumBonusSeconds: 2
   manualSubmitBonusSeconds: 0.5
@@ -34,7 +34,7 @@ MonoBehaviour:
   zeroAndPrimeMinimumExpressionMatchCount: 1
   currentTierDrawWeight: 0.4
   lowerTierDrawWeight: 0.6
-  currentExpressionSatisfiedMissionSelectionRatio: 0.08
+  currentExpressionSatisfiedMissionSelectionRatio: 0.05
   targetExpressionMatchRatio: 0.25
   targetExpressionMatchRatioReductionPerSection: 0.009
   minimumTargetExpressionMatchRatio: 0.01

@@ -109,10 +109,12 @@ namespace Ccc.Core.Logic
                 // Tier 3 / Tier 4 (将来用拡張)
                 // ==========================================
                 case MissionKind.Absolute:
+                    // 絶対値をNにしろ
                     return value.IsInteger && Math.Abs(value.Numerator) == condition.ParameterA;
 
                 case MissionKind.OnesDigit:
-                    return value.IsInteger && Math.Abs(value.Numerator) % 10 == condition.ParameterA;
+                    // 一の位をNにしろ
+                    return Math.Abs(value.Numerator / value.Denominator) % 10 == condition.ParameterA;
 
                 case MissionKind.Composite:
                     // 合成数: 1より大きく素数ではない整数
@@ -145,19 +147,18 @@ namespace Ccc.Core.Logic
                     return value.Numerator > 0 && value.CompareTo(Rational.Create(1, 1)) < 0;
 
                 case MissionKind.TwoDigit:
-                    // 2桁: 符号を除いた整数の桁数が2
-                    return value.IsInteger &&
-                           IntegerPropertyCalculator.CountDigits(value.Numerator) == TwoDigitCount;
+                    // 2桁: 符号・小数点・先頭の0を除いた数字が2個（9.5 → 95、0.25 → 25）
+                    return TryScaleTerminatingDecimalToInteger(value, out long twoDigitScaledInteger) &&
+                        IntegerPropertyCalculator.CountDigits(twoDigitScaledInteger) == TwoDigitCount;
 
                 case MissionKind.TensDigit:
-                    // 十の位: 符号を除いた整数で判定し、1桁の数は十の位0とみなす
-                    return value.IsInteger &&
-                           IntegerPropertyCalculator.GetTensDigit(value.Numerator) == condition.ParameterA;
+                    // 十の位: 符号を除いた整数部分で判定し、1桁の数は十の位0とみなす
+                    return IntegerPropertyCalculator.GetTensDigit(value.Numerator / value.Denominator) == condition.ParameterA;
 
                 case MissionKind.DigitSum:
-                    // 各桁の和: 符号を除いた整数の各桁を合計する
-                    return value.IsInteger &&
-                           IntegerPropertyCalculator.SumDigits(value.Numerator) == condition.ParameterA;
+                    // 各桁の和: 整数と有限小数は小数部を含む全桁を符号を除いて合計する。無限小数は常に不正解
+                    return TryScaleTerminatingDecimalToInteger(value, out long digitSumScaledInteger) &&
+                        IntegerPropertyCalculator.SumDigits(digitSumScaledInteger) == condition.ParameterA;
 
                 case MissionKind.RepeatingDecimal:
                     // 無限小数: 約分済みの分母に2と5以外の素因数を含む
@@ -227,6 +228,25 @@ namespace Ccc.Core.Logic
         {
             long remainder = dividend % divisor;
             return remainder < 0 ? remainder + divisor : remainder;
+        }
+
+        private static bool TryScaleTerminatingDecimalToInteger(Rational value, out long scaledInteger)
+        {
+            scaledInteger = 0L;
+            if (HasRepeatingDecimalExpansion(value.Denominator))
+            {
+                return false;
+            }
+
+            // 割り切れるまで10倍し、小数部を整数の桁へ移す（0.25 → 25、1.5 → 15）
+            long scaledNumerator = Math.Abs(value.Numerator);
+            while (scaledNumerator % value.Denominator != 0)
+            {
+                scaledNumerator = checked(scaledNumerator * 10L);
+            }
+
+            scaledInteger = scaledNumerator / value.Denominator;
+            return true;
         }
     }
 }

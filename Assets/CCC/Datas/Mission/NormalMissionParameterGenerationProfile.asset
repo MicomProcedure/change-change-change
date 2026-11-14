@@ -415,7 +415,7 @@ MonoBehaviour:
       maximum: 0
       step: 1
   - kind: 21
-    isEnabled: 0
+    isEnabled: 1
     appliesMatchRatioRange: 1
     generatesNegated: 0
     maximumCandidateCount: 2
@@ -491,7 +491,7 @@ MonoBehaviour:
       maximum: 0
       step: 1
   - kind: 25
-    isEnabled: 0
+    isEnabled: 1
     appliesMatchRatioRange: 1
     generatesNegated: 1
     maximumCandidateCount: 2

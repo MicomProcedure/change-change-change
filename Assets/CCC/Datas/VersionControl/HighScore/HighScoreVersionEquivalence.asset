@@ -19,12 +19,15 @@ MonoBehaviour:
     - _versions:
       - 1.0.0
       - 1.0.1
+    - _versions:
+      - 1.0.2
   - _gameMode: 0
     _difficulty: 1
     _versionGroups:
     - _versions:
       - 1.0.0
       - 1.0.1
+      - 1.0.2
   - _gameMode: 0
     _difficulty: 2
     _versionGroups:
@@ -32,3 +35,4 @@ MonoBehaviour:
       - 1.0.0
     - _versions:
       - 1.0.1
+      - 1.0.2

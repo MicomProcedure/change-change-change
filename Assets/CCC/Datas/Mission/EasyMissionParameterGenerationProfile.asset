@@ -55,7 +55,7 @@ MonoBehaviour:
       step: 1
   - kind: 2
     isEnabled: 1
-    appliesMatchRatioRange: 1
+    appliesMatchRatioRange: 0
     generatesNegated: 0
     maximumCandidateCount: 2
     parameterA:
@@ -93,7 +93,7 @@ MonoBehaviour:
       step: 1
   - kind: 4
     isEnabled: 1
-    appliesMatchRatioRange: 1
+    appliesMatchRatioRange: 0
     generatesNegated: 0
     maximumCandidateCount: 2
     parameterA:
@@ -320,7 +320,7 @@ MonoBehaviour:
       maximum: 0
       step: 1
   - kind: 16
-    isEnabled: 0
+    isEnabled: 1
     appliesMatchRatioRange: 1
     generatesNegated: 0
     maximumCandidateCount: 7
@@ -377,7 +377,7 @@ MonoBehaviour:
       maximum: 24
       step: 1
   - kind: 19
-    isEnabled: 0
+    isEnabled: 1
     appliesMatchRatioRange: 1
     generatesNegated: 0
     maximumCandidateCount: 23
@@ -396,7 +396,7 @@ MonoBehaviour:
       maximum: 0
       step: 1
   - kind: 20
-    isEnabled: 0
+    isEnabled: 1
     appliesMatchRatioRange: 1
     generatesNegated: 0
     maximumCandidateCount: 4
@@ -415,7 +415,7 @@ MonoBehaviour:
       maximum: 0
       step: 1
   - kind: 21
-    isEnabled: 0
+    isEnabled: 1
     appliesMatchRatioRange: 1
     generatesNegated: 0
     maximumCandidateCount: 1
@@ -472,7 +472,7 @@ MonoBehaviour:
       maximum: 0
       step: 1
   - kind: 24
-    isEnabled: 0
+    isEnabled: 1
     appliesMatchRatioRange: 1
     generatesNegated: 0
     maximumCandidateCount: 9
@@ -491,7 +491,7 @@ MonoBehaviour:
       maximum: 0
       step: 1
   - kind: 25
-    isEnabled: 0
+    isEnabled: 1
     appliesMatchRatioRange: 1
     generatesNegated: 0
     maximumCandidateCount: 1
