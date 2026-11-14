@@ -35,10 +35,10 @@ MonoBehaviour:
     _clip: {fileID: 8300000, guid: a30e8d94136bfb64b919e688d8db4a53, type: 3}
     _volume: 1
   - _key: 212
-    _clip: {fileID: 8300000, guid: f3a35827d3580ec44b6e62254b915cd5, type: 3}
+    _clip: {fileID: 8300000, guid: 0f684e6e248c6e246bc406e32c5731d2, type: 3}
     _volume: 0.3
   - _key: 207
-    _clip: {fileID: 8300000, guid: f3a35827d3580ec44b6e62254b915cd5, type: 3}
+    _clip: {fileID: 8300000, guid: ec1eb8e44d7dd414ea07da7f397e1e49, type: 3}
     _volume: 0.3
   - _key: 208
     _clip: {fileID: 8300000, guid: f634f30274c6c2241b9c45faa418011b, type: 3}
