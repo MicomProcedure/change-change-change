@@ -1,4 +1,5 @@
 using System;
+using Ccc.Core.Model;
 
 namespace Ccc.Presentation
 {
@@ -7,6 +8,11 @@ namespace Ccc.Presentation
     /// </summary>
     public sealed class GameplayResultViewStateDto
     {
+        /// <summary>
+        /// 今回のSessionの難易度を取得します。
+        /// </summary>
+        public GameDifficulty Difficulty { get; }
+
         /// <summary>
         /// 今回のSessionのスコアを、接頭辞を含まない表示用文字列で取得します。
         /// </summary>
@@ -28,13 +34,20 @@ namespace Ccc.Presentation
         /// <param name="scoreText">接頭辞を含まないスコアの表示用文字列。</param>
         /// <param name="achievedRankCount">今回のSessionのスコアで到達した評価段階の数。0以上。</param>
         /// <param name="isNewHighScore">今回のSessionでハイスコアを更新したかどうか。</param>
+        /// <param name="difficulty">今回のSessionの難易度。</param>
         /// <exception cref="ArgumentNullException">scoreTextがnullの場合。</exception>
-        /// <exception cref="ArgumentOutOfRangeException">achievedRankCountが負の値の場合。</exception>
+        /// <exception cref="ArgumentOutOfRangeException">achievedRankCountが負の値、または難易度が未定義の場合。</exception>
         public GameplayResultViewStateDto(
             string scoreText,
             int achievedRankCount,
-            bool isNewHighScore)
+            bool isNewHighScore,
+            GameDifficulty difficulty)
         {
+            if (!Enum.IsDefined(typeof(GameDifficulty), difficulty))
+            {
+                throw new ArgumentOutOfRangeException(nameof(difficulty), difficulty, null);
+            }
+
             if (achievedRankCount < 0)
             {
                 throw new ArgumentOutOfRangeException(
@@ -46,6 +59,7 @@ namespace Ccc.Presentation
             ScoreText = scoreText ?? throw new ArgumentNullException(nameof(scoreText));
             AchievedRankCount = achievedRankCount;
             IsNewHighScore = isNewHighScore;
+            Difficulty = difficulty;
         }
     }
 }

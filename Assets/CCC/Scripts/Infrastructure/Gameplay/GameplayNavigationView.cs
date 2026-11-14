@@ -19,6 +19,8 @@ namespace Ccc.Infrastructure.Gameplay
         [SerializeField] private TMP_Text _scoreValueText;
         [Tooltip("Result画面で、今回のスコアで到達した評価段階の数を表示するView。")]
         [SerializeField] private ScoreStarsView _scoreStarsView;
+        [Tooltip("今回のSessionの難易度に対応するGameObjectを表示するView。")]
+        [SerializeField] private GameDifficultyView _gameDifficultyView;
         [Tooltip("ハイスコアを更新したSessionのResult画面でのみ表示するText。文言はPrefabで設定する。")]
         [SerializeField] private TMP_Text _highScoreText;
         [Tooltip("ハイスコアを更新したSessionのResult画面でのみ表示するGameObject。")]
@@ -58,6 +60,11 @@ namespace Ccc.Infrastructure.Gameplay
             if (_scoreValueText != null)
             {
                 _scoreValueText.text = result.ScoreText;
+            }
+
+            if (_gameDifficultyView != null)
+            {
+                _gameDifficultyView.Render(result.Difficulty);
             }
 
             if (_highScoreText != null)
