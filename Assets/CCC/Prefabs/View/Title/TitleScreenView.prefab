@@ -54,7 +54,7 @@ MonoBehaviour:
   _resetConfirmationRoot: {fileID: 1011331040255741108}
   _enterMainMenuButton: {fileID: 1773991457906812657}
   _openStageButton: {fileID: 2141997799861008717}
-  _closeStageButton: {fileID: 3319055113865136702}
+  _closeStageButton: {fileID: 7415429876442971386}
   _startGameplayButton: {fileID: 4428427247413285082}
   _openOptionButton: {fileID: 1027929527590750588}
   _closeOptionButton: {fileID: 7231599988669929657}
@@ -572,17 +572,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
---- !u!114 &3319055113865136702 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 870093491229358122, guid: ec00fa28b8a70bc4c9dae9068da449fa, type: 3}
-  m_PrefabInstance: {fileID: 2458004843784761876}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
 --- !u!114 &4428427247413285082 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2263192401306723022, guid: ec00fa28b8a70bc4c9dae9068da449fa, type: 3}
@@ -630,6 +619,17 @@ MonoBehaviour:
 --- !u!114 &7034648981368679770 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4880918602505641806, guid: ec00fa28b8a70bc4c9dae9068da449fa, type: 3}
+  m_PrefabInstance: {fileID: 2458004843784761876}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
+--- !u!114 &7415429876442971386 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4968719773430533870, guid: ec00fa28b8a70bc4c9dae9068da449fa, type: 3}
   m_PrefabInstance: {fileID: 2458004843784761876}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
@@ -1241,6 +1241,10 @@ PrefabInstance:
     - target: {fileID: 4173855065546886177, guid: 6079f045de7f95840b7bfd06860a0334, type: 3}
       propertyPath: m_Name
       value: TutorialPanel
+      objectReference: {fileID: 0}
+    - target: {fileID: 4173855065546886177, guid: 6079f045de7f95840b7bfd06860a0334, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
