@@ -5,42 +5,38 @@ using Ccc.Core.Model;
 namespace Ccc.Presentation
 {
     /// <summary>
-    /// Rationalを小数点以下2桁の表示文言へ変換します。
+    /// Rationalを小数点以下最大2桁の表示文言へ変換します。
     /// </summary>
     public sealed class RationalDecimalFormatter
     {
+        // DecimalScaleとTruncatedDecimalFormatは、どちらも小数点以下2桁を表す
         private const int DecimalScale = 100;
-        private const string TruncationMark = "……";
+        private const string TruncatedDecimalFormat = "0.##";
         private const string DivisionByZeroText = "？";
 
         /// <summary>
-        /// Rationalを小数点以下2桁へ切り捨てて表示します。
-        /// 有限小数でない場合は、切り捨てた値に継続記号を付けます。
+        /// Rationalを小数点以下2桁へ切り捨て、末尾の0を省いて表示します。
+        /// 整数は小数点以下を付けずに表示します。
         /// </summary>
         /// <param name="rational">表示対象の正常なRational。</param>
-        /// <returns>小数表示文言。</returns>
+        /// <returns>整数または小数の表示文言。</returns>
         public string Format(Rational rational)
         {
             decimal numerator = rational.Numerator;
             bool isNegative = rational.IsNegative;
             decimal absoluteNumerator = isNegative ? -numerator : numerator;
             decimal denominator = rational.Denominator;
-            decimal scaledValue = decimal.Truncate(
-                absoluteNumerator * DecimalScale / denominator);
-            decimal integerPart = decimal.Truncate(scaledValue / DecimalScale);
-            int fractionalPart = (int)(scaledValue % DecimalScale);
-            bool hasRemainingDigits =
-                absoluteNumerator * DecimalScale % denominator != 0m;
+            decimal truncatedAbsoluteValue = decimal.Truncate(
+                absoluteNumerator * DecimalScale / denominator) / DecimalScale;
 
-            string integerText = integerPart.ToString("0", CultureInfo.InvariantCulture);
-            string fractionalText = fractionalPart.ToString("00", CultureInfo.InvariantCulture);
-            string result = integerText + "." + fractionalText;
-            if (hasRemainingDigits)
-            {
-                result += TruncationMark;
-            }
+            string absoluteText = truncatedAbsoluteValue.ToString(
+                TruncatedDecimalFormat,
+                CultureInfo.InvariantCulture);
 
-            return isNegative ? "-" + result : result;
+            // 切り捨てで0になった負数に"-0"を表示しない
+            return isNegative && truncatedAbsoluteValue != 0m
+                ? "-" + absoluteText
+                : absoluteText;
         }
 
         /// <summary>

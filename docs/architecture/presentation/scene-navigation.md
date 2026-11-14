@@ -22,7 +22,7 @@
 
 | Unity Scene | Scene内の画面（Screen）構成 |
 | --- | --- |
-| `TitleScene` | `TitleScreen`、`MainMenu`、`OptionMenu`、`Credit` |
+| `TitleScene` | `TitleScreen`、`MainMenu`、`Stage`、`Tutorial`、`OptionMenu`、`Credit` |
 | `GameScene` | `GameplayScreen`、`ResultScreen` |
 
 ```mermaid
@@ -30,12 +30,17 @@ stateDiagram-v2
    [*] --> TitleScreen
    TitleScreen --> MainMenu
 
+   MainMenu --> Stage
+   Stage --> MainMenu
+   Stage --> Tutorial
+   Tutorial --> Stage
    MainMenu --> OptionMenu
    OptionMenu --> MainMenu
+   OptionMenu --> MainMenu: ゲームリセット（全消去しApplicationLifetimeScopeを作り直してTitleSceneをロード）
    MainMenu --> Credit
    Credit --> MainMenu
 
-   MainMenu --> GameplayScreen: GameSceneをロード
+   Stage --> GameplayScreen: GameSceneをロード
    GameplayScreen --> ResultScreen: Session終了
    GameplayScreen --> MainMenu: TitleSceneをロード
    ResultScreen --> GameplayScreen: Retry
@@ -44,7 +49,10 @@ stateDiagram-v2
 
 - アプリケーションの通常起動時は `TitleScreen` から開始すること。
 - GameScene から TitleScene へ戻った場合は `MainMenu` から開始すること。
-- MainMenu のゲーム開始操作時は、ゲームモードを `LifeEndless`、難易度を `Normal` と指定した `GameplayStartRequest` を生成すること。
+- ゲームリセットの確認は `OptionMenu` 上のポップアップとし、Screen に含めないこと。ポップアップが開いている間は Screen を遷移させないこと。
+- ゲームリセット後は `MainMenu` から開始すること。詳細は [CCC ローカル永続化クラス設計](../infrastructure/persistence.md) を参照すること。
+- Stage のゲーム開始操作時は、ゲームモードを `LifeEndless`、難易度を Stage で選択中の値と指定した `GameplayStartRequest` を生成すること。
+- TitleScene 内の遷移は方向（`TitleScreenTransitionDirection`）を持つ。`Open*` / `EnterMainMenu` による遷移は `Forward`、`Close*` による遷移は `Backward` とすること。
 
 ---
 
@@ -53,14 +61,20 @@ stateDiagram-v2
 | 型名 | 配置アセンブリ / 名前空間 | 役割概要 |
 | --- | --- | --- |
 | `TitleScreenState` / `GameScreenState` | `Ccc.Presentation.Navigation` | Unity API に依存しない純粋な画面状態 enum |
+| `TitleScreenTransitionDirection` | `Ccc.Presentation.Navigation` | TitleScene 内で受け付けた画面遷移の方向 enum |
 | `OptionMenuViewStateDto` / `OptionSettingsSnapshot` | `Ccc.Presentation.Navigation` | OptionMenu 表示データおよび Gameplay 開始時の不変設定スナップショット |
 | `IGameplayNavigation` | `Ccc.Presentation` | GameplayPresenter から画面切り替えを依頼するためのポート |
 | `SceneNavigator` | `Ccc.Infrastructure.Navigation` | Unity Scene アシンクロナスロードおよびリクエスト引き渡しの具象クラス |
 | `TitleScreenModel` / `GameScreenModel` / `OptionMenuModel` | `Ccc.Infrastructure.Navigation` | シーン内の Screen 遷移状態および画面操作ロジック |
 | `TitleScreenView` / `GameScreenView` | `Ccc.Infrastructure.Navigation` | 各 Scene 内の Screen 表示制御と入力イベンド検知 |
+| `TitleScreenTransitionSoundPlayer` | `Ccc.Infrastructure.Navigation` | TitleScene 内の画面遷移方向に対応する SE の再生 |
+| `OptionVolumeAudioSynchronizer` | `Ccc.Infrastructure.Navigation` | `OptionMenuModel` の音量レベルを Audio へ継続反映 |
+| `TitleSelectorChangeSoundPlayer` | `Ccc.Infrastructure.Navigation` | TitleScene 内の選択値（難易度・音量）の切り替えに対応する SE の再生 |
 | `CycleSelectorView` | `Ccc.Infrastructure.UI` | Gameplay と OptionMenu で共有する循環選択 UI コンポーネント |
 | `ApplicationLifetimeScope` | `Ccc.Bootstrap` | アプリケーション共通のシングルトンコンポーネント登録 |
 | `TitleLifetimeScope` / `GameplayLifetimeScope` | `Ccc.Bootstrap` | 各シーンの DI 依存関係登録 |
+| `TitleEntryPoint` | `Ccc.Bootstrap` | TitleScene 開始時の初期処理（購読開始と Title BGM 再生） |
+| `IGameResetter` / `ApplicationScopeGameResetter` | `Ccc.Presentation.Navigation` / `Ccc.Bootstrap` | `ApplicationLifetimeScope` を作り直して TitleScene を読み込み直すゲームリセット |
 
 ---
 
@@ -71,11 +85,19 @@ classDiagram
 direction LR
 class ApplicationLifetimeScope
 class SceneNavigator
+class IGameResetter
+class ApplicationScopeGameResetter
 class TitleLifetimeScope
 class GameplayLifetimeScope
 class TitleScreenModel
 class OptionMenuModel
 class TitleScreenView
+class TitleEntryPoint
+class TitleScreenTransitionSoundPlayer
+class OptionVolumeAudioSynchronizer
+class TitleSelectorChangeSoundPlayer
+class IAudioPlayer
+class IAudioVolumeControl
 class CycleSelectorView
 class GameScreenModel
 class GameScreenView
@@ -90,6 +112,10 @@ ApplicationLifetimeScope o-- SceneNavigator : singleton
 TitleLifetimeScope o-- TitleScreenModel
 TitleLifetimeScope o-- OptionMenuModel
 TitleLifetimeScope o-- TitleScreenView
+TitleLifetimeScope o-- TitleScreenTransitionSoundPlayer
+TitleLifetimeScope o-- OptionVolumeAudioSynchronizer
+TitleLifetimeScope o-- TitleSelectorChangeSoundPlayer
+TitleLifetimeScope o-- TitleEntryPoint
 GameplayLifetimeScope o-- GameScreenModel
 GameplayLifetimeScope o-- GameScreenView
 GameplayLifetimeScope o-- GameplayPresenter
@@ -99,6 +125,21 @@ TitleScreenView --> OptionMenuModel
 TitleScreenView o-- CycleSelectorView
 TitleScreenModel --> OptionMenuModel : settings snapshot
 TitleScreenModel --> SceneNavigator
+TitleScreenModel --> IGameResetter : ResetAsync
+ApplicationScopeGameResetter ..|> IGameResetter
+ApplicationLifetimeScope o-- ApplicationScopeGameResetter : singleton
+ApplicationScopeGameResetter --> SceneNavigator : rebuilt scope
+TitleEntryPoint --> TitleScreenTransitionSoundPlayer : StartSubscription
+TitleEntryPoint --> OptionVolumeAudioSynchronizer : StartSubscription
+TitleEntryPoint --> TitleSelectorChangeSoundPlayer : StartSubscription
+TitleEntryPoint --> IAudioPlayer : PlayBgm
+TitleScreenTransitionSoundPlayer --> TitleScreenModel : ScreenTransitioned
+TitleScreenTransitionSoundPlayer --> IAudioPlayer : PlaySE
+OptionVolumeAudioSynchronizer --> OptionMenuModel : volume levels
+OptionVolumeAudioSynchronizer --> IAudioVolumeControl
+TitleSelectorChangeSoundPlayer --> TitleScreenModel : SelectedDifficulty
+TitleSelectorChangeSoundPlayer --> OptionMenuModel : volume levels
+TitleSelectorChangeSoundPlayer --> IAudioPlayer : PlaySE
 GameplayPresenter --> IGameplayNavigation
 GameScreenModel ..|> IGameplayNavigation
 GameScreenModel --> SceneNavigator
@@ -119,8 +160,16 @@ public enum TitleScreenState
 {
     TitleScreen = 0,
     MainMenu,
+    Stage,
     OptionMenu,
-    Credit
+    Credit,
+    Tutorial
+}
+
+public enum TitleScreenTransitionDirection
+{
+    Forward = 0,
+    Backward
 }
 
 public enum GameScreenState
@@ -154,7 +203,7 @@ public sealed class TitleStartRequest
 
 - `GameplayStartRequest` は生成後の変更が不可能な不変オブジェクトとする。
 - `GameMode` と `GameDifficulty` は `Ccc.Core.Model` の型を使用し、Presentation 層に同名の型を定義しないこと。
-- MainMenu でのゲーム開始時は `OptionMenuModel.CreateSnapshot()` により設定スナップショットを生成し、`GameplayStartRequest` を構築してシーンロードを開始すること。
+- MainMenu でのゲーム開始時は `OptionMenuModel.Settings` から設定スナップショットを取得し、`GameplayStartRequest` を構築してシーンロードを開始すること。
 - リトライ実行時は、GameScene の LifetimeScope に保持された同一の `GameplayStartRequest` を再利用すること。
 
 ### 5.3 ナビゲーション処理結果（Navigation Result）
@@ -216,8 +265,10 @@ public sealed class SceneNavigator : ISceneNavigator
 public sealed class TitleScreenModel : IDisposable
 {
     public ReadOnlyReactiveProperty<TitleScreenState> CurrentScreen { get; }
+    public Observable<TitleScreenTransitionDirection> ScreenTransitioned { get; }
     public ReadOnlyReactiveProperty<bool> IsBusy { get; }
     public ReadOnlyReactiveProperty<string> ErrorMessage { get; }
+    public ReadOnlyReactiveProperty<GameDifficulty> SelectedDifficulty { get; }
 
     public TitleScreenModel(
         ISceneNavigator sceneNavigator,
@@ -226,18 +277,104 @@ public sealed class TitleScreenModel : IDisposable
 
     public void EnterMainMenu();
     public void OpenOptionMenu();
+    public void OpenStage();
     public void CloseOptionMenu();
     public void OpenCredit();
     public void CloseCredit();
+    public void OpenTutorial();
+    public void CloseTutorial();
+    public void CloseStage();
+    public void CycleDifficulty();
     public UniTask StartGameplayAsync();
     public void Dispose();
 }
 ```
 
+> **画面遷移の通知仕様**
+> - 各遷移メソッドは、`IsBusy == false` かつ現在の画面が遷移元と一致する場合のみ受け付けること。受け付けない要求は何も変更せず、何も通知しないこと。
+> - 受け付けた遷移では、`ErrorMessage` を空にし、`CurrentScreen` を更新した後に `ScreenTransitioned` へ遷移方向を1回通知すること。
+> - `Close*` は `Backward`、それ以外の遷移メソッドは `Forward` を通知すること。
+> - `Dispose` 後の遷移要求は無視すること。`ScreenTransitioned` は `Dispose` 時に完了すること。
+
 ### 7.2 TitleScreenView
 
 - `CurrentScreen` の変更を監視し、対応する画面（GameObject）のみをアクティブにすること。
 - `IsBusy == true`（ロード中など）は、ボタンの連続タップや重複操作を無効化すること。
+
+### 7.3 TitleScreenTransitionSoundPlayer
+
+```csharp
+public sealed class TitleScreenTransitionSoundPlayer : IDisposable
+{
+    public TitleScreenTransitionSoundPlayer(
+        TitleScreenModel titleScreenModel,
+        IAudioPlayer audio);
+
+    public void StartSubscription();
+    public void Dispose();
+}
+```
+
+- `StartSubscription` で `TitleScreenModel.ScreenTransitioned` の購読を開始すること。
+- `Forward` を受けた場合は `AudioKey.SEApplyClick`（`WeakClick_1`）、`Backward` を受けた場合は `AudioKey.SECancelClick`（`WeakClick_2`）を再生すること。
+- 引数が `null` の場合は `ArgumentNullException`、二重開始時は `InvalidOperationException`、`Dispose` 後の開始は `ObjectDisposedException` を送出すること。
+- `Dispose` で購読を解除すること。
+
+### 7.4 OptionVolumeAudioSynchronizer
+
+```csharp
+public sealed class OptionVolumeAudioSynchronizer : IDisposable
+{
+    public OptionVolumeAudioSynchronizer(
+        OptionMenuModel optionMenuModel,
+        IAudioVolumeControl audioVolumeControl);
+
+    public void StartSubscription();
+    public void Dispose();
+}
+```
+
+- `StartSubscription` で `OptionMenuModel.SEVolumeLevel` / `BgmVolumeLevel` を購読し、開始時点の値を即時に、以降は変更の都度 `IAudioVolumeControl` へ反映すること。
+- 例外仕様と `Dispose` の挙動は `TitleScreenTransitionSoundPlayer` と同じとすること。
+
+### 7.5 TitleSelectorChangeSoundPlayer
+
+```csharp
+public sealed class TitleSelectorChangeSoundPlayer : IDisposable
+{
+    public TitleSelectorChangeSoundPlayer(
+        TitleScreenModel titleScreenModel,
+        OptionMenuModel optionMenuModel,
+        IAudioPlayer audio);
+
+    public void StartSubscription();
+    public void Dispose();
+}
+```
+
+- `StartSubscription` で `TitleScreenModel.SelectedDifficulty` と `OptionMenuModel.SEVolumeLevel` / `BgmVolumeLevel` を購読し、値が切り替わるたびに `AudioKey.SEChangeClick` を再生すること。開始時点の値では再生しないこと。
+- 値の切り替えを契機とするため、`IsBusy` 中など Model が受け付けなかった change 操作では再生しないこと。
+- 例外仕様と `Dispose` の挙動は `TitleScreenTransitionSoundPlayer` と同じとすること。
+
+### 7.6 TitleEntryPoint
+
+- TitleScene 開始時の初期処理のみを担当すること。`Start` で `OptionVolumeAudioSynchronizer`、`TitleScreenTransitionSoundPlayer`、`TitleSelectorChangeSoundPlayer` の順に購読を開始し、`AudioKey.BgmTitle` を再生すること。
+- `TitleSelectorChangeSoundPlayer` は `OptionVolumeAudioSynchronizer` より後に購読を開始し、SE 音量の変更時は変更後の音量で change SE が鳴るようにすること。
+- 画面遷移や設定変更への継続的な反応、および Model の破棄は担当しないこと。
+
+> **DI仕様（TitleLifetimeScope）**
+> - `OptionMenuModel`、`TitleScreenModel`、`OptionVolumeAudioSynchronizer`、`TitleScreenTransitionSoundPlayer`、`TitleSelectorChangeSoundPlayer` は `Lifetime.Scoped` で自身の型として登録し、TitleScene の Scope 破棄時に VContainer が `Dispose` すること。
+> - `TitleEntryPoint` は `RegisterEntryPoint` で登録すること。
+>
+> ```csharp
+> builder.Register<OptionMenuModel>(Lifetime.Scoped);
+> builder.Register<TitleScreenModel>(Lifetime.Scoped);
+> builder.Register<OptionVolumeAudioSynchronizer>(Lifetime.Scoped);
+> builder.Register<TitleScreenTransitionSoundPlayer>(Lifetime.Scoped);
+> builder.Register<TitleSelectorChangeSoundPlayer>(Lifetime.Scoped);
+> builder.RegisterComponentInHierarchy<TitleScreenView>();
+> builder.RegisterEntryPoint<TitleEntryPoint>();
+> ```
 
 ---
 
@@ -280,6 +417,9 @@ public sealed class GameScreenModel : IGameplayNavigation, IDisposable
 | `ApplicationLifetimeScope` | `SceneNavigator`、Audio共通インスタンス | Application（アプリ起動期間中） |
 | `TitleScreenModel` | `TitleScreenState`、ロード状態、エラーメッセージ | TitleScene |
 | `OptionMenuModel` | 設定候補、現在の選択Index、設定データ | TitleScene |
+| `TitleScreenTransitionSoundPlayer` | 画面遷移の購読 | TitleScene |
+| `OptionVolumeAudioSynchronizer` | 音量レベルの購読 | TitleScene |
+| `TitleSelectorChangeSoundPlayer` | 選択値（難易度・音量）の購読 | TitleScene |
 | `GameScreenModel` | `GameScreenState`、`SessionResult`、Retry状態 | GameScene |
 | `GameplayController` | `GameplaySessionContext`、`GameplayState` | GameScene内セッション |
 | `GameplayPresenter` | イベント購読、演出待機処理、UI用一時状態 | GameScene |
@@ -289,6 +429,8 @@ public sealed class GameScreenModel : IGameplayNavigation, IDisposable
 ## 10. 受け入れ条件（Acceptance Criteria）
 
 - タイトル画面からメインメニューへの移動、オプション画面・クレジット画面の開閉がスムーズに行えること。
+- TitleScene 内で `Close*` による遷移が受け付けられた場合のみキャンセルSEが鳴り、`IsBusy` 中など受け付けられなかった操作では鳴らないこと。
+- TitleScene 内で難易度・SE 音量・BGM 音量の change 操作が受け付けられた場合のみ change SE が鳴り、SE 音量の変更時は変更後の音量で鳴ること。
 - メインメニューでのゲーム開始操作時、設定スナップショットを含む `GameplayStartRequest` が正常に生成・渡されること。
 - シーンロード中の重複タップによって二重ロードが発生しないこと（`AlreadyLoading` の検知）。
 - ゲームオーバー時に `ResultScreen` へ切り替わり、リトライ操作によって同一シーン内で速やかに再スタートできること。

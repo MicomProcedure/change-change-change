@@ -410,8 +410,16 @@ class IMissionDrawStrategy {
 }
 class SimpleMissionDrawStrategy
 class FullMissionDrawStrategy
+class SectionDecliningMatchRatioMissionDrawStrategy
 class FixedMissionDrawStrategy
+class MissionDrawPipeline
 class MissionDrawSelectionModule
+class ITargetExpressionMatchRatioRangeResolver {
+  <<interface>>
+  +Resolve(section, config) TargetExpressionMatchRatioRange
+}
+class FixedTargetExpressionMatchRatioRangeResolver
+class SectionDecliningTargetExpressionMatchRatioRangeResolver
 class IDiagnosticsReporter~MissionDrawTrace~ {
   <<interface>>
   +bool IsEnabled
@@ -442,10 +450,18 @@ class MissionCandidate
 GameplayController --> IMissionDrawStrategy : calls
 SimpleMissionDrawStrategy ..|> IMissionDrawStrategy
 FullMissionDrawStrategy ..|> IMissionDrawStrategy
+SectionDecliningMatchRatioMissionDrawStrategy ..|> IMissionDrawStrategy
 FixedMissionDrawStrategy ..|> IMissionDrawStrategy
 SimpleMissionDrawStrategy --> MissionDrawSelectionModule
-FullMissionDrawStrategy --> MissionDrawSelectionModule
-FullMissionDrawStrategy --> IDiagnosticsReporter : reports MissionDrawTrace
+FullMissionDrawStrategy --> MissionDrawPipeline
+SectionDecliningMatchRatioMissionDrawStrategy --> MissionDrawPipeline
+FullMissionDrawStrategy ..> FixedTargetExpressionMatchRatioRangeResolver : creates
+SectionDecliningMatchRatioMissionDrawStrategy ..> SectionDecliningTargetExpressionMatchRatioRangeResolver : creates
+FixedTargetExpressionMatchRatioRangeResolver ..|> ITargetExpressionMatchRatioRangeResolver
+SectionDecliningTargetExpressionMatchRatioRangeResolver ..|> ITargetExpressionMatchRatioRangeResolver
+MissionDrawPipeline o-- ITargetExpressionMatchRatioRangeResolver : injected
+MissionDrawPipeline --> MissionDrawSelectionModule
+MissionDrawPipeline --> IDiagnosticsReporter : reports MissionDrawTrace
 MissionDrawSelectionModule o-- IRandomSource : injected
 MissionDrawSelectionModule --> TierResolver
 MissionDrawSelectionModule --> WeightedIndexSelector
@@ -454,18 +470,16 @@ IMissionDrawStrategy --> MissionDrawContext : input
 IMissionDrawStrategy ..> MissionCandidate : result
 ```
 
-本実装版は、2問目以降に解放済み候補を現在式で達成できる群と達成できない群へ分割し、`GameplayConfig.CurrentExpressionSatisfiedMissionSelectionRatio`の直接確率で先に候補群を選ぶ。両群が存在するときだけ乱数を1回消費し、sampleが比率未満なら達成できる群、以上なら達成できない群を選ぶ。片方の群しかない場合、および比率0/1で選択先が確定する場合は乱数を消費しない。その後にTier、極性、直前Mission、Kind、目標適合率上位候補の順で選定する。
+本実装版は、2問目以降に解放済み候補を現在式で達成できる群と達成できない群へ分割し、`GameplayConfig.CurrentExpressionSatisfiedMissionSelectionRatio`の直接確率で先に候補群を選ぶ。両群が存在するときだけ乱数を1回消費し、sampleが比率未満なら達成できる群、以上なら達成できない群を選ぶ。片方の群しかない場合、および比率0/1で選択先が確定する場合は乱数を消費しない。その後にTier、極性、直前Mission、Kind、目標式適合割合、目標式適合割合上位候補の順で選定する。この段階は本実装版系のStrategyで共通の`MissionDrawPipeline`が担い、Strategyごとに異なるのは目標式適合割合を選ぶ範囲を決める部品（`ITargetExpressionMatchRatioRangeResolver`）だけである。`FullMissionDrawStrategy`は設定値に固定した範囲、製品用の`SectionDecliningMatchRatioMissionDrawStrategy`はSectionが進むほど下限が下がる範囲を使い、範囲に幅があるときだけ乱数を1回消費して一様に選ぶ。
 
 ```mermaid
 flowchart TD
     Start[CatalogとSection]
     Tier[TierResolverでCurrent Tier導出]
-    Bucket[候補のあるCurrent／Lower Bucketを作る]
+    Bucket[候補のあるCurrent／Lower Bucketを作る・Lowerは全下位Tierを1つの候補群とする]
     Range{CurrentとLowerの両方があるか}
     Weighted[重み付き選択]
     OneRange[候補がある側を選択・乱数消費なし]
-    LowerTier{Lower内Tierが複数か}
-    PickLower[下位Tierを一様選択]
     Kind{Kindが複数か}
     PickKind[Kindを一様選択]
     Candidate{同Kind Candidateが複数か}
@@ -473,10 +487,8 @@ flowchart TD
     Result[MissionCandidate]
 
     Start --> Tier --> Bucket --> Range
-    Range -->|はい| Weighted --> LowerTier
-    Range -->|いいえ| OneRange --> LowerTier
-    LowerTier -->|はい| PickLower --> Kind
-    LowerTier -->|いいえ| Kind
+    Range -->|はい| Weighted --> Kind
+    Range -->|いいえ| OneRange --> Kind
     Kind -->|はい| PickKind --> Candidate
     Kind -->|いいえ| Candidate
     Candidate -->|はい| PickCandidate --> Result

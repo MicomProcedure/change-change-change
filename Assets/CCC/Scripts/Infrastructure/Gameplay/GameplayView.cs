@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Ccc.Infrastructure.UI;
 using Ccc.Presentation;
 using Cysharp.Threading.Tasks;
 using R3;
@@ -23,7 +24,8 @@ namespace Ccc.Infrastructure.Gameplay
         [SerializeField] private GameplayErrorView _gameplayErrorView;
         [SerializeField] private DotweenFeedbackView _feedbackView;
         [SerializeField] private TMP_Text _gameModeText;
-        [SerializeField] private TMP_Text _difficultyText;
+        [Tooltip("プレイ中の難易度に対応するGameObjectを表示するView。")]
+        [SerializeField] private GameDifficultyView _gameDifficultyView;
 
         [Header("Countdown")]
         [SerializeField] private CountdownView _countdownView;
@@ -106,11 +108,6 @@ namespace Ccc.Infrastructure.Gameplay
                 _gameModeText.text = state.GameModeText;
             }
 
-            if (_difficultyText != null)
-            {
-                _difficultyText.text = state.DifficultyText;
-            }
-
             if (_lifeView != null)
             {
                 _lifeView.Render(state.Life);
@@ -130,6 +127,11 @@ namespace Ccc.Infrastructure.Gameplay
                     state.LeftText,
                     state.OperatorText,
                     state.RightText,
+                    state.LeftIndex,
+                    state.OperatorIndex,
+                    state.RightIndex,
+                    state.NumberChoiceCount,
+                    state.OperatorChoiceCount,
                     state.AnswerText,
                     state.CanSubmit && _isGameplayInputEnabled);
             }
@@ -138,6 +140,34 @@ namespace Ccc.Infrastructure.Gameplay
             {
                 _submitView.Render(state.CanSubmit && _isGameplayInputEnabled);
             }
+        }
+
+        /// <summary>
+        /// 表示設定を各子Viewへ適用します。
+        /// 式のスタイルに対応するSelector一式が未設定の場合はログを出し、式の表示と入力を無効にして処理を継続します。
+        /// </summary>
+        /// <param name="settings">適用する表示設定。</param>
+        public void ApplyDisplaySettings(GameplayDisplaySettingsDto settings)
+        {
+            if (settings == null)
+            {
+                throw new ArgumentNullException(nameof(settings));
+            }
+
+            if (_gameDifficultyView != null)
+            {
+                _gameDifficultyView.Render(settings.Difficulty);
+            }
+
+            if (_expressionView == null ||
+                _expressionView.TryApplyDisplayStyle(settings.ExpressionDisplayStyle))
+            {
+                return;
+            }
+
+            LogConfigurationProblem(
+                $"{nameof(GameplayView)}: {nameof(ExpressionView)}にExpressionDisplayStyle.{settings.ExpressionDisplayStyle}の" +
+                "Selector一式が未設定です。式の表示と入力を無効にして処理を継続します。");
         }
 
         /// <summary>
@@ -220,17 +250,23 @@ namespace Ccc.Infrastructure.Gameplay
         /// Result画面を表示します。
         /// </summary>
         /// <param name="result">Result画面の表示状態。</param>
-        public void ShowResult(GameplayResultViewStateDto result)
+        /// <param name="cancellationToken">Result画面の表示演出を中断するトークン。</param>
+        /// <returns>Result画面の表示演出の完了を表す非同期処理。</returns>
+        public UniTask ShowResultAsync(
+            GameplayResultViewStateDto result,
+            System.Threading.CancellationToken cancellationToken)
         {
             if (result == null)
             {
                 throw new ArgumentNullException(nameof(result));
             }
 
-            if (_gameplayNavigationView != null)
+            if (_gameplayNavigationView == null)
             {
-                _gameplayNavigationView.RenderResult(result);
+                return UniTask.CompletedTask;
             }
+
+            return _gameplayNavigationView.RenderResultAsync(result, cancellationToken);
         }
 
         /// <summary>
@@ -335,7 +371,7 @@ namespace Ccc.Infrastructure.Gameplay
             LogMissingReferenceIfNecessary(_gameplayErrorView, nameof(_gameplayErrorView));
             LogMissingReferenceIfNecessary(_feedbackView, nameof(_feedbackView));
             LogMissingReferenceIfNecessary(_gameModeText, nameof(_gameModeText));
-            LogMissingReferenceIfNecessary(_difficultyText, nameof(_difficultyText));
+            LogMissingReferenceIfNecessary(_gameDifficultyView, nameof(_gameDifficultyView));
             LogMissingReferenceIfNecessary(_countdownView, nameof(_countdownView));
             LogMissingReferenceIfNecessary(_inputBlocker, nameof(_inputBlocker));
         }
@@ -354,6 +390,11 @@ namespace Ccc.Infrastructure.Gameplay
                 (IsDebugMode
                     ? "DebugModeのため処理を継続します。"
                     : "該当するUI表示または入力を無効にして処理を継続します。");
+            LogConfigurationProblem(message);
+        }
+
+        private void LogConfigurationProblem(string message)
+        {
             if (IsDebugMode)
             {
                 Debug.LogError(message, this);

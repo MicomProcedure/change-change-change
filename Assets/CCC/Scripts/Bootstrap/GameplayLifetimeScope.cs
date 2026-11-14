@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Ccc.Core.Model;
 using Ccc.Core.Logic;
 using Ccc.Core.UseCases;
@@ -13,6 +12,7 @@ using Ccc.Infrastructure.Gameplay;
 using Ccc.Presentation.Audio;
 using Ccc.Presentation;
 using Ccc.Presentation.Navigation;
+using Ccc.Presentation.ScoreRank;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -24,17 +24,12 @@ namespace Ccc.Bootstrap
     /// </summary>
     public sealed class GameplayLifetimeScope : LifetimeScope
     {
-        [SerializeField] private GameplayConfigCatalogAsset _configCatalogAsset;
-
         /// <summary>
         /// Gameplay Scopeの依存関係を登録します。
         /// </summary>
         /// <param name="builder">VContainerの登録Builder。</param>
         protected override void Configure(IContainerBuilder builder)
         {
-            ValidateAssetReferences();
-
-            builder.RegisterInstance(_configCatalogAsset);  // inspectorからGameplayConfigCatalogAssetを登録
             builder.Register<GameplayStartContext>(
                 resolver => CreateStartContext(resolver),
                 Lifetime.Scoped);
@@ -74,9 +69,10 @@ namespace Ccc.Bootstrap
                 resolver => CreateDiagnosticsSessionDescriptor(resolver),
                 Lifetime.Scoped);
             builder.RegisterMissionDrawDiagnostics();
-            builder.Register<IMissionDrawStrategy, FullMissionDrawStrategy>(Lifetime.Scoped);
+            builder.Register<IMissionDrawStrategy, SectionDecliningMatchRatioMissionDrawStrategy>(Lifetime.Scoped);
             builder.Register<ISectionTimer, UniTaskSectionTimer>(Lifetime.Scoped);
             builder.Register<ExpressionInput>(Lifetime.Scoped);
+            builder.RegisterLogger<GameplayController>(Lifetime.Scoped);
             builder.Register<IGameplayFlow, GameplayController>(Lifetime.Scoped);
             builder.Register<RationalDecimalFormatter>(Lifetime.Scoped);
             builder.Register<MissionTextFormatter>(Lifetime.Scoped);
@@ -87,6 +83,8 @@ namespace Ccc.Bootstrap
                     resolver.Resolve<ISceneNavigator>(),
                     resolver.Resolve<GameplayStartContext>().Request,
                     resolver.Resolve<GameplayConfig>(),
+                    resolver.Resolve<HighScoreService>(),
+                    resolver.Resolve<IScoreRankThresholdsProvider>(),
                     resolver.Resolve<IAudioPlayer>(),
                     resolver.Resolve<RationalDecimalFormatter>(),
                     resolver.Resolve<MissionTextFormatter>()),
@@ -94,39 +92,26 @@ namespace Ccc.Bootstrap
 
             builder.RegisterComponentInHierarchy<GameplayView>()
                 .As<IGameplayView, IGameplayCountdownView>();
+            builder.RegisterLogger<GameplayEntryPoint>(Lifetime.Scoped);
             builder.RegisterEntryPoint<GameplayEntryPoint>();
         }
 
-        private void ValidateAssetReferences()
+        private static GameplayStartContext CreateStartContext(IObjectResolver resolver)
         {
-            if (_configCatalogAsset == null)
-            {
-                throw new InvalidOperationException(
-                    "GameplayLifetimeScope requires a GameplayConfigCatalogAsset reference.");
-            }
-        }
-
-        private GameplayStartContext CreateStartContext(IObjectResolver resolver)
-        {
-            IReadOnlyList<string> catalogErrors = _configCatalogAsset.Validate();
-            if (catalogErrors.Count > 0)
-            {
-                throw new InvalidOperationException(
-                    "Gameplay config catalog validation failed: " +
-                    string.Join(" | ", catalogErrors));
-            }
+            // CatalogはApplicationLifetimeScopeで検証済みのものを登録している
+            GameplayConfigCatalogAsset configCatalogAsset = resolver.Resolve<GameplayConfigCatalogAsset>();
 
             GameplayNavigationRequest request;
-            
+
             if (!resolver.TryResolve(out request))
             {
-                request = _configCatalogAsset.CreateDefaultRequest();
+                request = configCatalogAsset.CreateDefaultRequest();
                 Debug.LogWarning(
                     "GameplayNavigationRequest was not provided. " +
                     "Using the default GameplayConfigCatalog entry for direct Scene Play.");
             }
 
-            if (!_configCatalogAsset.TryGetEntry(request, out GameplayConfigEntry entry))
+            if (!configCatalogAsset.TryGetEntry(request, out GameplayConfigEntry entry))
             {
                 throw new InvalidOperationException(
                     $"No GameplayConfigCatalog entry matches " +

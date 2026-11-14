@@ -53,7 +53,7 @@ flowchart LR
 
 ## 5. Mission抽選の実装スコープ
 
-- **プロダクション設定**: 本番動作時は `FullMissionDrawStrategy` を使用すること。
+- **プロダクション設定**: 本番動作時は `SectionDecliningMatchRatioMissionDrawStrategy` を使用すること。`FullMissionDrawStrategy` は目標式適合割合を固定した比較用とすること。
 - **開発確認用設定**: `FixedMissionDrawStrategy` は開発・デバッグ時の動作検証用として使用すること。
 - **必須対応範囲**: Normalモード、LifeEndlessモード、Tier 1〜4、Mission候補の自動生成、許可された`NegatedMission`候補、および本実装版Mission抽選ロジックを完成範囲とすること。
 - **候補供給**: 製品経路は`Automatic`とし、`PresetDebug`はDebugModeでの限定確認にのみ使用すること。

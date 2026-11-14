@@ -1,8 +1,6 @@
 using System;
 using Ccc.Infrastructure.Navigation;
 using Ccc.Presentation.Audio;
-using Ccc.Presentation.Navigation;
-using R3;
 using VContainer.Unity;
 
 namespace Ccc.Bootstrap
@@ -10,74 +8,45 @@ namespace Ccc.Bootstrap
     /// <summary>
     /// TitleScene開始時の初期処理を担当します。
     /// </summary>
-    public sealed class TitleEntryPoint : IStartable, IDisposable
+    public sealed class TitleEntryPoint : IStartable
     {
-        private readonly TitleScreenModel _model;
-        private readonly OptionMenuModel _optionMenuModel;
+        private readonly OptionVolumeAudioSynchronizer _optionVolumeAudioSynchronizer;
+        private readonly TitleScreenTransitionSoundPlayer _titleScreenTransitionSoundPlayer;
+        private readonly TitleSelectorChangeSoundPlayer _titleSelectorChangeSoundPlayer;
         private readonly IAudioPlayer _audio;
-        private readonly IAudioVolumeControl _audioVolumeControl;
-        private IDisposable _screenSubscription;
-        private IDisposable _seVolumeSubscription;
-        private IDisposable _bgmVolumeSubscription;
-        private TitleScreenState _previousScreen;
 
         /// <summary>
         /// TitleEntryPointを生成します。
         /// </summary>
-        /// <param name="model">Title画面Model。</param>
-        /// <param name="optionMenuModel">Option設定Model。</param>
+        /// <param name="optionVolumeAudioSynchronizer">Option音量のAudio反映処理。</param>
+        /// <param name="titleScreenTransitionSoundPlayer">Title画面遷移のSE再生処理。</param>
+        /// <param name="titleSelectorChangeSoundPlayer">Title画面の選択値切り替えのSE再生処理。</param>
         /// <param name="audio">Audio再生ポート。</param>
-        /// <param name="audioVolumeControl">音量レベル変更ポート。</param>
         public TitleEntryPoint(
-            TitleScreenModel model,
-            OptionMenuModel optionMenuModel,
-            IAudioPlayer audio,
-            IAudioVolumeControl audioVolumeControl)
+            OptionVolumeAudioSynchronizer optionVolumeAudioSynchronizer,
+            TitleScreenTransitionSoundPlayer titleScreenTransitionSoundPlayer,
+            TitleSelectorChangeSoundPlayer titleSelectorChangeSoundPlayer,
+            IAudioPlayer audio)
         {
-            _model = model ?? throw new ArgumentNullException(nameof(model));
-            _optionMenuModel = optionMenuModel ?? throw new ArgumentNullException(nameof(optionMenuModel));
+            _optionVolumeAudioSynchronizer = optionVolumeAudioSynchronizer ??
+                throw new ArgumentNullException(nameof(optionVolumeAudioSynchronizer));
+            _titleScreenTransitionSoundPlayer = titleScreenTransitionSoundPlayer ??
+                throw new ArgumentNullException(nameof(titleScreenTransitionSoundPlayer));
+            _titleSelectorChangeSoundPlayer = titleSelectorChangeSoundPlayer ??
+                throw new ArgumentNullException(nameof(titleSelectorChangeSoundPlayer));
             _audio = audio ?? throw new ArgumentNullException(nameof(audio));
-            _audioVolumeControl = audioVolumeControl ?? throw new ArgumentNullException(nameof(audioVolumeControl));
         }
 
         /// <summary>
-        /// Title BGMを再生します。
+        /// 音量反映とTitle画面SEの購読を開始し、Title BGMを再生します。
         /// </summary>
         public void Start()
         {
-            _previousScreen = _model.CurrentScreen.CurrentValue;
-            _screenSubscription = _model.CurrentScreen.Subscribe(HandleScreenChanged);
-            _seVolumeSubscription =
-                _optionMenuModel.SEVolumeLevel.Subscribe(_audioVolumeControl.SetSEVolumeLevel);
-            _bgmVolumeSubscription =
-                _optionMenuModel.BgmVolumeLevel.Subscribe(_audioVolumeControl.SetBgmVolumeLevel);
+            // SE音量変更時のchange音を変更後の音量で鳴らすため、音量反映より後に購読する
+            _optionVolumeAudioSynchronizer.StartSubscription();
+            _titleScreenTransitionSoundPlayer.StartSubscription();
+            _titleSelectorChangeSoundPlayer.StartSubscription();
             _audio.PlayBgm(AudioKey.BgmTitle);
-        }
-
-        /// <summary>
-        /// Title画面Modelを破棄します。
-        /// </summary>
-        public void Dispose()
-        {
-            _screenSubscription?.Dispose();
-            _screenSubscription = null;
-            _seVolumeSubscription?.Dispose();
-            _seVolumeSubscription = null;
-            _bgmVolumeSubscription?.Dispose();
-            _bgmVolumeSubscription = null;
-            _model.Dispose();
-        }
-
-        private void HandleScreenChanged(TitleScreenState currentScreen)
-        {
-            if ((_previousScreen == TitleScreenState.OptionMenu ||
-                 _previousScreen == TitleScreenState.Credit) &&
-                currentScreen == TitleScreenState.MainMenu)
-            {
-                _audio.PlaySE(AudioKey.SECancelClick);
-            }
-
-            _previousScreen = currentScreen;
         }
     }
 }

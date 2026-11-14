@@ -25,12 +25,12 @@
 | `ParameterB` | Betweenの幅、Moduloの剰余 |
 | `IsNegated` | 判定反転の有無 |
 
-`Tier`は入力しないこと。肯定固定Tier、Betweenの分析済み適合率、Negated既定Tierから`MissionCatalogBuilder`が確定する。
+`Tier`は入力しないこと。肯定固定Tier、Betweenの分析済み適合率、DivisorのNの到達可能性、Negated既定Tierから`MissionCatalogBuilder`が確定する。
 
 ## パラメータ構造
 
-- `None`: Even、Odd、Integer、Decimal、Positive、Negative、Prime、Zero、Square、Composite
-- `Single`: AtLeast、AtMost、Exact、Multiple、Absolute、OnesDigit、DecimalFirstDigit
+- `None`: Even、Odd、Integer、Decimal、Positive、Negative、Prime、Zero、Square、Composite、BetweenZeroAndOne、TwoDigit、RepeatingDecimal
+- `Single`: AtLeast、AtMost、Exact、Multiple、Absolute、OnesDigit、DecimalFirstDigit、Divisor、Power、TensDigit、DigitSum
 - `Pair`: Between、Modulo
 
 `None`はParameterA/Bを0、`Single`はParameterBを0とする。`Between`のParameterBは幅であり1以上、`Modulo`は法2以上かつ`0 <= remainder < divisor`とする。

@@ -14,7 +14,7 @@
 | --- | --- |
 | Mission単位の選出割合 | 特定のMissionが出過ぎていないか。狙ったMissionが出ていないか |
 | Kind・Tierの出現分布 | Section（Tier解放の進行）に応じてKindとTierの構成がどう変わるか |
-| パラメータ・適合率の質 | 選出Missionの適合率が目標値からどれだけ離れているか。Pool内順位とKind内パラメータに偏りがないか |
+| パラメータ・適合率の質 | Sectionごとの目標式適合割合の範囲に対して、選出Missionの適合率がその抽選の目標値からどれだけ離れているか。Pool内順位とKind内パラメータに偏りがないか |
 | 連続出題の偏り | Session内で同じKind・Missionが続いていないか |
 
 ---
@@ -52,7 +52,7 @@
 | `ExposedDraws` | そのMissionが抽選対象（有効かつTierが `CurrentTier` 以下）だった抽選回数 |
 | `UniformExpected` | 抽選対象だった各抽選で `1 / UnlockedCount` を合計した値（解放済み候補から一様に選んだ場合の期待選出回数） |
 | `Lift` | `Selected / UniformExpected` |
-| `StaticPoolRank` | 同じTier・極性・Kindの候補を、目標適合率との差の昇順・Catalog順で並べた順位（全候補が残った場合のPool内順位） |
+| `StaticPoolRank` | 同じTier・極性・Kindの候補を、目標式適合割合の上限 `TargetExpressionMatchRatio`（Section 1の値）との差の昇順・Catalog順で並べた順位（全候補が残り、目標値が上限の場合のPool内順位） |
 
 - 偏りの指標として、上位 `CONCENTRATION_TOP_FRACTION` のMissionが占める選出割合、実効Mission数（1/Σp²）、ジニ係数を示すこと。
 - 選出回数と `Lift` の上位、抽選対象だったのに未選出のMission、Kind×極性とTierごとの網羅率を表で示すこと。
@@ -63,7 +63,9 @@
 
 ### 4.3 パラメータ・適合率の質
 
-- 選出Missionの適合率分布と目標値、Kind別の目標値との差、PoolSize別の `SelectedRank` 構成比、Kind別のPoolが設定値未満だった抽選の割合を示すこと。
+- 目標式適合割合は抽選ごとに異なるため、目標値との差はdraws表の `TargetRatio`（その抽選の目標値）に対して求めること。
+- Section別の選出Missionの適合率分布を、その抽選の目標式適合割合の範囲（`TargetRatioLowerBound`・`TargetRatioUpperBound`）とともに示すこと。
+- 選出Missionの適合率から `TargetRatio` を引いた差の分布、Kind別の `TargetRatio` との差、PoolSize別の `SelectedRank` 構成比、Kind別のPoolが設定値未満だった抽選の割合を示すこと。
 - パラメータを持つKindについて、抽選対象だった全Missionのパラメータ別選出回数を示すこと。1パラメータのKindは極性別の棒グラフ、2パラメータのKindは極性ごとのA×Bヒートマップとし、Catalogにない組を選出0回と区別すること。
 
 ### 4.4 連続出題の偏り

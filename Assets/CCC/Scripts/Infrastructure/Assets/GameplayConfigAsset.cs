@@ -30,6 +30,8 @@ namespace Ccc.Infrastructure.Assets
         private const float DefaultLowerTierDrawWeight = 0.40f;
         private const float DefaultCurrentExpressionSatisfiedMissionSelectionRatio = 0.10f;
         private const float DefaultTargetExpressionMatchRatio = 0.20f;
+        private const float DefaultTargetExpressionMatchRatioReductionPerSection = 0f;
+        private const float DefaultMinimumTargetExpressionMatchRatio = 0f;
         private const float DefaultNegatedMissionSelectionWeight = 0.60f;
         private const int DefaultMissionParameterSelectionPoolSize = 3;
 
@@ -107,6 +109,13 @@ namespace Ccc.Infrastructure.Assets
         private float targetExpressionMatchRatio = DefaultTargetExpressionMatchRatio;
 
         [SerializeField]
+        private float targetExpressionMatchRatioReductionPerSection =
+            DefaultTargetExpressionMatchRatioReductionPerSection;
+
+        [SerializeField]
+        private float minimumTargetExpressionMatchRatio = DefaultMinimumTargetExpressionMatchRatio;
+
+        [SerializeField]
         private float negatedMissionSelectionWeight = DefaultNegatedMissionSelectionWeight;
 
         [SerializeField]
@@ -176,6 +185,17 @@ namespace Ccc.Infrastructure.Assets
             ValidateRatio(errors, targetExpressionMatchRatio, "Target expression match ratio");
             ValidateWeight(
                 errors,
+                targetExpressionMatchRatioReductionPerSection,
+                "Target expression match ratio reduction per section");
+            ValidateRatio(errors, minimumTargetExpressionMatchRatio, "Minimum target expression match ratio");
+            if (IsFinite(minimumTargetExpressionMatchRatio) && IsFinite(targetExpressionMatchRatio) &&
+                minimumTargetExpressionMatchRatio > targetExpressionMatchRatio)
+            {
+                errors.Add("Minimum target expression match ratio must not exceed the target expression match ratio.");
+            }
+
+            ValidateWeight(
+                errors,
                 negatedMissionSelectionWeight,
                 "Negated mission selection weight");
             if (missionParameterSelectionPoolSize <= 0)
@@ -224,6 +244,8 @@ namespace Ccc.Infrastructure.Assets
                 lowerTierDrawWeight,
                 currentExpressionSatisfiedMissionSelectionRatio,
                 targetExpressionMatchRatio,
+                targetExpressionMatchRatioReductionPerSection,
+                minimumTargetExpressionMatchRatio,
                 negatedMissionSelectionWeight,
                 missionParameterSelectionPoolSize);
         }

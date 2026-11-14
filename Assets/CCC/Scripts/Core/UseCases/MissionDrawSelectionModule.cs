@@ -89,13 +89,12 @@ namespace Ccc.Core.UseCases
         }
 
         /// <summary>
-        /// SectionとConfigに基づいて抽選対象Tierの候補群を選びます。
+        /// SectionとConfigに基づいて、現在Tierの候補群か全下位Tierをまとめた候補群を選びます。
         /// </summary>
         internal bool TrySelectTierCandidates(
             IReadOnlyList<MissionCandidate> candidates,
             int section,
             GameplayConfig config,
-            bool shouldSelectSpecificLowerTierWhenCurrentTierIsUnavailable,
             out IReadOnlyList<MissionCandidate> selectedCandidates,
             out string failureMessage)
         {
@@ -118,16 +117,8 @@ namespace Ccc.Core.UseCases
 
             if (currentTierCandidates.Length == 0)
             {
-                if (!shouldSelectSpecificLowerTierWhenCurrentTierIsUnavailable)
-                {
-                    selectedCandidates = lowerTierCandidates;
-                    return true;
-                }
-
-                return TrySelectLowerTierCandidates(
-                    lowerTierCandidates,
-                    out selectedCandidates,
-                    out failureMessage);
+                selectedCandidates = lowerTierCandidates;
+                return true;
             }
 
             if (lowerTierCandidates.Length == 0)
@@ -145,16 +136,10 @@ namespace Ccc.Core.UseCases
                 return false;
             }
 
-            if (selectCurrentTier)
-            {
-                selectedCandidates = currentTierCandidates;
-                return true;
-            }
-
-            return TrySelectLowerTierCandidates(
-                lowerTierCandidates,
-                out selectedCandidates,
-                out failureMessage);
+            selectedCandidates = selectCurrentTier
+                ? currentTierCandidates
+                : lowerTierCandidates;
+            return true;
         }
 
         /// <summary>
@@ -273,30 +258,30 @@ namespace Ccc.Core.UseCases
             return true;
         }
 
-        private bool TrySelectLowerTierCandidates(
-            IReadOnlyList<MissionCandidate> lowerTierCandidates,
-            out IReadOnlyList<MissionCandidate> selectedCandidates,
+        /// <summary>
+        /// 範囲から目標式適合割合を一様に選びます。下限と上限が等しい場合は乱数を消費しません。
+        /// </summary>
+        internal bool TrySelectTargetExpressionMatchRatio(
+            TargetExpressionMatchRatioRange range,
+            out float targetExpressionMatchRatio,
             out string failureMessage)
         {
-            selectedCandidates = null;
-            var tierValues = lowerTierCandidates
-                .Select(candidate => candidate.Tier)
-                .Distinct()
-                .OrderBy(tier => tier)
-                .ToArray();
-            if (!TrySelectUniformIndex(
-                    tierValues.Length,
-                    "lower tier",
-                    out int tierIndex,
-                    out failureMessage))
+            targetExpressionMatchRatio = 0f;
+            failureMessage = null;
+            if (range.IsSingleValue)
+            {
+                targetExpressionMatchRatio = range.LowerBound;
+                return true;
+            }
+
+            if (!TryGetRandomValue(out float randomValue, out failureMessage))
             {
                 return false;
             }
 
-            int selectedTier = tierValues[tierIndex];
-            selectedCandidates = lowerTierCandidates
-                .Where(candidate => candidate.Tier == selectedTier)
-                .ToArray();
+            // 倍精度で補間してからfloatへ丸めることで、結果が上限を超えないようにする
+            targetExpressionMatchRatio = (float)(
+                range.LowerBound + ((double)range.UpperBound - range.LowerBound) * randomValue);
             return true;
         }
 

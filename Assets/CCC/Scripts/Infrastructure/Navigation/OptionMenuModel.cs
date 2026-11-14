@@ -10,10 +10,14 @@ namespace Ccc.Infrastructure.Navigation
     public sealed class OptionMenuModel : IDisposable
     {
         private readonly IOptionSettingsStore _optionSettingsStore;
-        private readonly ReactiveProperty<int> _seVolumeLevel;
-        private readonly ReactiveProperty<int> _bgmVolumeLevel;
+        private readonly ReactiveProperty<OptionSettingsSnapshot> _settings;
 
         private bool _isDisposed;
+
+        /// <summary>
+        /// 現在のOption設定を取得します。
+        /// </summary>
+        public ReadOnlyReactiveProperty<OptionSettingsSnapshot> Settings { get; }
 
         /// <summary>
         /// 効果音の音量レベルを取得します。
@@ -35,12 +39,17 @@ namespace Ccc.Infrastructure.Navigation
             _optionSettingsStore =
                 optionSettingsStore ?? throw new ArgumentNullException(nameof(optionSettingsStore));
 
-            OptionSettingsSnapshot savedSettings = _optionSettingsStore.Load();
-            _seVolumeLevel = new ReactiveProperty<int>(savedSettings.SEVolumeLevel);
-            _bgmVolumeLevel = new ReactiveProperty<int>(savedSettings.BgmVolumeLevel);
+            _settings = new ReactiveProperty<OptionSettingsSnapshot>(_optionSettingsStore.Load());
 
-            SEVolumeLevel = _seVolumeLevel.ToReadOnlyReactiveProperty();
-            BgmVolumeLevel = _bgmVolumeLevel.ToReadOnlyReactiveProperty();
+            Settings = _settings.ToReadOnlyReactiveProperty();
+            SEVolumeLevel = _settings
+                .Select(settings => settings.SEVolumeLevel)
+                .DistinctUntilChanged()
+                .ToReadOnlyReactiveProperty();
+            BgmVolumeLevel = _settings
+                .Select(settings => settings.BgmVolumeLevel)
+                .DistinctUntilChanged()
+                .ToReadOnlyReactiveProperty();
         }
 
         /// <summary>
@@ -53,8 +62,10 @@ namespace Ccc.Infrastructure.Navigation
                 return;
             }
 
-            _seVolumeLevel.Value = GetNextVolumeLevel(_seVolumeLevel.Value);
-            _optionSettingsStore.Save(CreateSnapshot());
+            OptionSettingsSnapshot currentSettings = _settings.Value;
+            UpdateSettings(new OptionSettingsSnapshot(
+                GetNextVolumeLevel(currentSettings.SEVolumeLevel),
+                currentSettings.BgmVolumeLevel));
         }
 
         /// <summary>
@@ -67,19 +78,10 @@ namespace Ccc.Infrastructure.Navigation
                 return;
             }
 
-            _bgmVolumeLevel.Value = GetNextVolumeLevel(_bgmVolumeLevel.Value);
-            _optionSettingsStore.Save(CreateSnapshot());
-        }
-
-        /// <summary>
-        /// 現在のOption設定をSnapshotとして作成します。
-        /// </summary>
-        /// <returns>現在のSE・BGM音量を保持するSnapshotです。</returns>
-        public OptionSettingsSnapshot CreateSnapshot()
-        {
-            return new OptionSettingsSnapshot(
-                _seVolumeLevel.Value,
-                _bgmVolumeLevel.Value);
+            OptionSettingsSnapshot currentSettings = _settings.Value;
+            UpdateSettings(new OptionSettingsSnapshot(
+                currentSettings.SEVolumeLevel,
+                GetNextVolumeLevel(currentSettings.BgmVolumeLevel)));
         }
 
         /// <summary>
@@ -94,11 +96,17 @@ namespace Ccc.Infrastructure.Navigation
 
             _isDisposed = true;
 
+            Settings.Dispose();
             SEVolumeLevel.Dispose();
             BgmVolumeLevel.Dispose();
 
-            _seVolumeLevel.Dispose();
-            _bgmVolumeLevel.Dispose();
+            _settings.Dispose();
+        }
+
+        private void UpdateSettings(OptionSettingsSnapshot settings)
+        {
+            _settings.Value = settings;
+            _optionSettingsStore.Save(settings);
         }
 
         private static int GetNextVolumeLevel(int currentLevel)

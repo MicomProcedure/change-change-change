@@ -48,6 +48,7 @@ namespace Ccc.Core.Logic
                     "No mission parameter candidates provided.");
             }
 
+            HashSet<int> reachableIntegers = ReachableIntegerCollector.Collect(definedExpressions);
             var acceptedCandidates = new List<MissionCandidate>();
             for (int index = 0; index < normalizedParameters.Count; index++)
             {
@@ -63,7 +64,8 @@ namespace Ccc.Core.Logic
                 int tier = MissionCandidateTierResolver.Resolve(
                     parameter.Condition,
                     analysis.MatchRatio,
-                    betweenTierTwoThreshold);
+                    betweenTierTwoThreshold,
+                    reachableIntegers.Contains(parameter.Condition.ParameterA));
                 acceptedCandidates.Add(new MissionCandidate(
                     parameter.Condition,
                     tier,

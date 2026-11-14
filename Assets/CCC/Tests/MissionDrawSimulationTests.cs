@@ -255,6 +255,7 @@ namespace Ccc.Tests
                 settings,
                 Seed,
                 environment => new SequentialFlowScenario(environment, sessionCount: 3, maximumSection: 4),
+                CreateFullStrategy,
                 new RecordingReporter<MissionCatalog>(),
                 firstReporter);
             MissionDrawSimulation.Run(
@@ -262,6 +263,7 @@ namespace Ccc.Tests
                 settings,
                 Seed,
                 environment => new SequentialFlowScenario(environment, sessionCount: 3, maximumSection: 4),
+                CreateFullStrategy,
                 new RecordingReporter<MissionCatalog>(),
                 secondReporter);
 
@@ -288,6 +290,7 @@ namespace Ccc.Tests
                 CreatePreparationSettings(config),
                 Seed,
                 environment => new SequentialFlowScenario(environment, sessionCount: 2, maximumSection: 3),
+                CreateFullStrategy,
                 catalogReporter,
                 drawReporter);
 
@@ -296,6 +299,37 @@ namespace Ccc.Tests
             Assert.That(
                 drawReporter.Traces.Select(trace => trace.SelectedCandidate).Distinct(),
                 Is.SubsetOf(catalogReporter.Traces[0].Candidates));
+        }
+
+        /// <summary>
+        /// 生成関数が作ったStrategyへ抽選用乱数と診断Reporterを渡し、そのStrategyで全抽選を行うことを検証します。
+        /// </summary>
+        [Test]
+        public void Run_ShouldDrawWithStrategyCreatedByFactory()
+        {
+            GameplayConfig config = GameplayConfigDefaults.CreateNormal();
+            var drawReporter = new RecordingReporter<MissionDrawTrace>();
+            var createdStrategies = new List<CountingMissionDrawStrategy>();
+            IDiagnosticsReporter<MissionDrawTrace>? receivedReporter = null;
+
+            MissionDrawSimulationSummary summary = MissionDrawSimulation.Run(
+                config,
+                CreatePreparationSettings(config),
+                Seed,
+                environment => new SequentialFlowScenario(environment, sessionCount: 2, maximumSection: 3),
+                (randomSource, reporter) =>
+                {
+                    receivedReporter = reporter;
+                    var strategy = new CountingMissionDrawStrategy(CreateFullStrategy(randomSource, reporter));
+                    createdStrategies.Add(strategy);
+                    return strategy;
+                },
+                new RecordingReporter<MissionCatalog>(),
+                drawReporter);
+
+            Assert.That(createdStrategies, Has.Count.EqualTo(1));
+            Assert.That(receivedReporter, Is.SameAs(drawReporter));
+            Assert.That(createdStrategies[0].DrawCount, Is.EqualTo(summary.DrawCount));
         }
 
         /// <summary>
@@ -320,6 +354,7 @@ namespace Ccc.Tests
                 settings,
                 Seed,
                 environment => new SequentialFlowScenario(environment, sessionCount: 1, maximumSection: 1),
+                CreateFullStrategy,
                 new RecordingReporter<MissionCatalog>(),
                 new RecordingReporter<MissionDrawTrace>()));
         }
@@ -388,6 +423,39 @@ namespace Ccc.Tests
             }
 
             return draws;
+        }
+
+        private static IMissionDrawStrategy CreateFullStrategy(
+            IRandomSource randomSource,
+            IDiagnosticsReporter<MissionDrawTrace> diagnosticsReporter)
+        {
+            return new FullMissionDrawStrategy(randomSource, diagnosticsReporter);
+        }
+
+        private sealed class CountingMissionDrawStrategy : IMissionDrawStrategy
+        {
+            private readonly IMissionDrawStrategy _innerStrategy;
+
+            public CountingMissionDrawStrategy(IMissionDrawStrategy innerStrategy)
+            {
+                _innerStrategy = innerStrategy;
+            }
+
+            /// <summary>
+            /// 抽選が呼ばれた回数を取得します。
+            /// </summary>
+            public int DrawCount { get; private set; }
+
+            /// <summary>
+            /// 抽選回数を数えてから内側のStrategyで抽選します。
+            /// </summary>
+            /// <param name="context">抽選Context。</param>
+            /// <returns>内側のStrategyの抽選結果。</returns>
+            public MissionDrawResult Draw(MissionDrawContext context)
+            {
+                DrawCount++;
+                return _innerStrategy.Draw(context);
+            }
         }
 
         private sealed class RecordingReporter<TTrace> : IDiagnosticsReporter<TTrace>

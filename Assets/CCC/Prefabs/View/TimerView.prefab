@@ -29,8 +29,8 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 4444253163939462810}
   - {fileID: 4915578120901866654}
+  - {fileID: 4444253163939462810}
   - {fileID: 4578353033606828937}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -54,8 +54,8 @@ MonoBehaviour:
   _timerText: {fileID: 9070082008112711790}
   _timerIndicator: {fileID: 3996701980672980079}
   _bonusTimerIndicator: {fileID: 6026063819727306589}
-  _isBonusPreviewEnabled: 0
-  _previewBonusSeconds: 0
+  _bonusIndicatorMode: 1
+  _fixedBonusDecreaseRatioPerSecond: 0.2
 --- !u!1 &5015447055632477649
 GameObject:
   m_ObjectHideFlags: 0

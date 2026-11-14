@@ -23,7 +23,7 @@ PrefabInstance:
     - target: {fileID: 3960598941001036360, guid: 67be1ce2ef0864715be0f5710aa3d5bc, type: 3}
       propertyPath: disabledGraphic
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 2281586733443337246}
     - target: {fileID: 5238326301545750790, guid: 67be1ce2ef0864715be0f5710aa3d5bc, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -256,3 +256,14 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 8611985343993693539, guid: a0875d342f68e4483a23ebc62e9b38e6, type: 3}
   m_PrefabInstance: {fileID: 7242738249281768286}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2281586733443337246 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8875102947834414912, guid: a0875d342f68e4483a23ebc62e9b38e6, type: 3}
+  m_PrefabInstance: {fileID: 7242738249281768286}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image

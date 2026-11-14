@@ -11,28 +11,29 @@ namespace Ccc.Infrastructure.Audio
     public sealed class AudioEntry
     {
         [SerializeField]
-        private AudioKey key;
+        private AudioKey _key;
 
         [SerializeField]
-        private AudioClip clip;
+        private AudioClip _clip;
 
-        [SerializeField, Range(0f, 1f)]
-        private float volume = 1f;
+        [Tooltip("SE一覧では1を超える値で増幅できるが、音割れする可能性がある。BGM一覧は1以下で指定する。")]
+        [SerializeField, Min(AudioVolumeRules.MinVolume)]
+        private float _volume = 1f;
 
         /// <summary>
         ///     登録キーマッピング。
         /// </summary>
-        public AudioKey Key => key;
+        public AudioKey Key => _key;
 
         /// <summary>
         ///     再生するAudioClip。
         /// </summary>
-        public AudioClip Clip => clip;
+        public AudioClip Clip => _clip;
 
         /// <summary>
         ///     音量。
         /// </summary>
-        public float Volume => volume;
+        public float Volume => _volume;
 
         /// <summary>
         ///     指定された設定でAudioEntryを生成する。
@@ -42,9 +43,9 @@ namespace Ccc.Infrastructure.Audio
         /// <param name="volume">音量。</param>
         public AudioEntry(AudioKey key, AudioClip clip, float volume)
         {
-            this.key = key;
-            this.clip = clip;
-            this.volume = volume;
+            _key = key;
+            _clip = clip;
+            _volume = volume;
         }
 
         public AudioEntry()

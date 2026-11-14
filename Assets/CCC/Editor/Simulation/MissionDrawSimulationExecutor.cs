@@ -9,7 +9,7 @@ using Ccc.Simulation;
 namespace Ccc.Editor.Simulation
 {
     /// <summary>
-    /// シミュレーション設定から本番と同じConfigとCatalog準備設定を作り、結果をCSVへ書き出しながらシミュレーションを実行します。
+    /// シミュレーション設定から本番と同じConfigとCatalog準備設定、および選択中のStrategyを作り、結果をCSVへ書き出しながらシミュレーションを実行します。
     /// </summary>
     public static class MissionDrawSimulationExecutor
     {
@@ -62,6 +62,7 @@ namespace Ccc.Editor.Simulation
                     preparationSettings,
                     settings.Seed,
                     settings.CreateScenario,
+                    settings.CreateStrategy,
                     catalogReporter,
                     reporter);
                 return (summary, outputDirectoryPath);

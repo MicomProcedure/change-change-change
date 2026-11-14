@@ -8,7 +8,7 @@ using Ccc.Core.UseCases;
 namespace Ccc.Simulation
 {
     /// <summary>
-    /// 本番と同じ手順でMissionCatalogを準備し、シナリオが生成するContextで本実装版Strategyを繰り返し抽選します。
+    /// 本番と同じ手順でMissionCatalogを準備し、シナリオが生成するContextで指定されたMission抽選Strategyを繰り返し抽選します。
     /// </summary>
     public static class MissionDrawSimulation
     {
@@ -21,22 +21,29 @@ namespace Ccc.Simulation
         /// <param name="preparationSettings">MissionCatalog準備設定。</param>
         /// <param name="seed">抽選用とシナリオ用の乱数を決めるseed。同じseedと入力からは同じ結果を再現します。</param>
         /// <param name="createScenario">準備済み環境からシナリオを生成する関数。</param>
+        /// <param name="createStrategy">抽選用乱数と診断Reporterから、抽選に使うMission抽選Strategyを生成する関数。</param>
         /// <param name="catalogReporter">準備したMissionCatalogを抽選前に1回受け取る診断Reporter。</param>
         /// <param name="diagnosticsReporter">各抽選のTraceを受け取る診断Reporter。</param>
         /// <returns>抽選回数と失敗内訳。</returns>
         /// <exception cref="ArgumentNullException">引数がnullの場合。</exception>
-        /// <exception cref="InvalidOperationException">MissionCatalogの準備に失敗した場合。</exception>
+        /// <exception cref="InvalidOperationException">MissionCatalogの準備に失敗した場合、またはシナリオかStrategyの生成関数がnullを返した場合。</exception>
         public static MissionDrawSimulationSummary Run(
             GameplayConfig config,
             MissionCatalogPreparationSettings preparationSettings,
             int seed,
             Func<MissionDrawScenarioEnvironment, IMissionDrawScenario> createScenario,
+            Func<IRandomSource, IDiagnosticsReporter<MissionDrawTrace>, IMissionDrawStrategy> createStrategy,
             IDiagnosticsReporter<MissionCatalog> catalogReporter,
             IDiagnosticsReporter<MissionDrawTrace> diagnosticsReporter)
         {
             if (createScenario == null)
             {
                 throw new ArgumentNullException(nameof(createScenario));
+            }
+
+            if (createStrategy == null)
+            {
+                throw new ArgumentNullException(nameof(createStrategy));
             }
 
             if (catalogReporter == null)
@@ -69,7 +76,8 @@ namespace Ccc.Simulation
                 new SimulationRandom(seed ^ ScenarioSeedSalt));
             IMissionDrawScenario scenario = createScenario(environment)
                 ?? throw new InvalidOperationException("Scenario factory returned null.");
-            var strategy = new FullMissionDrawStrategy(new SimulationRandom(seed), diagnosticsReporter);
+            IMissionDrawStrategy strategy = createStrategy(new SimulationRandom(seed), diagnosticsReporter)
+                ?? throw new InvalidOperationException("Strategy factory returned null.");
 
             int drawCount = 0;
             var failureCounts = new Dictionary<string, int>();

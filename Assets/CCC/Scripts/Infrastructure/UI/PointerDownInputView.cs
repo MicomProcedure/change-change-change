@@ -8,7 +8,7 @@ namespace Ccc.Infrastructure.UI
     /// <summary>
     ///     1 回のポインターダウンを 1 回の押下イベントへ変換する共通入力コンポーネント。
     /// </summary>
-    public sealed class PointerDownInputView : MonoBehaviour, IPointerDownHandler
+    public sealed class PointerDownInputView : PressInputView, IPointerDownHandler
     {
         private Subject<Unit> _pressedSubject = new();
         private bool _isDestroyed;
@@ -17,7 +17,7 @@ namespace Ccc.Infrastructure.UI
         /// <summary>
         ///     押下イベントの発行元。
         /// </summary>
-        public Observable<Unit> Pressed => _pressedSubject;
+        public override Observable<Unit> Pressed => _pressedSubject;
 
         private void Awake()
         {
@@ -38,7 +38,7 @@ namespace Ccc.Infrastructure.UI
         ///     入力の受付可否を切り替える。
         /// </summary>
         /// <param name="isInteractable">入力受付可否。</param>
-        public void SetInteractable(bool isInteractable)
+        public override void SetInteractable(bool isInteractable)
         {
             _isInteractable = isInteractable;
         }

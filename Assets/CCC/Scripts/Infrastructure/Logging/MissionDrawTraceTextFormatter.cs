@@ -71,7 +71,9 @@ namespace Ccc.Infrastructure.Logging
                 .AppendLine();
             text.Append("Selection: SelectedRank=").Append(trace.SelectedRank)
                 .Append(", PoolSize=").Append(trace.PoolSize)
-                .Append(", TargetRatio=").Append(FormatRatio(trace.Config.TargetExpressionMatchRatio));
+                .Append(", TargetRatio=").Append(FormatRatio(trace.TargetExpressionMatchRatio))
+                .Append('(').Append(FormatRatio(trace.TargetExpressionMatchRatioRange.LowerBound))
+                .Append("..").Append(FormatRatio(trace.TargetExpressionMatchRatioRange.UpperBound)).Append(')');
 
             int displayedCount = Math.Min(_candidateCount, trace.RankedCandidates.Count);
             for (int index = 0; index < displayedCount; index++)
@@ -100,7 +102,7 @@ namespace Ccc.Infrastructure.Logging
                 .Append('/').Append(candidate.EvaluatedExpressionCount)
                 .Append(" Ratio=").Append(FormatRatio(candidate.ExpressionMatchRatio))
                 .Append(" Difference=").Append(FormatRatio(
-                    Math.Abs(candidate.ExpressionMatchRatio - trace.Config.TargetExpressionMatchRatio)));
+                    Math.Abs(candidate.ExpressionMatchRatio - trace.TargetExpressionMatchRatio)));
 
             if (rank <= trace.PoolSize)
             {

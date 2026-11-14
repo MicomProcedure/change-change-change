@@ -19,7 +19,9 @@ Gameplay 開始時の Mission 候補カタログ準備処理と、Session 進行
 | `ExpressionMatchRatio` | `ExpressionMatchCount` を正常な `ExpressionCandidate` 全体数で除した「式適合割合」 |
 | `MinExpressionMatchRatio` | `MissionCandidate` として採択・登録するための最小式適合割合 |
 | `MaxExpressionMatchRatio` | `MissionCandidate` として採択・登録するための最大式適合割合 |
-| `TargetExpressionMatchRatio` | 本実装版の抽出処理において優先目標とするターゲット式適合割合 |
+| `TargetExpressionMatchRatio` | 本実装版の抽出処理において優先目標とするターゲット式適合割合。Section低下版では初期値かつ上限 |
+| `TargetExpressionMatchRatioReductionPerSection` | Section低下版で、Sectionが1進むごとに目標式適合割合の下限を下げる量 |
+| `MinimumTargetExpressionMatchRatio` | Section低下版で、目標式適合割合の下限が下回らない値 |
 | `CurrentExpressionSatisfiedMissionSelectionRatio` | 2問目以降に現在式で達成できるMission候補群を選択する確率 |
 | `NegatedMissionSelectionWeight` | 肯定 Mission に対する反転 Mission（`Negated`）の相対抽選重み |
 
@@ -77,13 +79,15 @@ Gameplay 開始時、選択されたゲームモードと `GameDifficulty` か�
 | `MaxExpressionMatchRatio` | `0.60` |
 | `CurrentExpressionSatisfiedMissionSelectionRatio` | `0.10` |
 | `TargetExpressionMatchRatio` | `0.20` |
+| `TargetExpressionMatchRatioReductionPerSection` | `0`（低下しない） |
+| `MinimumTargetExpressionMatchRatio` | `0` |
 | `MissionParameterSelectionPoolSize` | `3` |
 | `CurrentTierSelectionWeight` | `0.60` |
 | `LowerTierSelectionWeight` | `0.40` |
 | `NegatedMissionSelectionWeight` | `0.60` |
 | `CompoundMissionSelectionWeight` | `0` |
 
-※上記パラメーターは難易度ごとにConfig設定可能とする。`CurrentExpressionSatisfiedMissionSelectionRatio`と`TargetExpressionMatchRatio`はSession内抽選でのみ参照すること。
+※上記パラメーターは難易度ごとにConfig設定可能とする。`CurrentExpressionSatisfiedMissionSelectionRatio`、`TargetExpressionMatchRatio`、`TargetExpressionMatchRatioReductionPerSection`、`MinimumTargetExpressionMatchRatio`はSession内抽選でのみ参照すること。
 
 ## Missionパラメータ候補の自動生成
 
@@ -94,6 +98,11 @@ Gameplay 開始時、選択されたゲームモードと `GameDifficulty` か�
 - `Absolute`: `N >= 1`かつNまたは-Nが到達可能
 - `OnesDigit`: `0～9`かつ対応する到達可能整数が存在
 - `DecimalFirstDigit`: `0～9`かつ対応する到達可能非整数が存在
+- `Divisor`: `N >= 1`かつNを割り切る0以外の到達可能整数が存在
+- `Power`: `N >= 2`かつ指数1以上のNの累乗である到達可能整数が存在
+- `TensDigit`: `0～9`かつ符号を除いた十の位がNの到達可能整数が存在（1桁の数は十の位0）
+- `DigitSum`: `N >= 1`かつ符号を除いた各桁の和がNの到達可能整数が存在
+- パラメータなしKind（`BetweenZeroAndOne`・`TwoDigit`・`RepeatingDecimal`を含む）: 到達可能性による事前絞り込みを行わず、Catalogの評価フィルタリングで採否を決める
 - `Between`: `lowerBound × width`の直積。`width >= 1`、加算がオーバーフローせず、両端が到達可能整数であること。上限は保持しない
 - `Modulo`: `divisor × remainder`の直積。`divisor >= 2`、`0 <= remainder < divisor`、対応するユークリッド剰余を持つ到達可能整数が存在すること
 
@@ -102,11 +111,14 @@ Gameplay 開始時、選択されたゲームモードと `GameDifficulty` か�
 ## 本実装版: Session中の抽選アルゴリズム
 
 1. `NegatedMissionSelectionWeight == 0`の場合はNegated候補を抽選対象から完全に除外すること。続いて現在Tier以下の解放済み候補を確定すること。Session初回は`CurrentExpression`を評価せず、そのまま手順2へ進むこと。2問目以降は解放済み候補を、現在式で達成できる候補群と達成できない候補群に分けること。両群に候補がある場合は`[0, 1)`の乱数sampleが`CurrentExpressionSatisfiedMissionSelectionRatio`未満なら達成できる候補群を、以上なら達成できない候補群を選ぶこと。片方の群だけに候補がある場合は、その群を乱数消費なしで選ぶこと。比率`0`は両群がある限り達成できない候補群、比率`1`は達成できる候補群を乱数消費なしで選ぶこと。
-2. 現在 Tier と下位 Tier を重み `0.60` / `0.40` で決定すること。
+2. 現在 Tier と下位 Tier を重み `0.60` / `0.40` で決定すること。下位 Tier が選ばれた場合は、全下位 Tier の候補を1つの候補群とし、下位 Tier 間の抽選は行わないこと。
 3. 肯定 Mission（基準重み `1.00`）と `NegatedMission`（相対重み `NegatedMissionSelectionWeight` 例: `0.60`）のいずれかを選択すること。
 4. 直前の出題と同一の Kind かつ同一パラメータの候補を除外すること（代替候補が存在する場合）。
 5. 残った Kind の中から一様抽選すること。
-6. 選択された Kind の候補を `TargetExpressionMatchRatio` との差分が小さい順に並べ替え、ConfigのMissionパラメータ抽選プール数までを上位候補群としてランダム抽選すること。
+6. その抽選で使う目標式適合割合を決め、選択された Kind の候補をその値との差分が小さい順に並べ替え、ConfigのMissionパラメータ抽選プール数までを上位候補群としてランダム抽選すること。目標式適合割合は、製品用のSection低下版では次の範囲から一様に選び、比較用の固定版では `TargetExpressionMatchRatio` とすること。
+   - 上限: `TargetExpressionMatchRatio`
+   - 下限: `TargetExpressionMatchRatio − TargetExpressionMatchRatioReductionPerSection × (Section − 1)`。`MinimumTargetExpressionMatchRatio` を下回る場合は `MinimumTargetExpressionMatchRatio`
+   - 下限と上限が等しい場合（Section 1、または低下量 `0`）は乱数を消費しないこと。手順1の候補群が達成できる候補群でも同じ値を使うこと。
 7. 直前Missionの除外は代替候補が存在する場合にのみ適用すること。手順1で解放済みの利用可能候補が0件の場合は設定エラーとすること。
 
 ## NegatedMission（判定反転ミッション）

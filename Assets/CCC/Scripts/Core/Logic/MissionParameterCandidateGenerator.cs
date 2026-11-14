@@ -274,6 +274,23 @@ namespace Ccc.Core.Logic
                     return parameter >= 0 &&
                            parameter <= 9 &&
                            reachableResults.DecimalFirstDigits.Contains(parameter);
+                case MissionKind.Divisor:
+                    return parameter >= 1 &&
+                           reachableResults.Integers.Any(
+                               reachable => reachable != 0 && parameter % reachable == 0);
+                case MissionKind.Power:
+                    return parameter >= 2 &&
+                           reachableResults.Integers.Any(
+                               reachable => IntegerPropertyCalculator.IsPositivePowerOf(reachable, parameter));
+                case MissionKind.TensDigit:
+                    return parameter >= 0 &&
+                           parameter <= 9 &&
+                           reachableResults.Integers.Any(
+                               reachable => IntegerPropertyCalculator.GetTensDigit(reachable) == parameter);
+                case MissionKind.DigitSum:
+                    return parameter >= 1 &&
+                           reachableResults.Integers.Any(
+                               reachable => IntegerPropertyCalculator.SumDigits(reachable) == parameter);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
             }
@@ -337,34 +354,25 @@ namespace Ccc.Core.Logic
         private static ReachableResults AnalyzeReachableResults(
             IReadOnlyList<ExpressionCandidate> expressions)
         {
-            var integers = new SortedSet<int>();
             var decimalFirstDigits = new HashSet<int>();
             for (int index = 0; index < expressions.Count; index++)
             {
                 CalculationResult result = expressions[index].Result;
-                if (!result.IsDefined)
+                if (!result.IsDefined || result.Value.IsInteger)
                 {
                     continue;
                 }
 
                 Rational value = result.Value;
-                if (value.IsInteger)
-                {
-                    if (value.Numerator >= int.MinValue && value.Numerator <= int.MaxValue)
-                    {
-                        integers.Add((int)value.Numerator);
-                    }
-                }
-                else
-                {
-                    long fractionalNumerator = Math.Abs(
-                        value.Numerator % value.Denominator);
-                    int firstDigit = (int)(fractionalNumerator * 10L / value.Denominator);
-                    decimalFirstDigits.Add(firstDigit);
-                }
+                long fractionalNumerator = Math.Abs(
+                    value.Numerator % value.Denominator);
+                int firstDigit = (int)(fractionalNumerator * 10L / value.Denominator);
+                decimalFirstDigits.Add(firstDigit);
             }
 
-            return new ReachableResults(integers, decimalFirstDigits);
+            return new ReachableResults(
+                ReachableIntegerCollector.Collect(expressions),
+                decimalFirstDigits);
         }
 
         private static int EuclideanModulo(int dividend, int divisor)

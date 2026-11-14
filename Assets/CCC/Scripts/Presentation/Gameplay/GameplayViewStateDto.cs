@@ -13,11 +13,6 @@ namespace Ccc.Presentation
         public string GameModeText { get; }
 
         /// <summary>
-        /// 現在の難易度表示文言を取得します。
-        /// </summary>
-        public string DifficultyText { get; }
-
-        /// <summary>
         /// 現在のSectionを取得します。
         /// </summary>
         public int Section { get; }
@@ -78,16 +73,45 @@ namespace Ccc.Presentation
         public bool CanSubmit { get; }
 
         /// <summary>
+        /// 式の左側の数値が、選択肢の中で何番目かを0始まりで取得します。
+        /// </summary>
+        public int LeftIndex { get; }
+
+        /// <summary>
+        /// 式の演算子が、選択肢の中で何番目かを0始まりで取得します。
+        /// </summary>
+        public int OperatorIndex { get; }
+
+        /// <summary>
+        /// 式の右側の数値が、選択肢の中で何番目かを0始まりで取得します。
+        /// </summary>
+        public int RightIndex { get; }
+
+        /// <summary>
+        /// 数値の選択肢の総数を取得します。
+        /// </summary>
+        public int NumberChoiceCount { get; }
+
+        /// <summary>
+        /// 演算子の選択肢の総数を取得します。
+        /// </summary>
+        public int OperatorChoiceCount { get; }
+
+        /// <summary>
         /// 指定された表示値からGameplay画面の表示状態を生成します。
         /// </summary>
         /// <param name="gameModeText">ゲームモード表示文言。</param>
-        /// <param name="difficultyText">難易度表示文言。</param>
         /// <param name="section">現在のSection。</param>
         /// <param name="life">残りLife。</param>
         /// <param name="missionText">ミッションの表示文言。</param>
         /// <param name="leftText">式の左側の表示文言。</param>
         /// <param name="operatorText">式の演算子の表示文言。</param>
         /// <param name="rightText">式の右側の表示文言。</param>
+        /// <param name="leftIndex">式の左側の数値の、選択肢の中での位置。</param>
+        /// <param name="operatorIndex">式の演算子の、選択肢の中での位置。</param>
+        /// <param name="rightIndex">式の右側の数値の、選択肢の中での位置。</param>
+        /// <param name="numberChoiceCount">数値の選択肢の総数。</param>
+        /// <param name="operatorChoiceCount">演算子の選択肢の総数。</param>
         /// <param name="answerText">答えの表示文言。</param>
         /// <param name="hasRemainingTime">残り時間が有効かどうか。</param>
         /// <param name="remainingSeconds">残り秒数。</param>
@@ -98,13 +122,17 @@ namespace Ccc.Presentation
         /// <exception cref="ArgumentOutOfRangeException">残り秒数が不正な場合。</exception>
         public GameplayViewStateDto(
             string gameModeText,
-            string difficultyText,
             int section,
             int life,
             string missionText,
             string leftText,
             string operatorText,
             string rightText,
+            int leftIndex,
+            int operatorIndex,
+            int rightIndex,
+            int numberChoiceCount,
+            int operatorChoiceCount,
             string answerText,
             bool hasRemainingTime,
             float remainingSeconds,
@@ -115,11 +143,6 @@ namespace Ccc.Presentation
             if (gameModeText == null)
             {
                 throw new ArgumentNullException(nameof(gameModeText));
-            }
-
-            if (difficultyText == null)
-            {
-                throw new ArgumentNullException(nameof(difficultyText));
             }
 
             if (missionText == null)
@@ -168,13 +191,17 @@ namespace Ccc.Presentation
             }
 
             GameModeText = gameModeText;
-            DifficultyText = difficultyText;
             Section = section;
             Life = life;
             MissionText = missionText;
             LeftText = leftText;
             OperatorText = operatorText;
             RightText = rightText;
+            LeftIndex = leftIndex;
+            OperatorIndex = operatorIndex;
+            RightIndex = rightIndex;
+            NumberChoiceCount = numberChoiceCount;
+            OperatorChoiceCount = operatorChoiceCount;
             AnswerText = answerText;
             HasRemainingTime = hasRemainingTime;
             RemainingSeconds = hasRemainingTime ? remainingSeconds : 0f;
