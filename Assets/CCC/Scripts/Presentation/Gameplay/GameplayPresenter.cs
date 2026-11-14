@@ -401,7 +401,6 @@ namespace Ccc.Presentation
 
             return new GameplayViewStateDto(
                 _gameplayRequest.GameMode.ToString(),
-                _gameplayRequest.Difficulty.ToString(),
                 gameplayState.CorrectAnswerCount,
                 gameplayState.Life,
                 missionText,
@@ -538,7 +537,8 @@ namespace Ccc.Presentation
             return new GameplayResultViewStateDto(
                 scoreText,
                 achievedRankCount,
-                highScoreResult.IsNewHighScore);
+                highScoreResult.IsNewHighScore,
+                _gameplayRequest.Difficulty);
         }
 
         private static string FormatExpression(Expression expression)
