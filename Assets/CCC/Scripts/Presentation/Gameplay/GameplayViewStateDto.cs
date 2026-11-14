@@ -13,11 +13,6 @@ namespace Ccc.Presentation
         public string GameModeText { get; }
 
         /// <summary>
-        /// 現在の難易度表示文言を取得します。
-        /// </summary>
-        public string DifficultyText { get; }
-
-        /// <summary>
         /// 現在のSectionを取得します。
         /// </summary>
         public int Section { get; }
@@ -106,7 +101,6 @@ namespace Ccc.Presentation
         /// 指定された表示値からGameplay画面の表示状態を生成します。
         /// </summary>
         /// <param name="gameModeText">ゲームモード表示文言。</param>
-        /// <param name="difficultyText">難易度表示文言。</param>
         /// <param name="section">現在のSection。</param>
         /// <param name="life">残りLife。</param>
         /// <param name="missionText">ミッションの表示文言。</param>
@@ -128,7 +122,6 @@ namespace Ccc.Presentation
         /// <exception cref="ArgumentOutOfRangeException">残り秒数が不正な場合。</exception>
         public GameplayViewStateDto(
             string gameModeText,
-            string difficultyText,
             int section,
             int life,
             string missionText,
@@ -150,11 +143,6 @@ namespace Ccc.Presentation
             if (gameModeText == null)
             {
                 throw new ArgumentNullException(nameof(gameModeText));
-            }
-
-            if (difficultyText == null)
-            {
-                throw new ArgumentNullException(nameof(difficultyText));
             }
 
             if (missionText == null)
@@ -203,7 +191,6 @@ namespace Ccc.Presentation
             }
 
             GameModeText = gameModeText;
-            DifficultyText = difficultyText;
             Section = section;
             Life = life;
             MissionText = missionText;
