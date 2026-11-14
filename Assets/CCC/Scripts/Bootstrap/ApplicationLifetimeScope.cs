@@ -190,6 +190,7 @@ namespace Ccc.Bootstrap
                     _editorPlayPlatformOverride,
                     Application.isEditor,
                     Application.platform,
+                    Application.isMobilePlatform,
                     startupScenePlatform)));
         }
 
