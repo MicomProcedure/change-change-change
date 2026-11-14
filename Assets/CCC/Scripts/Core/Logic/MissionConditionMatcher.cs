@@ -147,8 +147,9 @@ namespace Ccc.Core.Logic
                     return value.Numerator > 0 && value.CompareTo(Rational.Create(1, 1)) < 0;
 
                 case MissionKind.TwoDigit:
-                    // 2桁: 符号を除いた整数部分の桁数が2
-                    return IntegerPropertyCalculator.CountDigits(value.Numerator / value.Denominator) == TwoDigitCount;
+                    // 2桁: 符号・小数点・先頭の0を除いた数字が2個（9.5 → 95、0.25 → 25）
+                    return TryScaleTerminatingDecimalToInteger(value, out long twoDigitScaledInteger) &&
+                        IntegerPropertyCalculator.CountDigits(twoDigitScaledInteger) == TwoDigitCount;
 
                 case MissionKind.TensDigit:
                     // 十の位: 符号を除いた整数部分で判定し、1桁の数は十の位0とみなす
@@ -156,8 +157,8 @@ namespace Ccc.Core.Logic
 
                 case MissionKind.DigitSum:
                     // 各桁の和: 整数と有限小数は小数部を含む全桁を符号を除いて合計する。無限小数は常に不正解
-                    return TrySumTerminatingDigits(value, out long digitSum) &&
-                        digitSum == condition.ParameterA;
+                    return TryScaleTerminatingDecimalToInteger(value, out long digitSumScaledInteger) &&
+                        IntegerPropertyCalculator.SumDigits(digitSumScaledInteger) == condition.ParameterA;
 
                 case MissionKind.RepeatingDecimal:
                     // 無限小数: 約分済みの分母に2と5以外の素因数を含む
@@ -229,9 +230,9 @@ namespace Ccc.Core.Logic
             return remainder < 0 ? remainder + divisor : remainder;
         }
 
-        private static bool TrySumTerminatingDigits(Rational value, out long digitSum)
+        private static bool TryScaleTerminatingDecimalToInteger(Rational value, out long scaledInteger)
         {
-            digitSum = 0L;
+            scaledInteger = 0L;
             if (HasRepeatingDecimalExpansion(value.Denominator))
             {
                 return false;
@@ -244,7 +245,7 @@ namespace Ccc.Core.Logic
                 scaledNumerator = checked(scaledNumerator * 10L);
             }
 
-            digitSum = IntegerPropertyCalculator.SumDigits(scaledNumerator / value.Denominator);
+            scaledInteger = scaledNumerator / value.Denominator;
             return true;
         }
     }

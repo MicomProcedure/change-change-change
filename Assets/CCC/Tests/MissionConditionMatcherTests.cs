@@ -83,7 +83,8 @@ namespace Ccc.Tests
         }
 
         /// <summary>
-        /// 2桁は符号を除いた整数部（0方向切り捨て）が10以上99以下の値を含み、小数も対象とすることを検証します。
+        /// 2桁は符号・小数点・先頭の0を除いた数字が2個の値を含むことを検証します。
+        /// 有限小数は小数点以下の桁数を問わず対象とし、無限小数は含みません。
         /// </summary>
         [TestCase(10L, 1L, true)]
         [TestCase(99L, 1L, true)]
@@ -91,15 +92,23 @@ namespace Ccc.Tests
         [TestCase(9L, 1L, false)]
         [TestCase(100L, 1L, false)]
         [TestCase(0L, 1L, false)]
-        [TestCase(25L, 2L, true)]    // 12.5
-        [TestCase(-25L, 2L, true)]   // -12.5
-        [TestCase(199L, 2L, true)]   // 99.5
-        [TestCase(31L, 3L, true)]    // 10.33...
-        [TestCase(19L, 2L, false)]   // 9.5
-        [TestCase(201L, 2L, false)]  // 100.5
-        [TestCase(1L, 2L, false)]    // 0.5（整数部0は1桁）
-        [TestCase(-1L, 2L, false)]   // -0.5
-        public void IsMatch_TwoDigit_ShouldJudgeTwoDigitIntegerPart(
+        [TestCase(19L, 2L, true)]     // 9.5
+        [TestCase(-19L, 2L, true)]    // -9.5
+        [TestCase(3L, 2L, true)]      // 1.5
+        [TestCase(1L, 4L, true)]      // 0.25
+        [TestCase(-1L, 4L, true)]     // -0.25
+        [TestCase(1L, 5L, false)]     // 0.2（1個）
+        [TestCase(1L, 20L, false)]    // 0.05（1個）
+        [TestCase(25L, 2L, false)]    // 12.5（3個）
+        [TestCase(199L, 2L, false)]   // 99.5（3個）
+        [TestCase(21L, 20L, false)]   // 1.05（3個）
+        [TestCase(3L, 200L, true)]    // 0.015（表示は0.01だが判定は正確な値で行う）
+        [TestCase(1L, 400L, true)]    // 0.0025（表示は0だが判定は正確な値で行う）
+        [TestCase(1L, 200L, false)]   // 0.005（1個）
+        [TestCase(1L, 8L, false)]     // 0.125（3個）
+        [TestCase(1L, 3L, false)]     // 0.33...（無限小数）
+        [TestCase(31L, 3L, false)]    // 10.33...（無限小数）
+        public void IsMatch_TwoDigit_ShouldJudgeTwoSignificantDigits(
             long numerator,
             long denominator,
             bool expected)
@@ -108,11 +117,14 @@ namespace Ccc.Tests
         }
 
         /// <summary>
-        /// 2桁にするなは、整数部が2桁の小数を不正解とし、整数部が2桁でない小数を正解とすることを検証します。
+        /// 2桁にするなは、数字が2個の小数を不正解とし、それ以外の小数を正解とすることを検証します。
         /// </summary>
-        [TestCase(25L, 2L, false)]   // 12.5
+        [TestCase(19L, 2L, false)]   // 9.5
+        [TestCase(1L, 4L, false)]    // 0.25
+        [TestCase(25L, 2L, true)]    // 12.5
         [TestCase(1L, 2L, true)]     // 0.5
-        public void IsMatch_NegatedTwoDigitWithDecimal_ShouldJudgeByIntegerPart(
+        [TestCase(1L, 3L, true)]     // 0.33...
+        public void IsMatch_NegatedTwoDigitWithDecimal_ShouldJudgeBySignificantDigits(
             long numerator,
             long denominator,
             bool expected)
