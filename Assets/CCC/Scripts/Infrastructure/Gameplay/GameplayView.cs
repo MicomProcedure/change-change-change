@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Ccc.Infrastructure.UI;
 using Ccc.Presentation;
 using Cysharp.Threading.Tasks;
 using R3;
@@ -23,7 +24,8 @@ namespace Ccc.Infrastructure.Gameplay
         [SerializeField] private GameplayErrorView _gameplayErrorView;
         [SerializeField] private DotweenFeedbackView _feedbackView;
         [SerializeField] private TMP_Text _gameModeText;
-        [SerializeField] private TMP_Text _difficultyText;
+        [Tooltip("プレイ中の難易度に対応するGameObjectを表示するView。")]
+        [SerializeField] private GameDifficultyView _gameDifficultyView;
 
         [Header("Countdown")]
         [SerializeField] private CountdownView _countdownView;
@@ -106,11 +108,6 @@ namespace Ccc.Infrastructure.Gameplay
                 _gameModeText.text = state.GameModeText;
             }
 
-            if (_difficultyText != null)
-            {
-                _difficultyText.text = state.DifficultyText;
-            }
-
             if (_lifeView != null)
             {
                 _lifeView.Render(state.Life);
@@ -155,6 +152,11 @@ namespace Ccc.Infrastructure.Gameplay
             if (settings == null)
             {
                 throw new ArgumentNullException(nameof(settings));
+            }
+
+            if (_gameDifficultyView != null)
+            {
+                _gameDifficultyView.Render(settings.Difficulty);
             }
 
             if (_expressionView == null ||
@@ -369,7 +371,7 @@ namespace Ccc.Infrastructure.Gameplay
             LogMissingReferenceIfNecessary(_gameplayErrorView, nameof(_gameplayErrorView));
             LogMissingReferenceIfNecessary(_feedbackView, nameof(_feedbackView));
             LogMissingReferenceIfNecessary(_gameModeText, nameof(_gameModeText));
-            LogMissingReferenceIfNecessary(_difficultyText, nameof(_difficultyText));
+            LogMissingReferenceIfNecessary(_gameDifficultyView, nameof(_gameDifficultyView));
             LogMissingReferenceIfNecessary(_countdownView, nameof(_countdownView));
             LogMissingReferenceIfNecessary(_inputBlocker, nameof(_inputBlocker));
         }

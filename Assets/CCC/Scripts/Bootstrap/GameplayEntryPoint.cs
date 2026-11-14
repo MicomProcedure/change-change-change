@@ -122,7 +122,9 @@ namespace Ccc.Bootstrap
                 return;
             }
 
-            _view.ApplyDisplaySettings(new GameplayDisplaySettingsDto(configEntry.ExpressionDisplayStyle));
+            _view.ApplyDisplaySettings(new GameplayDisplaySettingsDto(
+                configEntry.ExpressionDisplayStyle,
+                _startContext.Request.Difficulty));
             MonoBehaviour viewBehaviour = _view as MonoBehaviour;
             CancellationToken destroyCancellationToken = viewBehaviour == null
                 ? CancellationToken.None
