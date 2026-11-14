@@ -83,7 +83,7 @@ namespace Ccc.Tests
         }
 
         /// <summary>
-        /// 2桁は符号を除いて10以上99以下の整数だけを含むことを検証します。
+        /// 2桁は符号を除いた整数部（0方向切り捨て）が10以上99以下の値を含み、小数も対象とすることを検証します。
         /// </summary>
         [TestCase(10L, 1L, true)]
         [TestCase(99L, 1L, true)]
@@ -91,8 +91,15 @@ namespace Ccc.Tests
         [TestCase(9L, 1L, false)]
         [TestCase(100L, 1L, false)]
         [TestCase(0L, 1L, false)]
-        [TestCase(25L, 2L, false)]
-        public void IsMatch_TwoDigit_ShouldJudgeTwoDigitInteger(
+        [TestCase(25L, 2L, true)]    // 12.5
+        [TestCase(-25L, 2L, true)]   // -12.5
+        [TestCase(199L, 2L, true)]   // 99.5
+        [TestCase(31L, 3L, true)]    // 10.33...
+        [TestCase(19L, 2L, false)]   // 9.5
+        [TestCase(201L, 2L, false)]  // 100.5
+        [TestCase(1L, 2L, false)]    // 0.5（整数部0は1桁）
+        [TestCase(-1L, 2L, false)]   // -0.5
+        public void IsMatch_TwoDigit_ShouldJudgeTwoDigitIntegerPart(
             long numerator,
             long denominator,
             bool expected)
@@ -101,7 +108,45 @@ namespace Ccc.Tests
         }
 
         /// <summary>
-        /// 十の位は符号を除いた整数で判定し、1桁の数を十の位0とみなすことを検証します。
+        /// 2桁にするなは、整数部が2桁の小数を不正解とし、整数部が2桁でない小数を正解とすることを検証します。
+        /// </summary>
+        [TestCase(25L, 2L, false)]   // 12.5
+        [TestCase(1L, 2L, true)]     // 0.5
+        public void IsMatch_NegatedTwoDigitWithDecimal_ShouldJudgeByIntegerPart(
+            long numerator,
+            long denominator,
+            bool expected)
+        {
+            AssertMatch(MissionCondition.Create(MissionKind.TwoDigit, true), numerator, denominator, expected);
+        }
+
+        /// <summary>
+        /// 一の位は符号を除いた整数部（0方向切り捨て）の一の位で判定し、小数も対象とすることを検証します。
+        /// </summary>
+        [TestCase(2, 12L, 1L, true)]
+        [TestCase(2, -12L, 1L, true)]
+        [TestCase(0, 0L, 1L, true)]
+        [TestCase(0, 10L, 1L, true)]
+        [TestCase(3, 12L, 1L, false)]
+        [TestCase(2, 25L, 2L, true)]    // 12.5
+        [TestCase(2, -25L, 2L, true)]   // -12.5
+        [TestCase(2, 5L, 2L, true)]     // 2.5
+        [TestCase(5, 25L, 2L, false)]   // 12.5 の小数部は見ない
+        [TestCase(0, 1L, 2L, true)]     // 0.5
+        [TestCase(0, -1L, 2L, true)]    // -0.5
+        [TestCase(0, 1L, 3L, true)]     // 0.33...
+        [TestCase(3, 1L, 3L, false)]    // 0.33...
+        public void IsMatch_OnesDigit_ShouldJudgeUnsignedOnesDigitOfIntegerPart(
+            int parameter,
+            long numerator,
+            long denominator,
+            bool expected)
+        {
+            AssertMatch(MissionCondition.Create(MissionKind.OnesDigit, parameter), numerator, denominator, expected);
+        }
+
+        /// <summary>
+        /// 十の位は符号を除いた整数部（0方向切り捨て）で判定し、1桁の数を十の位0とみなし、小数も対象とすることを検証します。
         /// </summary>
         [TestCase(0, 7L, 1L, true)]
         [TestCase(0, 0L, 1L, true)]
@@ -112,9 +157,16 @@ namespace Ccc.Tests
         [TestCase(1, -15L, 1L, true)]
         [TestCase(1, 112L, 1L, true)]
         [TestCase(1, 7L, 1L, false)]
-        [TestCase(1, 25L, 2L, false)]
         [TestCase(2, -20L, 1L, true)]
-        public void IsMatch_TensDigit_ShouldJudgeUnsignedTensDigit(
+        [TestCase(1, 25L, 2L, true)]     // 12.5
+        [TestCase(1, -25L, 2L, true)]    // -12.5
+        [TestCase(2, 251L, 2L, true)]    // 125.5
+        [TestCase(0, 19L, 2L, true)]     // 9.5（1桁なので十の位0）
+        [TestCase(0, 1L, 3L, true)]      // 0.33...
+        [TestCase(0, -1L, 2L, true)]     // -0.5
+        [TestCase(1, 19L, 2L, false)]    // 9.5
+        [TestCase(2, 25L, 2L, false)]    // 12.5
+        public void IsMatch_TensDigit_ShouldJudgeUnsignedTensDigitOfIntegerPart(
             int parameter,
             long numerator,
             long denominator,
@@ -124,7 +176,7 @@ namespace Ccc.Tests
         }
 
         /// <summary>
-        /// 各桁の和は符号を除いた整数の各桁を合計して判定することを検証します。
+        /// 各桁の和は整数と有限小数の全桁を符号を除いて合計し、無限小数は不正解とすることを検証します。
         /// </summary>
         [TestCase(7, 16L, 1L, true)]
         [TestCase(7, -25L, 1L, true)]
@@ -134,6 +186,12 @@ namespace Ccc.Tests
         [TestCase(7, 0L, 1L, false)]
         [TestCase(7, 7L, 2L, false)]
         [TestCase(1, 100L, 1L, true)]
+        [TestCase(7, 1L, 4L, true)]      // 0.25
+        [TestCase(7, -5L, 2L, true)]     // -2.5
+        [TestCase(8, 5L, 4L, true)]      // 1.25
+        [TestCase(12, 3L, 4L, true)]     // 0.75
+        [TestCase(6, 1L, 3L, false)]     // 0.33...（無限小数）
+        [TestCase(13, 5L, 3L, false)]    // 1.66...（無限小数）
         public void IsMatch_DigitSum_ShouldJudgeUnsignedDigitSum(
             int parameter,
             long numerator,
