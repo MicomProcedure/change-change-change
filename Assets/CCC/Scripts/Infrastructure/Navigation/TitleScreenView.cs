@@ -41,6 +41,8 @@ namespace Ccc.Infrastructure.Navigation
 
         [SerializeField] private Button _openOptionButton;
         [SerializeField] private Button _closeOptionButton;
+        [Tooltip("プライバシーポリシーのWebページを開くボタン。")]
+        [SerializeField] private Button _openPrivacyPolicyButton;
         [SerializeField] private Button _openCreditButton;
         [SerializeField] private Button _closeCreditButton;
         [SerializeField] private Button _openTutorialButton;
@@ -77,6 +79,7 @@ namespace Ccc.Infrastructure.Navigation
         private TitleScreenModel _model;
         private IRuntimeMode _runtimeMode;
         private IApplicationVersionProvider _applicationVersionProvider;
+        private IExternalPageOpener _externalPageOpener;
         private IDisposable _screenSubscription;
         private IDisposable _busySubscription;
         private IDisposable _errorSubscription;
@@ -96,12 +99,14 @@ namespace Ccc.Infrastructure.Navigation
             TitleScreenModel model,
             OptionMenuModel optionMenuModel,
             IRuntimeMode runtimeMode,
-            IApplicationVersionProvider applicationVersionProvider)
+            IApplicationVersionProvider applicationVersionProvider,
+            IExternalPageOpener externalPageOpener)
         {
             _model = model;
             _optionMenuModel = optionMenuModel;
             _runtimeMode = runtimeMode;
             _applicationVersionProvider = applicationVersionProvider;
+            _externalPageOpener = externalPageOpener;
         }
 
         private void Start()
@@ -134,6 +139,11 @@ namespace Ccc.Infrastructure.Navigation
             if (_closeOptionButton != null)
             {
                 _closeOptionButton.onClick.AddListener(_model.CloseOptionMenu);
+            }
+
+            if (_openPrivacyPolicyButton != null)
+            {
+                _openPrivacyPolicyButton.onClick.AddListener(_externalPageOpener.OpenPrivacyPolicy);
             }
 
             if (_openCreditButton != null)
@@ -371,6 +381,7 @@ namespace Ccc.Infrastructure.Navigation
             SetInteractableIfAvailable(_startGameplayButton, isInteractable);
             SetInteractableIfAvailable(_openOptionButton, isInteractable);
             SetInteractableIfAvailable(_closeOptionButton, isInteractable);
+            SetInteractableIfAvailable(_openPrivacyPolicyButton, isInteractable);
             SetInteractableIfAvailable(_openCreditButton, isInteractable);
             SetInteractableIfAvailable(_closeCreditButton, isInteractable);
             SetInteractableIfAvailable(_closeStageButton, isInteractable);
@@ -507,6 +518,12 @@ namespace Ccc.Infrastructure.Navigation
                 return false;
             }
 
+            if (_externalPageOpener == null)
+            {
+                LogMissingReference(nameof(_externalPageOpener));
+                return false;
+            }
+
             if (_titleScreenRoot == null)
             {
                 LogMissingReference(nameof(_titleScreenRoot));
@@ -566,6 +583,11 @@ namespace Ccc.Infrastructure.Navigation
             if (_closeOptionButton == null)
             {
                 LogMissingReference(nameof(_closeOptionButton));
+            }
+
+            if (_openPrivacyPolicyButton == null)
+            {
+                LogMissingReference(nameof(_openPrivacyPolicyButton));
             }
 
             if (_openCreditButton == null)
