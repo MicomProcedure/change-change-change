@@ -48,3 +48,4 @@ MonoBehaviour:
     TypeName: Ccc.Bootstrap.ApplicationLifetimeScope
   autoRun: 1
   autoInjectGameObjects: []
+  _externalPageUrlAsset: {fileID: 11400000, guid: fdb314f98202b4427833a89d6b202622, type: 2}
