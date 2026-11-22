@@ -2460,6 +2460,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MissionView
       objectReference: {fileID: 0}
+    - target: {fileID: 2677761881386278239, guid: c77da7f93d11c4c9d9d9e22de29ca9fe, type: 3}
+      propertyPath: _scoreText
+      value: 
+      objectReference: {fileID: 9011833796919720279}
     - target: {fileID: 5794097701686146014, guid: c77da7f93d11c4c9d9d9e22de29ca9fe, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
