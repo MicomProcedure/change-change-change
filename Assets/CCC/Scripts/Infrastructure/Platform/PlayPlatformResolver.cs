@@ -17,9 +17,11 @@ namespace Ccc.Infrastructure.Platform
         /// <param name="editorOverride">Editor実行時にのみ適用する上書き設定。</param>
         /// <param name="isEditor">Editor上で実行しているかどうか。</param>
         /// <param name="runtimePlatform">Unityが報告する実行プラットフォーム。</param>
+        /// <param name="isMobilePlatform">Unityが報告するモバイル端末判定。WebGL実行時にのみ使用します。</param>
         /// <param name="startupScenePlatform">起動時のSceneが一意に属するプラットフォーム。特定できない場合はnull。</param>
         /// <returns>
-        /// Standaloneビルドの場合はPC、それ以外のビルドの場合はMobile。
+        /// WebGLビルドではモバイル端末判定に応じてMobileまたはPCを返します。
+        /// その他のビルドではStandaloneの場合はPC、それ以外の場合はMobileを返します。
         /// Editorでは上書き設定に従い、Autoの場合は起動時のSceneのプラットフォーム、特定できなければMobileを返します。
         /// </returns>
         /// <exception cref="ArgumentOutOfRangeException">未定義の上書き設定の場合。</exception>
@@ -27,11 +29,17 @@ namespace Ccc.Infrastructure.Platform
             PlayPlatformOverride editorOverride,
             bool isEditor,
             RuntimePlatform runtimePlatform,
+            bool isMobilePlatform,
             PlayPlatform? startupScenePlatform)
         {
             if (isEditor)
             {
                 return ResolveEditorPlatform(editorOverride, startupScenePlatform);
+            }
+
+            if (runtimePlatform == RuntimePlatform.WebGLPlayer)
+            {
+                return isMobilePlatform ? PlayPlatform.Mobile : PlayPlatform.PC;
             }
 
             return IsStandalonePlayer(runtimePlatform)
