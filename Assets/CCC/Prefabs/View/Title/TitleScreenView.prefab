@@ -58,6 +58,7 @@ MonoBehaviour:
   _startGameplayButton: {fileID: 4428427247413285082}
   _openOptionButton: {fileID: 1027929527590750588}
   _closeOptionButton: {fileID: 7231599988669929657}
+  _openPrivacyPolicyButton: {fileID: 6381204642776552212}
   _openCreditButton: {fileID: 2648163276676394149}
   _closeCreditButton: {fileID: 2326251902822905110}
   _openTutorialButton: {fileID: 7034648981368679770}
@@ -843,6 +844,17 @@ RectTransform:
 --- !u!114 &5310282393922225785 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8710334724796253022, guid: 4a40b3d077138924db0f902c7ae6f39c, type: 3}
+  m_PrefabInstance: {fileID: 3553545696022218023}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
+--- !u!114 &6381204642776552212 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7628584485465937459, guid: 4a40b3d077138924db0f902c7ae6f39c, type: 3}
   m_PrefabInstance: {fileID: 3553545696022218023}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
